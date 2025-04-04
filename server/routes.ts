@@ -790,7 +790,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         if (!aiOutputText) {
           console.error("Could not extract message from AI response");
-          aiOutputText = `I am ミライ Notes Assistant. I've received your message but I'm having trouble formulating a response right now.`;
+          aiOutputText = `I am ミライ ノートアシスタント. I've received your message but I'm having trouble formulating a response right now.`;
         }
 
         // Format the bot's response

@@ -611,7 +611,7 @@ export function NotesList() {
                 <DialogTitle>
                   <div className="flex items-center gap-2">
                     <Brain className="h-5 w-5 text-blue-500" />
-                    <span>Notes Assistant</span>
+                    <span>ノートアシスタント</span>
                     {selectedNotes.length > 0 && (
                       <Badge variant="outline" className="ml-1">
                         {selectedNotes.length} notes selected
@@ -638,7 +638,7 @@ export function NotesList() {
           <div className="flex flex-1 overflow-hidden">
             {/* Notes selection sidebar */}
             <div className="w-[200px] border-r p-2 hidden sm:block">
-              <h3 className="text-sm font-medium mb-2">Select Notes</h3>
+              <h3 className="text-sm font-medium mb-2">ノートを選択</h3>
               <ScrollArea className="h-[calc(80vh-4rem)]">
                 <div className="space-y-1 pr-2">
                   {notes.map((note) => (
@@ -677,7 +677,7 @@ export function NotesList() {
                         selectedNotes.length > 0 ? (
                           "Ask questions about your selected notes."
                         ) : (
-                          "Select notes from the sidebar or ask questions about all your notes."
+                          "ノートを選択 from the sidebar or ask questions about all your notes."
                         )
                       ) : (
                         "Create some notes first to chat with them."
@@ -718,7 +718,7 @@ export function NotesList() {
                   </Button>
                 </form>
                 {notes.length > 0 && selectedNotes.length === 0 && (
-                  <p className="mt-2 text-xs text-muted-foreground">No notes selected. The assistant will use all notes.</p>
+                  <p className="mt-2 text-xs text-muted-foreground">ノートが選択されていません。アシスタントはすべてのノートを使用します。</p>
                 )}
               </div>
             </div>
