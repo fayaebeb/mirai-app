@@ -507,7 +507,7 @@ export const ChatInterface = () => {
 
             {sendMessage.isPending && (
               <div className="flex justify-center pt-2 pb-4">
-                <ChatLoadingIndicator variant="character" message="NeoCortexが処理中..." />
+                <ChatLoadingIndicator variant="character" message="ミライちゃんが処理中..." />
               </div>
             )}
             <div ref={messageEndRef} />
