@@ -46,11 +46,12 @@ export function NotesList() {
     queryKey: ['/api/notes'],
   });
 
-  // Fetch notes chat messages
+  // Fetch notes chat messages directly from the dedicated endpoint
   const { data: notesChatMessages = [], isLoading: isLoadingMessages } = useQuery<Message[]>({
-    queryKey: ['/api/messages'],
+    queryKey: ['/api/notes-chat-messages'],
     enabled: !!user && isNoteChatOpen,
-    select: (messages) => messages.filter(message => message.sessionId?.startsWith('notes_')),
+    // Keep the messages even after closing/reopening the chat window
+    staleTime: Infinity,
   });
 
   // Create note mutation
@@ -146,19 +147,32 @@ export function NotesList() {
         notes: selectedNotes,
       });
 
-      return response.json();
+      return {
+        botMessage: await response.json(),
+        userContent: content,
+        userMessageId: optimisticUserMessage.id
+      };
     },
-    onSuccess: (newBotMessage: Message) => {
-      // Clear optimistic messages when we get a response
-      setOptimisticMessages([]);
+    onSuccess: (data) => {
+      // Get the bot message from the response
+      const newBotMessage = data.botMessage;
       
-      // Add the new message to the messages list
-      queryClient.setQueryData<Message[]>(['/api/messages'], (oldMessages = []) => {
-        return [
-          ...oldMessages,
-          newBotMessage,
-        ];
+      // Remove the optimistic message with this ID
+      const currentOptimisticMessages = optimisticMessages.filter(
+        msg => msg.id !== data.userMessageId
+      );
+      setOptimisticMessages(currentOptimisticMessages);
+      
+      // Add the bot response to the query cache
+      queryClient.setQueryData<Message[]>(['/api/notes-chat-messages'], (oldMessages = []) => {
+        if (!oldMessages) return [newBotMessage];
+        
+        // Add the bot message to existing messages
+        return [...oldMessages, newBotMessage];
       });
+      
+      // Invalidate the messages query to ensure we have the actual server data
+      queryClient.invalidateQueries({ queryKey: ['/api/notes-chat-messages'] });
     },
     onError: (error) => {
       // Clear optimistic messages on error

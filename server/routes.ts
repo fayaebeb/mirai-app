@@ -20,7 +20,7 @@ function formatBotResponse(text: string): string {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
-  
+
   // Add a dedicated goal tracker chat endpoint
   app.post("/api/goal-chat", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
@@ -45,10 +45,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       console.log(`Sending request to Goal Tracker API: ${userContent}`);
-      
+
       // Get ALL goals for this user (both active and completed)
       const allGoals = await storage.getGoalsByUserId(req.user!.id);
-      
+
       // Format goals with completion status and dates for better context
       const formattedGoals = allGoals.map(goal => {
         const createdDate = new Date(goal.createdAt).toLocaleDateString('en-US', { 
@@ -56,7 +56,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           month: 'short',
           day: 'numeric'
         });
-        
+
         const updatedDate = new Date(goal.updatedAt).toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'short',
@@ -73,12 +73,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
           dueDateStr = `, Due: ${dueDate}`;
         }
-        
+
         return `${goal.description} ${goal.completed ? "[COMPLETED]" : "[ACTIVE]"} - Created: ${createdDate}, Last Updated: ${updatedDate}${dueDateStr}`;
       }).join("\n- ");
-      
+
       const goalsText = formattedGoals ? `- ${formattedGoals}` : "No goals found.";
-      
+
       const response = await fetch(LANGFLOW_API_GOAL, {
         method: "POST",
         headers: {
@@ -144,13 +144,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (goalDescription.length > 5) {
               // Check for due date information in the message
               let dueDate: Date | null = null;
-              
+
               // Simple patterns for date extraction - could be improved with NLP in a production system
               const byDateMatch = userContent.toLowerCase().match(/by (tomorrow|next week|next month|end of month|next year|january|february|march|april|may|june|july|august|september|october|november|december)/i);
               if (byDateMatch) {
                 const dateText = byDateMatch[1];
                 const today = new Date();
-                
+
                 if (dateText === 'tomorrow') {
                   dueDate = new Date(today.setDate(today.getDate() + 1));
                 } else if (dateText === 'next week') {
@@ -164,11 +164,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   const monthNames = ['january', 'february', 'march', 'april', 'may', 'june', 
                                      'july', 'august', 'september', 'october', 'november', 'december'];
                   const monthIndex = monthNames.findIndex(m => m === dateText.toLowerCase());
-                  
+
                   if (monthIndex !== -1) {
                     const targetMonth = monthIndex;
                     const currentMonth = today.getMonth();
-                    
+
                     // If the target month is earlier than current month, assume next year
                     if (targetMonth < currentMonth) {
                       dueDate = new Date(today.getFullYear() + 1, targetMonth, 15);
@@ -178,7 +178,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   }
                 }
               }
-              
+
               await storage.createGoal(req.user!.id, {
                 description: goalDescription,
                 completed: false,
@@ -244,14 +244,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
                             userContent.toLowerCase().includes('achievement');
 
       let response;
-      
+
       if (isGoalRelated) {
         // Use the goal tracker API
         console.log(`Sending request to Goal Tracker API: ${userContent}`);
-        
+
         // Get ALL goals for this user (both active and completed)
         const allGoals = await storage.getGoalsByUserId(req.user!.id);
-        
+
         // Format goals with completion status and dates for better context
         const formattedGoals = allGoals.map(goal => {
           const createdDate = new Date(goal.createdAt).toLocaleDateString('en-US', { 
@@ -259,7 +259,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             month: 'short',
             day: 'numeric'
           });
-          
+
           const updatedDate = new Date(goal.updatedAt).toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'short',
@@ -276,12 +276,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
             dueDateStr = `, Due: ${dueDate}`;
           }
-          
+
           return `${goal.description} ${goal.completed ? "[COMPLETED]" : "[ACTIVE]"} - Created: ${createdDate}, Last Updated: ${updatedDate}${dueDateStr}`;
         }).join("\n- ");
-        
+
         const goalsText = formattedGoals ? `- ${formattedGoals}` : "No goals found.";
-        
+
         response = await fetch(LANGFLOW_API_GOAL, {
           method: "POST",
           headers: {
@@ -369,13 +369,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (goalDescription.length > 5) {
               // Check for due date information in the message
               let dueDate: Date | null = null;
-              
+
               // Simple patterns for date extraction - could be improved with NLP in a production system
               const byDateMatch = userContent.toLowerCase().match(/by (tomorrow|next week|next month|end of month|next year|january|february|march|april|may|june|july|august|september|october|november|december)/i);
               if (byDateMatch) {
                 const dateText = byDateMatch[1];
                 const today = new Date();
-                
+
                 if (dateText === 'tomorrow') {
                   dueDate = new Date(today.setDate(today.getDate() + 1));
                 } else if (dateText === 'next week') {
@@ -389,11 +389,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   const monthNames = ['january', 'february', 'march', 'april', 'may', 'june', 
                                       'july', 'august', 'september', 'october', 'november', 'december'];
                   const monthIndex = monthNames.findIndex(m => m === dateText.toLowerCase());
-                  
+
                   if (monthIndex !== -1) {
                     const targetMonth = monthIndex;
                     const currentMonth = today.getMonth();
-                    
+
                     // If the target month is earlier than current month, assume next year
                     if (targetMonth < currentMonth) {
                       dueDate = new Date(today.getFullYear() + 1, targetMonth, 15);
@@ -403,7 +403,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   }
                 }
               }
-              
+
               await storage.createGoal(req.user!.id, {
                 description: goalDescription,
                 completed: false,
@@ -434,7 +434,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
   // Add a GET route for /api/messages to fetch all messages
   app.get("/api/messages", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
@@ -442,14 +442,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Use the full username as the session ID to ensure uniqueness across users
       const persistentSessionId = `user_${req.user!.id}_${req.user!.username}`;
-      
+
       // Check if the session with the specific ID exists first
       const existingUserSession = await storage.getSessionBySessionId(persistentSessionId);
       if (!existingUserSession) {
         console.log(`Creating new session for user ${req.user!.id} with sessionId ${persistentSessionId}`);
         await storage.createUserSession(req.user!.id, persistentSessionId);
       }
-      
+
       const messages = await storage.getMessagesByUserAndSession(
         req.user!.id,
         persistentSessionId
@@ -459,7 +459,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error retrieving messages:", error);
     }
   });
-  
+
   // Add a GET route for /api/goal-messages to fetch goal-specific chat messages
   app.get("/api/goal-messages", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
@@ -467,14 +467,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Use a different session ID pattern for goal chat to ensure separation from regular chat
       const goalSessionId = `goal_${req.user!.id}_${req.user!.username}`;
-      
+
       // Check if the session with the specific ID exists first
       const existingGoalSession = await storage.getSessionBySessionId(goalSessionId);
       if (!existingGoalSession) {
         console.log(`Creating new goal session for user ${req.user!.id} with sessionId ${goalSessionId}`);
         await storage.createUserSession(req.user!.id, goalSessionId);
       }
-      
+
       const messages = await storage.getMessagesByUserAndSession(
         req.user!.id,
         goalSessionId
@@ -596,14 +596,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Use the full username as the session ID to ensure uniqueness across users
       const persistentSessionId = `user_${req.user!.id}_${req.user!.username}`;
-      
+
       // Check if the session with the specific ID exists first
       const existingUserSession = await storage.getSessionBySessionId(persistentSessionId);
       if (!existingUserSession) {
         console.log(`Creating new session for user ${req.user!.id} with sessionId ${persistentSessionId}`);
         await storage.createUserSession(req.user!.id, persistentSessionId);
       }
-      
+
       const messages = await storage.getMessagesByUserAndSession(
         req.user!.id,
         persistentSessionId
@@ -657,7 +657,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
+  // Add an endpoint to get notes chat messages
+  app.get("/api/notes-chat-messages", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      // Use a different session ID pattern for notes chat to ensure separation from regular chat
+      const notesSessionId = `notes_${req.user!.id}_${req.user!.username}`;
+
+      // Check if the session with the specific ID exists first
+      const existingNotesSession = await storage.getSessionBySessionId(notesSessionId);
+      if (!existingNotesSession) {
+        console.log(`Creating new notes session for user ${req.user!.id} with sessionId ${notesSessionId}`);
+        await storage.createUserSession(req.user!.id, notesSessionId);
+      }
+
+      const messages = await storage.getMessagesByUserAndSession(
+        req.user!.id,
+        notesSessionId
+      );
+      console.log(`Retrieved ${messages.length} notes chat messages for user ${req.user!.id} with sessionId ${notesSessionId}`);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error retrieving notes chat messages:", error);
+      res.status(500).json({
+        message: "Failed to retrieve notes chat messages",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  });
+
   // Add a dedicated notes chat endpoint
   app.post("/api/notes-chat", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
@@ -683,7 +713,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       console.log(`Sending request to Notes Chat API: ${userContent}`);
-      
+
       // Format the selected notes for context
       let formattedNotes = "";
       if (selectedNotes && selectedNotes.length > 0) {
@@ -693,7 +723,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             month: 'short',
             day: 'numeric'
           });
-          
+
           return `Title: ${note.title}\nContent: ${note.content}\nCreated: ${createdDate}\n---`;
         }).join("\n");
       } else {
@@ -706,14 +736,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
               month: 'short',
               day: 'numeric'
             });
-            
+
             return `Title: ${note.title}\nContent: ${note.content}\nCreated: ${createdDate}\n---`;
           }).join("\n");
         } else {
           formattedNotes = "No notes found.";
         }
       }
-      
+
       const response = await fetch(LANGFLOW_API_NOTES, {
         method: "POST",
         headers: {
