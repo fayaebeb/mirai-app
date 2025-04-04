@@ -430,18 +430,7 @@ export default function HomePage() {
                 </Button>
               </div>
               
-              {/* PDF Export Button */}
-              {messages.length > 0 && (
-                <motion.div 
-                  whileHover={{ scale: 1.05 }} 
-                  whileTap={{ scale: 0.95 }}
-                  className="relative"
-                >
-                  <ChatPDFExport messages={messages} />
-                  {/* Notification dot for new messages */}
-                  <span className="absolute -top-1 -right-1 bg-blue-500 rounded-full w-1.5 h-1.5 animate-pulse" />
-                </motion.div>
-              )}
+              
               
               {/* Username badge - consistent on all devices */}
               <AnimatePresence>

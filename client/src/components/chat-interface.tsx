@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Send, Check, Sparkles, Heart, Lightbulb, Wand2, MessageSquare, FileText } from "lucide-react";
+import { Send, Check, Sparkles, Heart, Lightbulb, Wand2, MessageSquare, FileText, Trash2 } from "lucide-react";
 import { Message } from "@shared/schema";
 import { nanoid } from "nanoid";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -19,6 +19,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ChatPDFExport } from "./chat-pdf-export";
 
 // Define a type for optimistic messages that uses string IDs instead of numbers
@@ -295,6 +305,7 @@ export const ChatInterface = () => {
   const [isOnline, setIsOnline] = useState(true);
   const [showTutorial, setShowTutorial] = useState(false);
   const [showEmotions, setShowEmotions] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -335,6 +346,50 @@ export const ChatInterface = () => {
     enabled: !!user,
   });
 
+  // Clear chat history mutation
+  const clearChatHistory = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest(
+        'DELETE',
+        '/api/messages'
+      );
+      return response.json();
+    },
+    onSuccess: () => {
+      // Clear the messages in the query cache
+      queryClient.setQueryData<Message[]>(['/api/messages'], []);
+      
+      // Close the confirmation dialog
+      setShowClearConfirm(false);
+      
+      // Show success toast
+      toast({
+        title: "チャット履歴をクリアしました",
+        description: "すべてのメッセージが削除されました。",
+      });
+      
+      // Ensure UI refreshes and scrolls to empty state properly
+      setTimeout(() => {
+        if (messageEndRef.current) {
+          messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    },
+    onError: (error) => {
+      console.error("Error clearing chat history:", error);
+      toast({
+        title: "エラーが発生しました",
+        description: "チャット履歴のクリアに失敗しました。",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Handle clear chat button click
+  const handleClearChat = () => {
+    setShowClearConfirm(true);
+  };
+
   // Scroll to bottom when messages change
   useEffect(() => {
     if (messageEndRef.current) {
@@ -373,7 +428,7 @@ export const ChatInterface = () => {
       // Detect if this is a goal-related message (handled on the server)
       console.log("Message being sent:", content);
       console.log("Is goal-related:", isGoalRelated(content));
-      
+
       // Send to API and get the response
       const response = await apiRequest(
         'POST',
@@ -448,21 +503,62 @@ export const ChatInterface = () => {
   };
 
   return (
-    <Card className="w-full h-full flex flex-col overflow-hidden relative border-muted-foreground/20">
+    <Card className="w-full h-[calc(100vh-14rem)] sm:h-[calc(100vh-12rem)] flex flex-col overflow-hidden relative border-muted-foreground/20">
       {showTutorial && <Tutorial onClose={() => setShowTutorial(false)} />}
-      
+
+      {/* Confirmation Dialog for clearing chat history */}
+      <AlertDialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>チャット履歴をクリアしますか？</AlertDialogTitle>
+            <AlertDialogDescription>
+              この操作は取り消せません。すべてのチャットメッセージがデータベースから削除されます。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => clearChatHistory.mutate()}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              クリア
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Fixed Chat Header */}
-      <div className="absolute top-0 left-0 right-0 z-20 border-b p-2 flex justify-between items-center bg-muted/30">
+      <div className="flex-shrink-0 border-b p-2 flex justify-between items-center bg-muted/30 sticky top-0 left-0 right-0 z-20">
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-blue-400" />
           <h2 className="text-sm font-medium">AI チャット会話</h2>
         </div>
-        {/* PDF export button removed - now available in header */}
+        <div className="flex items-center gap-2">
+          {messages.length > 0 && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    onClick={handleClearChat}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>チャット履歴をクリア</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+          <ChatPDFExport messages={messages} />
+        </div>
       </div>
 
-      {/* Scrollable Chat Area with margin top to account for fixed header */}
-      <div className="flex-1 overflow-hidden mt-[52px]"> {/* 52px = header height */}
+      {/* Scrollable Chat Area */}
+      <div className="flex-1 overflow-hidden">
         <ScrollArea className="h-full px-1 sm:px-4 py-3 w-full" ref={scrollAreaRef}>
           <div className="space-y-4 w-full max-w-full">
             {messages.length === 0 ? (
@@ -511,12 +607,14 @@ export const ChatInterface = () => {
               </div>
             )}
             <div ref={messageEndRef} />
+            {/* Add some bottom padding to ensure content isn't hidden behind the input area on small screens */}
+            <div className="h-4" /> 
           </div>
         </ScrollArea>
       </div>
 
-      {/* Message Input Form */}
-      <form onSubmit={handleSubmit} className="p-2 sm:p-4 border-t flex flex-col gap-2 relative z-10 bg-background">
+      {/* Message Input Form - Fixed at bottom */}
+      <form onSubmit={handleSubmit} className="flex-shrink-0 p-2 sm:p-3 border-t flex flex-col gap-1.5 bg-background sticky bottom-0 left-0 right-0 z-10">
         <AnimatePresence>
           {showEmotions && (
             <div className="absolute bottom-full left-0 w-full flex justify-center">
@@ -536,7 +634,7 @@ export const ChatInterface = () => {
                 e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
               }}
               placeholder="メッセージを入力してください..."
-              className="pr-10 focus:ring-2 focus:ring-pink-100 text-sm sm:text-base min-h-[40px] max-h-[200px] resize-none"
+              className="pr-10 focus:ring-2 focus:ring-pink-100 text-sm sm:text-base min-h-[38px] max-h-[200px] resize-none py-2"
               rows={1}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey && !isMobile) {
