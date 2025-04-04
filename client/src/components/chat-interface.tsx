@@ -475,7 +475,7 @@ export const ChatInterface = () => {
                   <Sparkles className="h-10 w-10 text-pink-300 mb-3" />
                   <h3 className="text-lg font-medium mb-2">対話を始めましょう</h3>
                   <p className="text-muted-foreground max-w-xs mx-auto text-sm sm:text-base">
-                    下のテキストボックスにメッセージを入力して、NeoCortexと対話を開始してください
+                    下のテキストボックスにメッセージを入力して、ミライと対話を開始してください
                   </p>
                 </motion.div>
               </div>
