@@ -347,55 +347,64 @@ export const ChatInterface = () => {
   });
 
   // Clear chat history mutation
-  const clearChatHistory = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest(
-        'DELETE',
-        '/api/messages'
-      );
-      return response.json();
-    },
-    onSuccess: () => {
-      // Clear the messages in the query cache
-      queryClient.setQueryData<Message[]>(['/api/messages'], []);
-      
-      // Close the confirmation dialog
-      setShowClearConfirm(false);
-      
-      // Show success toast
-      toast({
-        title: "チャット履歴をクリアしました",
-        description: "すべてのメッセージが削除されました。",
-      });
-      
-      // Ensure UI refreshes and scrolls to empty state properly
-      setTimeout(() => {
-        if (messageEndRef.current) {
-          messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 100);
-    },
-    onError: (error) => {
-      console.error("Error clearing chat history:", error);
-      toast({
-        title: "エラーが発生しました",
-        description: "チャット履歴のクリアに失敗しました。",
-        variant: "destructive"
-      });
-    }
-  });
+const clearChatHistory = useMutation({
+  mutationFn: async () => {
+    const response = await apiRequest('DELETE', '/api/messages');
 
-  // Handle clear chat button click
-  const handleClearChat = () => {
-    setShowClearConfirm(true);
-  };
-
-  // Scroll to bottom when messages change
-  useEffect(() => {
-    if (messageEndRef.current) {
-      messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (!response.ok) {
+      throw new Error("Failed to delete messages");
     }
-  }, [messages, messageEndRef]);
+
+    // Safely try to parse JSON response
+    try {
+      return await response.json();
+    } catch (err) {
+      console.warn("No JSON in response body:", err);
+      return { success: true }; // fallback default
+    }
+  },
+  onSuccess: () => {
+    // Clear the messages in the query cache
+    queryClient.setQueryData<Message[]>(['/api/messages'], []);
+
+    // Close the confirmation dialog
+    setShowClearConfirm(false);
+
+    // Show success toast
+    toast({
+      title: "チャット履歴をクリアしました",
+      description: "すべてのメッセージが削除されました。",
+    });
+
+    // Ensure UI refreshes and scrolls to empty state properly
+    setTimeout(() => {
+      if (messageEndRef.current) {
+        messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
+  },
+  onError: (error) => {
+    console.error("Error clearing chat history:", error);
+    toast({
+      title: "エラーが発生しました",
+      description: "チャット履歴のクリアに失敗しました。",
+      variant: "destructive"
+    });
+  }
+});
+
+// Handle clear chat button click
+const handleClearChat = () => {
+  setShowClearConfirm(true);
+};
+
+// Scroll to bottom when messages change
+useEffect(() => {
+  if (messageEndRef.current) {
+    messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
+  }
+}, [messages, messageEndRef]);
+
 
   // Send message mutation
   // Helper function to check if a message is goal-related
