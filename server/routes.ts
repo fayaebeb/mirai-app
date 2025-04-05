@@ -435,6 +435,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete all messages for a session
+  app.delete("/api/messages", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      // Use the full username as the session ID to ensure uniqueness across users
+      const persistentSessionId = `user_${req.user!.id}_${req.user!.username}`;
+
+      // Delete all messages for this session
+      const deleted = await storage.deleteMessagesBySessionId(req.user!.id, persistentSessionId);
+      
+      if (deleted) {
+        console.log(`Deleted all messages for user ${req.user!.id} with sessionId ${persistentSessionId}`);
+        res.json({ success: true, message: "All messages deleted successfully" });
+      } else {
+        console.log(`No messages found to delete for user ${req.user!.id} with sessionId ${persistentSessionId}`);
+        res.json({ success: true, message: "No messages to delete" });
+      }
+    } catch (error) {
+      console.error("Error deleting messages:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Error deleting messages", 
+        error: error instanceof Error ? error.message : "Unknown error" 
+      });
+    }
+  });
+
   // Add a GET route for /api/messages to fetch all messages
   app.get("/api/messages", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
