@@ -323,12 +323,12 @@ export function NotesList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold flex items-center gap-2">
-          <FileText className="h-5 w-5" />
-          ノート
-        </h2>
-        <div className="flex gap-2">
+  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+    <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+      <FileText className="h-5 w-5" />
+      ノート
+    </h2>
+    <div className="flex flex-wrap gap-2">
           <Button
             size="sm"
             variant="outline"
