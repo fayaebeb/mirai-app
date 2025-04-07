@@ -151,7 +151,11 @@ export function GoalChatInterface() {
             </div>
           ) : allMessages.length === 0 ? (
             <div className="flex flex-col h-full min-h-[300px] items-center justify-center text-center text-muted-foreground p-4">
-              <Bot className="h-12 w-12 mb-4 text-primary/30" />
+              <img
+                src="/images/mirai.png"
+                alt="Chat Icon"
+                className="h-14 w-14 mb-4 opacity-80"
+              />
               <h3 className="text-lg font-medium">目標アシスタントへようこそ</h3>
               <p className="max-w-sm">
                 目標の設定や進捗確認について質問してください。

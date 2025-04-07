@@ -21,6 +21,7 @@ import remarkGfm from "remark-gfm";
 import ChatMessage from "@/components/chat-message";
 import { ChatLoadingIndicator } from "@/components/chat-loading-indicator";
 import { useAuth } from "@/hooks/use-auth";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { v4 as uuidv4 } from 'uuid';
 
 export function NotesList() {
@@ -31,6 +32,7 @@ export function NotesList() {
   const [newNoteTitle, setNewNoteTitle] = useState("");
   const [newNoteContent, setNewNoteContent] = useState("");
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   // Note selection state for the chat
   const [selectedNotes, setSelectedNotes] = useState<Note[]>([]);
@@ -324,7 +326,7 @@ export function NotesList() {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold flex items-center gap-2">
           <FileText className="h-5 w-5" />
-          Notes
+          ノート
         </h2>
         <div className="flex gap-2">
           <Button
@@ -335,7 +337,7 @@ export function NotesList() {
             disabled={notes.length === 0}
           >
             <Brain className="h-4 w-4" />
-            <span>Chat with Notes</span>
+            <span>ノートとチャット</span>
             {selectedNotes.length > 0 && (
               <Badge variant="secondary" className="ml-1">
                 {selectedNotes.length}
@@ -346,7 +348,7 @@ export function NotesList() {
             <DialogTrigger asChild>
               <Button size="sm" className="flex items-center gap-1">
                 <Plus className="h-4 w-4" />
-                <span>Add Note</span>
+                <span>ノートを追加</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[550px]">
@@ -412,10 +414,10 @@ export function NotesList() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[300px]">Title</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Updated</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="w-[300px]">タイトル</TableHead>
+                <TableHead>作成日</TableHead>
+                <TableHead>更新日</TableHead>
+                <TableHead className="text-right">操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -627,7 +629,7 @@ export function NotesList() {
                     disabled={selectedNotes.length === 0}
                     className="text-xs"
                   >
-                    Clear Selection
+                    選択を解除
                   </Button>
                   {/* Default close button provided by the Dialog library */}
                   
@@ -636,7 +638,7 @@ export function NotesList() {
 
           
           <div className="flex flex-1 overflow-hidden">
-            {/* Notes selection sidebar */}
+            {/* Notes selection sidebar - Desktop */}
             <div className="w-[200px] border-r p-2 hidden sm:block">
               <h3 className="text-sm font-medium mb-2">ノートを選択</h3>
               <ScrollArea className="h-[calc(80vh-4rem)]">
@@ -663,6 +665,33 @@ export function NotesList() {
             
             {/* Chat area */}
             <div className="flex-1 flex flex-col overflow-hidden">
+              {/* Mobile notes selection */}
+              <div className="sm:hidden border-b mb-2">
+                <ScrollArea className="py-2">
+                  <div className="flex gap-2 px-2 overflow-x-auto pb-2">
+                    {notes.map((note) => (
+                      <div
+                        key={`mobile-select-${note.id}`}
+                        className={`flex-shrink-0 p-2 text-sm rounded cursor-pointer ${
+                          selectedNotes.some(n => n.id === note.id)
+                            ? 'bg-blue-900/30 border border-blue-400/30'
+                            : 'border border-muted hover:bg-muted'
+                        }`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          toggleNoteSelection(note, { stopPropagation: () => {} } as any);
+                        }}
+                      >
+                        <div className="flex-1 whitespace-nowrap">
+                          <div className="font-medium">{note.title}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+              
               <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
                 {isLoadingMessages ? (
                   <div className="flex h-full items-center justify-center">
@@ -670,14 +699,20 @@ export function NotesList() {
                   </div>
                 ) : allChatMessages.length === 0 ? (
                   <div className="flex flex-col h-full items-center justify-center text-center text-muted-foreground p-4">
-                    <Bot className="h-12 w-12 mb-4 text-primary/30" />
-                    <h3 className="text-lg font-medium">Chat with your notes</h3>
+                    <img
+                src="/images/mirai.png"
+                alt="Chat Icon"
+                className="h-14 w-14 mb-4 opacity-80"
+              />
+                    <h3 className="text-lg font-medium">自分のノートとチャットする</h3>
                     <p className="max-w-sm">
                       {notes.length > 0 ? (
                         selectedNotes.length > 0 ? (
                           "Ask questions about your selected notes."
                         ) : (
-                          "ノートを選択 from the sidebar or ask questions about all your notes."
+                          isMobile ? 
+                          "Select notes above or ask questions about all your notes." :
+                          "Select notes from the sidebar or ask questions about all your notes."
                         )
                       ) : (
                         "Create some notes first to chat with them."
@@ -705,7 +740,7 @@ export function NotesList() {
                     ref={inputRef}
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
-                    placeholder="Ask a question about your notes..."
+                    placeholder="ノートについて質問してください..."
                     className="flex-1"
                     disabled={sendNotesChatMessage.isPending}
                   />
