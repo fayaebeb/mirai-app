@@ -858,7 +858,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating note:", error);
       res.status(500).json({
-        message: "Failed to create note",
+        message: "Failed to ノートを作成",
         error: error instanceof Error ? error.message : "Unknown error",
       });
     }

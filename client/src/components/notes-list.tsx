@@ -56,7 +56,7 @@ export function NotesList() {
     staleTime: Infinity,
   });
 
-  // Create note mutation
+  // ノートを作成 mutation
   const createNoteMutation = useMutation({
     mutationFn: async (data: { title: string; content: string }) => {
       const response = await apiRequest('POST', '/api/notes', data);
@@ -355,14 +355,14 @@ export function NotesList() {
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <Plus className="h-5 w-5" />
-                  Create New Note
+                  新しいノートを作成
                 </DialogTitle>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
                   <Input
                     id="title"
-                    placeholder="Note Title"
+                    placeholder="ノートのタイトル"
                     value={newNoteTitle}
                     onChange={(e) => setNewNoteTitle(e.target.value)}
                     className="w-full"
@@ -371,7 +371,7 @@ export function NotesList() {
                 <div className="grid gap-2">
                   <Textarea
                     id="content"
-                    placeholder="Note Content"
+                    placeholder="ノートの内容"
                     value={newNoteContent}
                     onChange={(e) => setNewNoteContent(e.target.value)}
                     className="w-full min-h-[200px]"
@@ -383,13 +383,13 @@ export function NotesList() {
                   onClick={() => setIsAddNoteOpen(false)}
                   variant="outline"
                 >
-                  Cancel
+                  キャンセル
                 </Button>
                 <Button 
                   onClick={handleAddNote}
                   disabled={createNoteMutation.isPending}
                 >
-                  {createNoteMutation.isPending ? "Creating..." : "Create Note"}
+                  {createNoteMutation.isPending ? "Creating..." : "ノートを作成"}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -413,11 +413,11 @@ export function NotesList() {
         ) : (
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead className="w-[300px]">タイトル</TableHead>
-                <TableHead>作成日</TableHead>
-                <TableHead>更新日</TableHead>
-                <TableHead className="text-right">操作</TableHead>
+            <TableRow>
+                <TableHead className="min-w-[130px]">タイトル</TableHead>
+                <TableHead className="min-w-[120px]">作成日</TableHead>
+                <TableHead className="min-w-[120px]">更新日</TableHead>
+                <TableHead className="min-w-[100px] text-right">操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -501,7 +501,7 @@ export function NotesList() {
             <div className="grid gap-2">
               <Input
                 id="edit-title"
-                placeholder="Note Title"
+                placeholder="ノートのタイトル"
                 value={newNoteTitle}
                 onChange={(e) => setNewNoteTitle(e.target.value)}
                 className="w-full"
@@ -510,7 +510,7 @@ export function NotesList() {
             <div className="grid gap-2">
               <Textarea
                 id="edit-content"
-                placeholder="Note Content"
+                placeholder="ノートの内容"
                 value={newNoteContent}
                 onChange={(e) => setNewNoteContent(e.target.value)}
                 className="w-full min-h-[200px] font-mono text-sm"
@@ -525,7 +525,7 @@ export function NotesList() {
               onClick={() => setIsEditNoteOpen(false)}
               variant="outline"
             >
-              Cancel
+              キャンセル
             </Button>
             <Button 
               onClick={handleUpdateNote}

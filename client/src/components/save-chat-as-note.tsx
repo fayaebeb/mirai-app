@@ -19,7 +19,7 @@ export function SaveChatAsNote({ message }: SaveChatAsNoteProps) {
   const [content, setContent] = useState("");
   const { toast } = useToast();
 
-  // Create note mutation
+  // ノートを作成 mutation
   const createNoteMutation = useMutation({
     mutationFn: async (data: { title: string; content: string }) => {
       const response = await apiRequest('POST', '/api/notes', data);
@@ -90,7 +90,7 @@ export function SaveChatAsNote({ message }: SaveChatAsNoteProps) {
           <div className="grid gap-2">
             <Input
               id="title"
-              placeholder="Note Title"
+              placeholder="ノートのタイトル"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full"
@@ -99,7 +99,7 @@ export function SaveChatAsNote({ message }: SaveChatAsNoteProps) {
           <div className="grid gap-2">
             <Textarea
               id="content"
-              placeholder="Note Content"
+              placeholder="ノートの内容"
               value={content}
               onChange={(e) => setContent(e.target.value)}
               className="w-full min-h-[200px] font-mono text-sm"
@@ -114,7 +114,7 @@ export function SaveChatAsNote({ message }: SaveChatAsNoteProps) {
             onClick={() => setIsOpen(false)}
             variant="outline"
           >
-            Cancel
+            キャンセル
           </Button>
           <Button 
             onClick={handleSaveAsNote}
