@@ -8,10 +8,21 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/componen
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { Send, Bot, Target } from "lucide-react";
+import { Send, Bot, Target, Eraser, AlertTriangle } from "lucide-react";
 import ChatMessage from "@/components/chat-message";
 import { ChatLoadingIndicator } from "@/components/chat-loading-indicator";
 import { v4 as uuidv4 } from 'uuid';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 // Import the Message interface from chat-message.tsx which includes onRegenerateAnswer
 interface MessageWithRegenerate extends Message {
@@ -40,6 +51,36 @@ export function GoalChatInterface() {
   const { data: messages = [], isLoading: isLoadingMessages } = useQuery<Message[]>({
     queryKey: ['/api/goal-messages'],
     enabled: !!user,
+  });
+  
+  // Clear chat history mutation
+  const clearChatHistoryMutation = useMutation({
+    mutationFn: async () => {
+      // Make DELETE request to the API endpoint
+      await apiRequest('DELETE', '/api/goal-messages');
+    },
+    onSuccess: () => {
+      // Clear optimistic messages
+      setOptimisticMessages([]);
+      
+      // Clear the query cache
+      queryClient.setQueryData(['/api/goal-messages'], []);
+      
+      // Invalidate the messages query to ensure it's updated
+      queryClient.invalidateQueries({ queryKey: ['/api/goal-messages'] });
+      
+      toast({
+        title: "会話履歴をクリアしました",
+        description: "目標アシスタントのチャット履歴が削除されました。",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "履歴クリアエラー",
+        description: "チャット履歴を削除できませんでした。もう一度お試しください。",
+        variant: "destructive",
+      });
+    },
   });
 
   // Send a message mutation
@@ -137,9 +178,46 @@ export function GoalChatInterface() {
   return (
     <Card className="flex flex-col h-full w-full">
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2">
-          <Target className="h-5 w-5 text-blue-500" />
-          <span>目標アシスタント</span>
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Target className="h-5 w-5 text-blue-500" />
+            <span>目標アシスタント</span>
+          </div>
+          
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-xs flex items-center gap-1"
+                disabled={!allMessages.length}
+              >
+                <Eraser className="h-3.5 w-3.5" />
+                会話履歴をクリア
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-amber-500" />
+                  チャット履歴を削除しますか？
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  この操作は元に戻せません。すべての会話履歴がデータベースから完全に削除されます。
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={() => clearChatHistoryMutation.mutate()}
+                  className="bg-destructive hover:bg-destructive/90"
+                  disabled={clearChatHistoryMutation.isPending}
+                >
+                  {clearChatHistoryMutation.isPending ? "削除中..." : "削除する"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </CardTitle>
       </CardHeader>
       
@@ -154,7 +232,7 @@ export function GoalChatInterface() {
               <img
                 src="/images/mirai.png"
                 alt="Chat Icon"
-                className="h-14 w-14 mb-4 opacity-80"
+                className="h-20 w-20 mb-4 opacity-80"
               />
               <h3 className="text-lg font-medium">目標アシスタントへようこそ</h3>
               <p className="max-w-sm">

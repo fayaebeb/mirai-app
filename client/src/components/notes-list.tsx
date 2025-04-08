@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Pencil, Trash2, Plus, Download, Send, MessageSquare, Brain, Bot } from "lucide-react";
+import { FileText, Pencil, Trash2, Plus, Download, Send, MessageSquare, Brain, Bot, Eraser, AlertTriangle } from "lucide-react";
 import { exportChatToPDF } from "@/lib/pdf-utils";
 import { format } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -23,6 +23,17 @@ import { ChatLoadingIndicator } from "@/components/chat-loading-indicator";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { v4 as uuidv4 } from 'uuid';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export function NotesList() {
   const [isAddNoteOpen, setIsAddNoteOpen] = useState(false);
@@ -56,7 +67,7 @@ export function NotesList() {
     staleTime: Infinity,
   });
 
-  // ノートを作成 mutation
+  // Create note mutation
   const createNoteMutation = useMutation({
     mutationFn: async (data: { title: string; content: string }) => {
       const response = await apiRequest('POST', '/api/notes', data);
@@ -158,31 +169,61 @@ export function NotesList() {
     onSuccess: (data) => {
       // Get the bot message from the response
       const newBotMessage = data.botMessage;
-      
+
       // Remove the optimistic message with this ID
       const currentOptimisticMessages = optimisticMessages.filter(
         msg => msg.id !== data.userMessageId
       );
       setOptimisticMessages(currentOptimisticMessages);
-      
+
       // Add the bot response to the query cache
       queryClient.setQueryData<Message[]>(['/api/notes-chat-messages'], (oldMessages = []) => {
         if (!oldMessages) return [newBotMessage];
-        
+
         // Add the bot message to existing messages
         return [...oldMessages, newBotMessage];
       });
-      
+
       // Invalidate the messages query to ensure we have the actual server data
       queryClient.invalidateQueries({ queryKey: ['/api/notes-chat-messages'] });
     },
     onError: (error) => {
       // Clear optimistic messages on error
       setOptimisticMessages([]);
-      
+
       toast({
         title: "Error occurred",
         description: "Failed to send message. Please try again later.",
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // Clear chat history mutation
+  const clearChatHistoryMutation = useMutation({
+    mutationFn: async () => {
+      // Make DELETE request to the API endpoint
+      await apiRequest('DELETE', '/api/notes-chat-messages');
+    },
+    onSuccess: () => {
+      // Clear optimistic messages
+      setOptimisticMessages([]);
+      
+      // Clear the query cache
+      queryClient.setQueryData(['/api/notes-chat-messages'], []);
+      
+      // Invalidate the messages query to ensure it's updated
+      queryClient.invalidateQueries({ queryKey: ['/api/notes-chat-messages'] });
+      
+      toast({
+        title: "Chat history cleared",
+        description: "Your notes chat history has been deleted.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error clearing chat history",
+        description: "Failed to clear chat history. Please try again later.",
         variant: "destructive",
       });
     },
@@ -206,7 +247,7 @@ export function NotesList() {
 
   const handleUpdateNote = () => {
     if (!currentNote) return;
-    
+
     if (!newNoteTitle.trim()) {
       toast({
         title: "Title required",
@@ -293,10 +334,10 @@ export function NotesList() {
   const handleChatSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
-    
+
     sendNotesChatMessage.mutate(chatInput);
     setChatInput("");
-    
+
     // Focus back on the input field after sending
     setTimeout(() => inputRef.current?.focus(), 0);
   };
@@ -304,7 +345,7 @@ export function NotesList() {
   // Toggle note selection for chat
   const toggleNoteSelection = (note: Note, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent view note dialog from opening
-    
+
     if (selectedNotes.some(n => n.id === note.id)) {
       setSelectedNotes(selectedNotes.filter(n => n.id !== note.id));
     } else {
@@ -322,13 +363,13 @@ export function NotesList() {
   });
 
   return (
-    <div className="space-y-4">
-  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-    <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
-      <FileText className="h-5 w-5" />
-      ノート
-    </h2>
-    <div className="flex flex-wrap gap-2">
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+              <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                ノート
+              </h2>
+              <div className="flex flex-wrap gap-2">
           <Button
             size="sm"
             variant="outline"
@@ -413,7 +454,7 @@ export function NotesList() {
         ) : (
           <Table>
             <TableHeader>
-            <TableRow>
+              <TableRow>
                 <TableHead className="min-w-[130px]">タイトル</TableHead>
                 <TableHead className="min-w-[120px]">作成日</TableHead>
                 <TableHead className="min-w-[120px]">更新日</TableHead>
@@ -616,7 +657,7 @@ export function NotesList() {
                     <span>ノートアシスタント</span>
                     {selectedNotes.length > 0 && (
                       <Badge variant="outline" className="ml-1">
-                        {selectedNotes.length} notes selected
+                        {selectedNotes.length}件のノートを選択中
                       </Badge>
                     )}
                   </div>
@@ -631,12 +672,47 @@ export function NotesList() {
                   >
                     選択を解除
                   </Button>
-                  {/* Default close button provided by the Dialog library */}
                   
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-xs flex items-center gap-1"
+                        disabled={!notesChatMessages.length && !optimisticMessages.length}
+                      >
+                        <Eraser className="h-3.5 w-3.5" />
+                        会話履歴をクリア
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2">
+                          <AlertTriangle className="h-5 w-5 text-amber-500" />
+                          チャット履歴を削除しますか？
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          この操作は元に戻せません。すべての会話履歴がデータベースから完全に削除されます。
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={() => clearChatHistoryMutation.mutate()}
+                          className="bg-destructive hover:bg-destructive/90"
+                          disabled={clearChatHistoryMutation.isPending}
+                        >
+                          {clearChatHistoryMutation.isPending ? "削除中..." : "削除する"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                  
+                  {/* Default close button provided by the Dialog library */}
                 </div>
               </DialogHeader>
 
-          
+
           <div className="flex flex-1 overflow-hidden">
             {/* Notes selection sidebar - Desktop */}
             <div className="w-[200px] border-r p-2 hidden sm:block">
@@ -662,7 +738,7 @@ export function NotesList() {
                 </div>
               </ScrollArea>
             </div>
-            
+
             {/* Chat area */}
             <div className="flex-1 flex flex-col overflow-hidden">
               {/* Mobile notes selection */}
@@ -691,7 +767,7 @@ export function NotesList() {
                   </div>
                 </ScrollArea>
               </div>
-              
+
               <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
                 {isLoadingMessages ? (
                   <div className="flex h-full items-center justify-center">
@@ -702,20 +778,20 @@ export function NotesList() {
                     <img
                 src="/images/mirai.png"
                 alt="Chat Icon"
-                className="h-14 w-14 mb-4 opacity-80"
+                className="h-20 w-20 mb-4 opacity-80"
               />
                     <h3 className="text-lg font-medium">自分のノートとチャットする</h3>
                     <p className="max-w-sm">
                       {notes.length > 0 ? (
                         selectedNotes.length > 0 ? (
-                          "Ask questions about your selected notes."
+                          "選択したノートについて質問してください。"
                         ) : (
                           isMobile ? 
-                          "Select notes above or ask questions about all your notes." :
-                          "Select notes from the sidebar or ask questions about all your notes."
+                          "上でノートを選択するか、すべてのノートについて質問してください。" :
+                          "サイドバーからノートを選択するか、すべてのノートについて質問してください。"
                         )
                       ) : (
-                        "Create some notes first to chat with them."
+                        "チャットするには、まずノートを作成してください。"
                       )}
                     </p>
                   </div>
@@ -733,7 +809,7 @@ export function NotesList() {
                   </div>
                 )}
               </ScrollArea>
-              
+
               <div className="p-4 border-t">
                 <form onSubmit={handleChatSubmit} className="flex gap-2">
                   <Input

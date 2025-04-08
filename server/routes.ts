@@ -517,6 +517,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+  
+  // Add DELETE endpoint to clear goal chat history
+  app.delete("/api/goal-messages", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      // Use the same session ID pattern as other goal chat endpoints
+      const goalSessionId = `goal_${req.user!.id}_${req.user!.username}`;
+      
+      // Delete all messages with this session ID
+      const result = await storage.deleteMessagesBySessionId(req.user!.id, goalSessionId);
+      
+      console.log(`Deleted goal chat messages for user ${req.user!.id} with sessionId ${goalSessionId}, success: ${result}`);
+      
+      res.json({ success: result });
+    } catch (error) {
+      console.error("Error deleting goal chat messages:", error);
+      res.status(500).json({
+        message: "Failed to delete goal chat messages",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  });
 
   app.post("/api/chat", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
@@ -711,6 +734,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error retrieving notes chat messages:", error);
       res.status(500).json({
         message: "Failed to retrieve notes chat messages",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  });
+  
+  // Add endpoint to clear notes chat history
+  app.delete("/api/notes-chat-messages", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      // Use the same session ID pattern as other notes chat endpoints
+      const notesSessionId = `notes_${req.user!.id}_${req.user!.username}`;
+      
+      // Delete all messages with this session ID
+      const result = await storage.deleteMessagesBySessionId(req.user!.id, notesSessionId);
+      
+      console.log(`Deleted notes chat messages for user ${req.user!.id} with sessionId ${notesSessionId}, success: ${result}`);
+      
+      res.json({ success: result });
+    } catch (error) {
+      console.error("Error deleting notes chat messages:", error);
+      res.status(500).json({
+        message: "Failed to delete notes chat messages",
         error: error instanceof Error ? error.message : "Unknown error",
       });
     }
