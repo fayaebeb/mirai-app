@@ -76,7 +76,7 @@ export function SaveChatAsNote({ message }: SaveChatAsNoteProps) {
         >
           <Book className="h-3 w-3" />
           <span className="hidden sm:inline">ノートに保存</span>
-          <span className="sm:hidden">Save</span>
+          <span className="sm:hidden">保存</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[550px]">
