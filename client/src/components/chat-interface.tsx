@@ -503,7 +503,7 @@ export const ChatInterface = () => {
   };
 
   return (
-    <Card className="w-full h-[calc(100vh-14rem)] sm:h-[calc(100vh-12rem)] md:max-w-[90%] mx-auto flex flex-col overflow-hidden relative border-muted-foreground/20">
+    <Card className="w-full h-[calc(100vh-8rem)] sm:h-[calc(100vh-8rem)] md:max-w-[90%] mx-auto flex flex-col overflow-hidden relative border-muted-foreground/20">
       {showTutorial && <Tutorial onClose={() => setShowTutorial(false)} />}
 
       {/* Confirmation Dialog for clearing chat history */}
