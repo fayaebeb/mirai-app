@@ -120,7 +120,7 @@ export default function HomePage() {
     if (activeTab === "chat") {
       return (
         <motion.div 
-          className="bg-slate-900/90 backdrop-blur-md rounded-xl shadow-xl p-4 max-w-3xl mx-auto border border-blue-500/20 overflow-hidden relative"
+          className="bg-slate-900/90 backdrop-blur-md rounded-xl shadow-xl p-4 max-w-3xl md:max-w-4xl lg:max-w-5xl mx-auto border border-blue-500/20 overflow-hidden relative"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
@@ -164,7 +164,7 @@ export default function HomePage() {
     } else if (activeTab === "notes") {
       return (
         <motion.div 
-          className="bg-slate-900/90 backdrop-blur-md rounded-xl shadow-xl p-4 max-w-3xl mx-auto border border-blue-500/20 overflow-hidden relative"
+          className="bg-slate-900/90 backdrop-blur-md rounded-xl shadow-xl p-4 max-w-3xl md:max-w-4xl lg:max-w-5xl mx-auto border border-blue-500/20 overflow-hidden relative"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
@@ -203,7 +203,7 @@ export default function HomePage() {
         <div className="flex flex-col gap-6">
           {/* Goal tracker */}
           <motion.div 
-            className="bg-slate-900/90 backdrop-blur-md rounded-xl shadow-xl p-4 max-w-3xl mx-auto border border-blue-500/20 overflow-hidden relative"
+            className="bg-slate-900/90 backdrop-blur-md rounded-xl shadow-xl p-4 max-w-3xl md:max-w-4xl lg:max-w-5xl mx-auto border border-blue-500/20 overflow-hidden relative"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
@@ -239,7 +239,7 @@ export default function HomePage() {
 
           {/* Goal chat interface */}
           <motion.div 
-            className="bg-slate-900/90 backdrop-blur-md rounded-xl shadow-xl p-4 max-w-3xl mx-auto border border-blue-500/20 overflow-hidden relative"
+            className="bg-slate-900/90 backdrop-blur-md rounded-xl shadow-xl p-4 max-w-3xl md:max-w-4xl lg:max-w-5xl mx-auto border border-blue-500/20 overflow-hidden relative"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.5 }}
