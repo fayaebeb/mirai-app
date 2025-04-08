@@ -209,7 +209,7 @@ export function NotesList() {
   const [showEmotions, setShowEmotions] = useState(false);
   const { user } = useAuth();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Fetch notes
   const { data: notes = [], isLoading, isError } = useQuery<Note[]>({
@@ -507,6 +507,10 @@ export function NotesList() {
     setTimeout(() => {
       textarea.focus();
       textarea.selectionStart = textarea.selectionEnd = start + text.length;
+      
+      // Automatically adjust the textarea height
+      textarea.style.height = "auto";
+      textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`;
     }, 0);
   };
 
@@ -1002,13 +1006,24 @@ export function NotesList() {
                   </AnimatePresence>
 
                   <div className="relative w-full">
-                    <Input
+                    <Textarea
                       ref={inputRef}
                       value={chatInput}
-                      onChange={(e) => setChatInput(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setChatInput(e.target.value)}
                       placeholder="ノートについて質問してください..."
-                      className="w-full pr-8"
+                      className="w-full pr-8 min-h-[40px] max-h-[200px] resize-none"
+                      rows={1}
                       disabled={sendNotesChatMessage.isPending}
+                      onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+                        if (e.key === "Enter" && !e.shiftKey && !isMobile) {
+                          e.preventDefault();
+                          handleChatSubmit(e);
+                        }
+                        // Automatically adjust the textarea height
+                        const target = e.target as HTMLTextAreaElement;
+                        target.style.height = "auto";
+                        target.style.height = `${Math.min(target.scrollHeight, 200)}px`;
+                      }}
                     />
                     <TooltipProvider key="prompt-tooltip">
                       <Tooltip>

@@ -229,7 +229,7 @@ export function SakuraPetalLoading() {
           animate={{ opacity: [0.7, 1, 0.7] }}
           transition={{ duration: 1.5, repeat: Infinity }}
         >
-          Loading...
+          読み込み中...
         </motion.span>
       </div>
     </div>

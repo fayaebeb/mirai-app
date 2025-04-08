@@ -68,22 +68,22 @@ const MessageSection = ({
     <Collapsible 
       open={isOpen} 
       onOpenChange={setIsOpen}
-      className="mt-3 rounded-lg border border-blue-400/30 overflow-hidden transition-all duration-200"
+      className="mt-2 rounded-md border border-blue-400/20 overflow-hidden transition-all duration-200"
     >
       <CollapsibleTrigger asChild>
         <Button
           variant="ghost"
-          className="w-full flex items-center justify-between p-2 hover:bg-slate-800/50 transition-colors"
+          className="w-full flex items-center justify-between py-1 px-1.5 hover:bg-slate-800/50 transition-colors"
         >
           <div className="flex items-center gap-2">
-            <Icon className="h-4 w-4 text-blue-400" />
-            <span className="text-sm font-mono text-blue-300">{title}</span>
+            <Icon className="h-3 w-3 text-blue-400" />
+            <span className="text-xs font-mono text-blue-300">{title}</span>
           </div>
           <motion.div
             animate={{ rotate: isOpen ? 180 : 0 }}
             transition={{ duration: 0.2 }}
           >
-            <ChevronDown className="h-4 w-4 text-blue-400" />
+            <ChevronDown className="h-3 w-3 text-blue-400" />
           </motion.div>
         </Button>
       </CollapsibleTrigger>
@@ -92,9 +92,9 @@ const MessageSection = ({
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
-          className="p-3 bg-slate-900/50 backdrop-blur-sm"
+          className="p-2 bg-slate-900/50 backdrop-blur-sm"
         >
-          <div className="prose prose-sm prose-invert max-w-none">
+          <div className="prose prose-xs prose-invert max-w-none text-[10px] sm:text-xs">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {content}
             </ReactMarkdown>
@@ -132,7 +132,7 @@ export default function ChatMessage({ message }: { message: Message }) {
 
   return (
     <div
-      className={cn("flex w-full my-4 relative", {
+      className={cn("flex w-full my-2.5 relative", {
         "justify-end": !message.isBot,
         "justify-start": message.isBot
       })}
@@ -178,7 +178,7 @@ export default function ChatMessage({ message }: { message: Message }) {
       )}
 
       {message.isBot && (
-        <Avatar className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 border border-blue-500/50 shadow-lg bg-slate-900">
+        <Avatar className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 border border-blue-500/50 shadow-lg bg-slate-900">
           <motion.div
             whileHover={{ scale: 1.1, rotate: [0, -5, 5, 0] }}
             transition={{ rotate: { duration: 0.5 } }}
@@ -201,14 +201,14 @@ export default function ChatMessage({ message }: { message: Message }) {
         transition={{ duration: 0.3 }}
         whileHover={message.isBot ? { scale: 1.02 } : { scale: 1 }}
         onHoverStart={handleBotMessageHover}
-        className={cn("max-w-[85%] sm:max-w-[75%] rounded-xl", {
-          "ml-auto self-end": !message.isBot,
-          "mr-auto self-start ml-2 sm:ml-3": message.isBot,
+        className={cn("w-full rounded-xl", {
+          "justify-end flex": !message.isBot,
+          "justify-start flex ml-2 sm:ml-3": message.isBot,
         })}
       >
         <Card
           className={cn(
-            "px-2 py-1.5 sm:px-4 sm:py-3 text-sm sm:text-base",
+            "px-2 py-1 sm:px-2.5 sm:py-1.5 text-[10px] sm:text-xs",
             {
               "bg-blue-600 text-white border border-blue-500/50 shadow-lg": !message.isBot,
               "bg-slate-900/90 backdrop-blur-md text-white border border-blue-400/30 shadow-lg": message.isBot,
@@ -231,7 +231,7 @@ export default function ChatMessage({ message }: { message: Message }) {
             </div>
           )}
 
-          <div className={cn("prose prose-xs sm:prose-sm break-words font-medium w-full", {
+          <div className={cn("prose prose-xs sm:prose-xs break-words font-normal w-full text-[11px] sm:text-xs", {
             "prose-invert": true
           })}>
             {message.isBot && sections ? (
@@ -241,7 +241,7 @@ export default function ChatMessage({ message }: { message: Message }) {
                   components={{
                     table: ({ node, ...props }) => (
                       <div className="overflow-x-auto w-full">
-                        <table className="text-[11px] sm:text-sm border-collapse w-full min-w-[400px]" {...props} />
+                        <table className="text-[10px] sm:text-[11px] border-collapse w-full min-w-[300px]" {...props} />
                       </div>
                     ),
                     td: ({ node, ...props }) => (
@@ -280,7 +280,7 @@ export default function ChatMessage({ message }: { message: Message }) {
                 components={{
                   table: ({ node, ...props }) => (
                     <div className="overflow-x-auto w-full">
-                      <table className="text-[11px] sm:text-sm border-collapse w-full min-w-[400px]" {...props} />
+                      <table className="text-[10px] sm:text-[11px] border-collapse w-full min-w-[300px]" {...props} />
                     </div>
                   ),
                   td: ({ node, ...props }) => (
@@ -322,7 +322,7 @@ export default function ChatMessage({ message }: { message: Message }) {
                     </svg>
                     再生成
                   </button>
-                  
+
                   <SaveChatAsNote message={message} />
                 </>
               )}

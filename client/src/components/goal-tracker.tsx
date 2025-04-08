@@ -22,6 +22,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { ja } from "date-fns/locale";
+
 
 export function GoalTracker() {
   const [newGoalDescription, setNewGoalDescription] = useState("");
@@ -195,7 +197,7 @@ export function GoalTracker() {
                             {goal.dueDate && (
                               <span className="text-xs text-muted-foreground mt-1 flex items-center">
                                 <Calendar className="h-3 w-3 inline mr-1" />
-                                {format(new Date(goal.dueDate), "yyyy年MM月dd日")}
+                                {format(new Date(goal.dueDate), "yyyy年MM月dd日", { locale: ja })}
                               </span>
                             )}
                           </div>
@@ -309,6 +311,7 @@ export function GoalTracker() {
                         selected={dueDate}
                         onSelect={setDueDate}
                         initialFocus
+                        locale={ja}
                       />
                     </PopoverContent>
                   </Popover>

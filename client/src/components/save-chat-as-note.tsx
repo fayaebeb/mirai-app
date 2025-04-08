@@ -75,7 +75,7 @@ export function SaveChatAsNote({ message }: SaveChatAsNoteProps) {
           className="text-[9px] sm:text-[10px] flex items-center gap-1 opacity-60 hover:opacity-100 transition-opacity h-5 px-1.5 py-0"
         >
           <Book className="h-3 w-3" />
-          <span className="hidden sm:inline">Save as Note</span>
+          <span className="hidden sm:inline">ノートに保存</span>
           <span className="sm:hidden">Save</span>
         </Button>
       </DialogTrigger>
@@ -83,7 +83,7 @@ export function SaveChatAsNote({ message }: SaveChatAsNoteProps) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Save className="h-5 w-5" />
-            Save as Note
+            ノートに保存
           </DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">

@@ -358,16 +358,16 @@ export const ChatInterface = () => {
     onSuccess: () => {
       // Clear the messages in the query cache
       queryClient.setQueryData<Message[]>(['/api/messages'], []);
-      
+
       // Close the confirmation dialog
       setShowClearConfirm(false);
-      
+
       // Show success toast
       toast({
         title: "チャット履歴をクリアしました",
         description: "すべてのメッセージが削除されました。",
       });
-      
+
       // Ensure UI refreshes and scrolls to empty state properly
       setTimeout(() => {
         if (messageEndRef.current) {
@@ -503,7 +503,7 @@ export const ChatInterface = () => {
   };
 
   return (
-    <Card className="w-full h-[calc(100vh-14rem)] sm:h-[calc(100vh-12rem)] flex flex-col overflow-hidden relative border-muted-foreground/20">
+    <Card className="w-full h-[calc(100vh-9rem)] sm:h-[calc(100vh-9rem)] md:max-w-[90%] mx-auto flex flex-col overflow-hidden relative border-muted-foreground/20">
       {showTutorial && <Tutorial onClose={() => setShowTutorial(false)} />}
 
       {/* Confirmation Dialog for clearing chat history */}
@@ -531,7 +531,7 @@ export const ChatInterface = () => {
       <div className="flex-shrink-0 border-b p-2 flex justify-between items-center bg-muted/30 sticky top-0 left-0 right-0 z-20">
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-blue-400" />
-          <h2 className="text-sm font-medium">AI チャット会話</h2>
+
         </div>
         <div className="flex items-center gap-2">
           {messages.length > 0 && (
@@ -560,7 +560,7 @@ export const ChatInterface = () => {
       {/* Scrollable Chat Area */}
       <div className="flex-1 overflow-hidden">
         <ScrollArea className="h-full px-1 sm:px-4 py-3 w-full" ref={scrollAreaRef}>
-          <div className="space-y-4 w-full max-w-full">
+          <div className="space-y-2 w-full max-w-full">
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-60 text-center">
                 <motion.div
@@ -633,8 +633,8 @@ export const ChatInterface = () => {
                 e.target.style.height = "auto";
                 e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
               }}
-              placeholder="メッセージを入力してください..."
-              className="pr-10 focus:ring-2 focus:ring-pink-100 text-sm sm:text-base min-h-[38px] max-h-[200px] resize-none py-2"
+              placeholder="ミライに何かお手伝いできますか？..."
+              className="pr-10 focus:ring-2 focus:ring-pink-100 text-xs sm:text-sm min-h-[36px] max-h-[180px] resize-none py-1.5"
               rows={1}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey && !isMobile) {
@@ -666,7 +666,7 @@ export const ChatInterface = () => {
           <motion.button
             type="submit"
             disabled={sendMessage.isPending}
-            className="px-3 sm:px-4 py-2 h-[40px] rounded-full bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 text-white shadow-[0_0_10px_rgba(255,255,255,0.3)] flex items-center gap-1 disabled:opacity-70 flex-shrink-0 hover:shadow-[0_0_20px_rgba(255,255,255,0.6)] transition-shadow"
+            className="px-2.5 sm:px-3.5 py-1.5 h-[36px] rounded-full bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 text-white shadow-[0_0_10px_rgba(255,255,255,0.3)] flex items-center gap-1 disabled:opacity-70 flex-shrink-0 hover:shadow-[0_0_20px_rgba(255,255,255,0.6)] transition-shadow"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >

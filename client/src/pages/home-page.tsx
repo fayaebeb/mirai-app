@@ -17,7 +17,7 @@ export default function HomePage() {
   const [showParticles, setShowParticles] = useState(false);
   const [currentGreeting, setCurrentGreeting] = useState("");
   const [activeTab, setActiveTab] = useState<string>("chat");
-  
+
   // Get messages for PDF export
   const { data: messages = [] } = useQuery<Message[]>({
     queryKey: ['/api/messages'],
@@ -41,7 +41,7 @@ export default function HomePage() {
   useEffect(() => {
     const hour = new Date().getHours();
     let greeting = "";
-    
+
     if (hour >= 5 && hour < 12) {
       greeting = greetings[0]; // Morning protocol
     } else if (hour >= 12 && hour < 17) {
@@ -49,13 +49,13 @@ export default function HomePage() {
     } else {
       greeting = greetings[2]; // Evening session
     }
-    
+
     // Add a random additional greeting sometimes
     if (Math.random() > 0.7) {
       const randomIndex = Math.floor(Math.random() * (greetings.length - 3)) + 3;
       greeting += " // " + greetings[randomIndex];
     }
-    
+
     setCurrentGreeting(greeting);
   }, []);
 
@@ -64,13 +64,13 @@ export default function HomePage() {
     // Show particle animation on initial load
     setShowParticles(true);
     const timer = setTimeout(() => setShowParticles(false), 5000);
-    
+
     // Show particles again every so often
     const interval = setInterval(() => {
       setShowParticles(true);
       setTimeout(() => setShowParticles(false), 5000);
     }, 25000);
-    
+
     return () => {
       clearTimeout(timer);
       clearInterval(interval);
@@ -133,7 +133,7 @@ export default function HomePage() {
             <div className="absolute top-1/6 left-1/2 w-px h-2/3 bg-blue-400" />
             <div className="absolute top-1/4 left-2/3 w-px h-1/2 bg-blue-400" />
             <div className="absolute top-1/3 left-1/3 w-px h-1/3 bg-blue-400" />
-            
+
             <div className="absolute top-1/4 left-1/4 w-2 h-2 rounded-full bg-blue-400" />
             <div className="absolute top-1/2 left-1/6 w-2 h-2 rounded-full bg-blue-400" />
             <div className="absolute top-3/4 left-1/3 w-2 h-2 rounded-full bg-blue-400" />
@@ -141,7 +141,7 @@ export default function HomePage() {
             <div className="absolute top-1/4 left-2/3 w-2 h-2 rounded-full bg-blue-400" />
             <div className="absolute top-1/3 left-1/3 w-2 h-2 rounded-full bg-blue-400" />
           </div>
-          
+
           {/* Tech corner elements */}
           <div className="absolute top-2 left-2 text-blue-400 opacity-30">
             <Network size={14} />
@@ -155,7 +155,7 @@ export default function HomePage() {
           <div className="absolute bottom-2 right-2 text-blue-500 opacity-30">
             <Database size={14} />
           </div>
-          
+
           <div className="relative z-10">
             <ChatInterface />
           </div>
@@ -178,7 +178,7 @@ export default function HomePage() {
             <div className="absolute top-1/4 left-2/3 w-px h-1/2 bg-blue-400" />
             <div className="absolute top-1/3 left-1/3 w-px h-1/3 bg-blue-400" />
           </div>
-          
+
           {/* Tech corner elements */}
           <div className="absolute top-2 left-2 text-blue-400 opacity-30">
             <Book size={14} />
@@ -192,7 +192,7 @@ export default function HomePage() {
           <div className="absolute bottom-2 right-2 text-blue-500 opacity-30">
             <Cpu size={14} />
           </div>
-          
+
           <div className="relative z-10">
             <NotesList />
           </div>
@@ -217,7 +217,7 @@ export default function HomePage() {
               <div className="absolute top-1/4 left-2/3 w-px h-1/2 bg-blue-400" />
               <div className="absolute top-1/3 left-1/3 w-px h-1/3 bg-blue-400" />
             </div>
-            
+
             {/* Tech corner elements */}
             <div className="absolute top-2 left-2 text-blue-400 opacity-30">
               <Target size={14} />
@@ -231,12 +231,12 @@ export default function HomePage() {
             <div className="absolute bottom-2 right-2 text-blue-500 opacity-30">
               <Network size={14} />
             </div>
-            
+
             <div className="relative z-10">
               <GoalTracker />
             </div>
           </motion.div>
-          
+
           {/* Goal chat interface */}
           <motion.div 
             className="bg-slate-900/90 backdrop-blur-md rounded-xl shadow-xl p-4 max-w-3xl mx-auto border border-blue-500/20 overflow-hidden relative"
@@ -253,7 +253,7 @@ export default function HomePage() {
               <div className="absolute top-1/4 left-2/3 w-px h-1/2 bg-blue-400" />
               <div className="absolute top-1/3 left-1/3 w-px h-1/3 bg-blue-400" />
             </div>
-            
+
             {/* Tech corner elements */}
             <div className="absolute top-2 left-2 text-blue-400 opacity-30">
               <Target size={14} />
@@ -267,7 +267,7 @@ export default function HomePage() {
             <div className="absolute bottom-2 right-2 text-blue-500 opacity-30">
               <Network size={14} />
             </div>
-            
+
             <div className="relative z-10">
               <GoalChatInterface />
             </div>
@@ -295,7 +295,7 @@ export default function HomePage() {
           <Database className="h-16 w-16 text-blue-300" />
         </motion.div>
       </div>
-      
+
       <div className="absolute bottom-20 left-10 opacity-10 hidden md:block">
         <motion.div
           animate={{ 
@@ -310,7 +310,7 @@ export default function HomePage() {
           <Globe className="h-20 w-20 text-blue-400" />
         </motion.div>
       </div>
-      
+
       {/* Tech particles animation */}
       <TechParticlesAnimation />
 
@@ -335,7 +335,7 @@ export default function HomePage() {
                   className="h-full w-full object-contain"
                 />
               </motion.div>
-              
+
               {/* AI Brand Logo integrated */}
               <motion.div
                 className="relative flex items-center"
@@ -354,10 +354,10 @@ export default function HomePage() {
                   }}
                   transition={{ duration: 3, repeat: Infinity }}
                 >
-                  
+
                   <span>ミライ</span>
                 </motion.div>
-                
+
                 {/* Decorative rotating rings */}
                 <motion.div
                   className="absolute inset-0 -z-10 rounded-full border border-blue-500/30 border-t-blue-500/80"
@@ -366,7 +366,7 @@ export default function HomePage() {
                 />
               </motion.div>
             </div>
-            
+
             {/* Center: View Tabs */}
             <div className="hidden md:flex justify-center items-center">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -395,7 +395,7 @@ export default function HomePage() {
                 </TabsList>
               </Tabs>
             </div>
-            
+
             {/* Right: User Info & Actions */}
             <div className="flex items-center gap-2">
               {/* Mobile Tabs */}
@@ -429,9 +429,9 @@ export default function HomePage() {
                   )}
                 </Button>
               </div>
-              
-              
-              
+
+
+
               {/* Username badge - consistent on all devices */}
               <AnimatePresence>
                 {displayName && (
@@ -455,7 +455,7 @@ export default function HomePage() {
                   </motion.div>
                 )}
               </AnimatePresence>
-              
+
               {/* Logout button */}
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button
@@ -474,30 +474,33 @@ export default function HomePage() {
       </header>
 
       {/* Greeting message */}
-      <motion.div 
-        className="container mx-auto px-4 py-2 text-center"
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
-      >
-        <motion.h2 
-          className="text-lg text-blue-400 font-mono tracking-wider"
-          animate={{ y: [0, -2, 0] }}
-          transition={{ duration: 3, repeat: Infinity, repeatType: "reverse" }}
+      {activeTab !== "chat" && (
+        <motion.div 
+          className="container mx-auto px-4 py-2 text-center"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
         >
-          <span className="text-blue-300">[</span>
-          {displayName && `${displayName}`}
-          <span className="text-blue-300">]</span>
-          <span className="mx-2 animate-pulse">»</span>
-          {currentGreeting}
-        </motion.h2>
-      </motion.div>
+          <motion.h2 
+            className="text-lg text-blue-400 font-mono tracking-wider"
+            animate={{ y: [0, -2, 0] }}
+            transition={{ duration: 3, repeat: Infinity, repeatType: "reverse" }}
+          >
+            <span className="text-blue-300">[</span>
+            {displayName && `${displayName}`}
+            <span className="text-blue-300">]</span>
+            <span className="mx-2 animate-pulse">»</span>
+            {currentGreeting}
+          </motion.h2>
+        </motion.div>
+      )}
+
 
       {/* Main content section */}
       <main className="flex-1 container mx-auto px-4 py-6">
         {renderMainContent()}
       </main>
-      
+
       {/* Footer with branding */}
       <footer className="border-t border-blue-900/30 py-2 bg-slate-950/60 backdrop-blur-md">
         <div className="container mx-auto px-4 text-center">

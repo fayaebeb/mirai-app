@@ -3,7 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Message } from "@shared/schema";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/use-auth";
@@ -201,7 +201,7 @@ export function GoalChatInterface() {
   const { user } = useAuth();
   const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const [optimisticMessages, setOptimisticMessages] = useState<OptimisticMessage[]>([]);
   const [showEmotions, setShowEmotions] = useState(false);
   const isMobile = window.innerWidth < 640;
@@ -333,6 +333,10 @@ export function GoalChatInterface() {
     setTimeout(() => {
       textarea.focus();
       textarea.selectionStart = textarea.selectionEnd = start + text.length;
+      
+      // Automatically adjust the textarea height
+      textarea.style.height = "auto";
+      textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`;
     }, 0);
   };
 
@@ -465,14 +469,24 @@ export function GoalChatInterface() {
           </AnimatePresence>
           
           <div className="relative w-full">
-            <Input
+            <Textarea
               ref={inputRef}
-              placeholder="目標についてミライちゃんに質問する..."
+              placeholder="目標についてミライに質問する..."
               value={messageText}
-              onChange={(e) => setMessageText(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setMessageText(e.target.value)}
               disabled={sendMessage.isPending}
-              className="w-full pr-8"
-              autoComplete="off"
+              className="w-full pr-8 min-h-[40px] max-h-[200px] resize-none"
+              rows={1}
+              onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+                if (e.key === "Enter" && !e.shiftKey && !isMobile) {
+                  e.preventDefault();
+                  handleSubmit(e);
+                }
+                // Automatically adjust the textarea height
+                const target = e.target as HTMLTextAreaElement;
+                target.style.height = "auto";
+                target.style.height = `${Math.min(target.scrollHeight, 200)}px`;
+              }}
             />
             <TooltipProvider key="prompt-tooltip">
               <Tooltip>
