@@ -8,10 +8,17 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/componen
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { Send, Bot, Target, Eraser, AlertTriangle } from "lucide-react";
+import { Send, Bot, Target, Eraser, AlertTriangle, Lightbulb, MessageSquare, Wand2 } from "lucide-react";
 import ChatMessage from "@/components/chat-message";
 import { ChatLoadingIndicator } from "@/components/chat-loading-indicator";
 import { v4 as uuidv4 } from 'uuid';
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -39,6 +46,156 @@ type OptimisticMessage = {
   sessionId: string;
 }
 
+// Array of prompts that users can quickly select
+interface Prompt {
+  text: string;
+  message?: string;
+  description: string;
+}
+
+// Prompt categories to organize the prompts
+interface PromptCategory {
+  name: string;
+  icon: JSX.Element;
+  prompts: Prompt[];
+}
+
+const promptCategories: PromptCategory[] = [
+  {
+    name: "出力形式 📄",
+    icon: <MessageSquare className="h-4 w-4" />,
+    prompts: [
+      {
+        text: "会話形式で💬",
+        message: "AさんとBさんの会話形式で出力して",
+        description: "フレンドリーな会話形式で回答します",
+      },
+      {
+        text: "箇条書き形式で📝",
+        message: "箇条書き形式で出力して",
+        description: "箇条書き形式で出力します",
+      },
+      {
+        text: "表形式で📊",
+        message: "表形式で出力して",
+        description: "表形式で出力します",
+      },
+      {
+        text: "FAQ形式で❓",
+        message: "FAQ形式で出力して",
+        description: "FAQ形式で出力します",
+      },
+      {
+        text: "比喩・たとえ話形式🎭",
+        message: "比喩・たとえ話形式で出力して",
+        description: "比喩・たとえ話形式で出力します",
+      },
+      {
+        text: "簡潔に要約✨",
+        message: "簡潔に要約で出力して",
+        description: "簡潔に要約で出力します",
+      },
+    ]
+  },
+  {
+    name: "アシスタント 🤖",
+    icon: <Wand2 className="h-4 w-4" />,
+    prompts: [
+      {
+        text: "＋指示のコツ🎯",
+        message: "質問に対してさらに理解を深めるために、どのような指示をすればよいか提案して",
+        description: "より良い指示の出し方をアドバイスします",
+      },
+      {
+        text: "「外部情報なし」🚫",
+        message: "インターネットからの情報を利用しないで",
+        description: "外部情報を使わずに回答します",
+      },
+      {
+        text: "初心者向け📘",
+        message: "説明に出てくる専門用語には、それぞれ説明を加え、初心者でも理解しやすいように。具体的な例を挙げながら丁寧に解説して",
+        description: "具体的な例を挙げながら丁寧に解説します",
+      },
+    ]
+  },
+];
+
+// Component for selecting emotion/prompt buttons
+interface EmotionButtonsProps {
+  onSelect: (message: string) => void;
+  onClose: () => void;
+}
+
+const EmotionButtons = ({ onSelect, onClose }: EmotionButtonsProps) => {
+  const [selectedCategory, setSelectedCategory] = useState<string>(promptCategories[0].name);
+
+  // Handle clicks outside the emotion buttons to close it
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleClickOutside = (event: MouseEvent) => {
+    if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      onClose();
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const selectedCategoryData = promptCategories.find(cat => cat.name === selectedCategory) || promptCategories[0];
+
+  return (
+    <motion.div
+      ref={containerRef}
+      className="bg-card shadow-lg rounded-xl border overflow-hidden w-full max-w-md"
+      initial={{ y: 20, opacity: 0, scale: 0.95 }}
+      animate={{ y: 0, opacity: 1, scale: 1 }}
+      exit={{ y: 20, opacity: 0, scale: 0.9 }}
+      transition={{ duration: 0.2 }}
+    >
+      {/* Category selector */}
+      <div className="flex gap-1 p-2 bg-muted/40 overflow-x-auto scrollbar-hide">
+        {promptCategories.map((category) => (
+          <Button
+            key={category.name}
+            type="button"
+            variant={selectedCategory === category.name ? "default" : "ghost"}
+            size="sm"
+            className="whitespace-nowrap text-xs flex items-center gap-1.5"
+            onClick={() => setSelectedCategory(category.name)}
+          >
+            {category.icon}
+            <span>{category.name}</span>
+          </Button>
+        ))}
+      </div>
+
+      {/* Prompt buttons */}
+      <div className="grid grid-cols-1 gap-1 p-2 max-h-60 overflow-y-auto">
+        {selectedCategoryData.prompts.map((prompt, index) => (
+          <motion.button
+            type="button" // Prevents default submit behavior
+            key={index}
+            className="flex flex-col items-start rounded-lg px-3 py-2 text-left hover:bg-accent transition-colors"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => {
+              onSelect(prompt.message || prompt.text);
+              onClose();
+            }}
+          >
+            <span className="font-medium text-sm">{prompt.text}</span>
+            <span className="text-xs text-muted-foreground mt-0.5">{prompt.description}</span>
+          </motion.button>
+        ))}
+      </div>
+    </motion.div>
+  );
+};
+
 export function GoalChatInterface() {
   const [messageText, setMessageText] = useState("");
   const { user } = useAuth();
@@ -46,6 +203,9 @@ export function GoalChatInterface() {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [optimisticMessages, setOptimisticMessages] = useState<OptimisticMessage[]>([]);
+  const [showEmotions, setShowEmotions] = useState(false);
+  const isMobile = window.innerWidth < 640;
+  const [chatInput, setChatInput] = useState("");
 
   // Fetch goal-specific messages
   const { data: messages = [], isLoading: isLoadingMessages } = useQuery<Message[]>({
@@ -154,6 +314,31 @@ export function GoalChatInterface() {
     }
   }, [messages, optimisticMessages, sendMessage.isPending]);
 
+  // Handle the insertion of prompt text
+  const handleEmotionSelect = (text: string) => {
+    const textarea = inputRef.current;
+    if (!textarea) {
+      setMessageText(prev => prev + text);
+      return;
+    }
+
+    textarea.focus();
+
+    const start = textarea.selectionStart ?? messageText.length;
+    const end = textarea.selectionEnd ?? messageText.length;
+
+    const newValue = messageText.slice(0, start) + text + messageText.slice(end);
+    setMessageText(newValue);
+
+    setTimeout(() => {
+      textarea.focus();
+      textarea.selectionStart = textarea.selectionEnd = start + text.length;
+    }, 0);
+  };
+
+
+
+
   // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -178,22 +363,22 @@ export function GoalChatInterface() {
   return (
     <Card className="flex flex-col h-full w-full">
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-blue-500" />
-            <span>目標アシスタント</span>
-          </div>
-          
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-xs flex items-center gap-1"
-                disabled={!allMessages.length}
-              >
+                <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Target className="h-5 w-5 text-blue-500" />
+                    <span className="text-lg sm:text-xl md:text-2xl font-semibold">目標アシスタント</span>
+                  </div>
+
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-xs flex items-center gap-1 self-end sm:self-auto"
+                        disabled={!allMessages.length}
+                      >
                 <Eraser className="h-3.5 w-3.5" />
-                会話履歴をクリア
+                履歴削除
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -270,16 +455,45 @@ export function GoalChatInterface() {
       </CardContent>
       
       <CardFooter className="p-4 pt-2">
-        <form onSubmit={handleSubmit} className="flex w-full gap-2">
-          <Input
-            ref={inputRef}
-            placeholder="目標についてミライちゃんに質問する..."
-            value={messageText}
-            onChange={(e) => setMessageText(e.target.value)}
-            disabled={sendMessage.isPending}
-            className="flex-grow"
-            autoComplete="off"
-          />
+        <form onSubmit={handleSubmit} className="flex w-full gap-2 relative">
+          <AnimatePresence>
+            {showEmotions && (
+              <div className="absolute bottom-full left-0 w-full flex justify-center">
+                <EmotionButtons onSelect={handleEmotionSelect} onClose={() => setShowEmotions(false)} />
+              </div>
+            )}
+          </AnimatePresence>
+          
+          <div className="relative w-full">
+            <Input
+              ref={inputRef}
+              placeholder="目標についてミライちゃんに質問する..."
+              value={messageText}
+              onChange={(e) => setMessageText(e.target.value)}
+              disabled={sendMessage.isPending}
+              className="w-full pr-8"
+              autoComplete="off"
+            />
+            <TooltipProvider key="prompt-tooltip">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <motion.button
+                    type="button"
+                    className="absolute right-2 top-2 text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 px-1.5 py-1 rounded-md hover:bg-accent/50"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setShowEmotions((prev) => !prev)}
+                  >
+                    <Lightbulb className="h-4 w-4" />
+                  </motion.button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>プロンプト一覧</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          
           <Button 
             type="submit" 
             size="icon" 
