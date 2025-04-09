@@ -11,8 +11,10 @@ import ChatMessage from "./chat-message";
 import { ScrollArea } from "./ui/scroll-area";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 import ChatLoadingIndicator, { SakuraPetalLoading } from "./chat-loading-indicator";
 import { motion, AnimatePresence } from "framer-motion";
+import "./chat-header.css";
 import {
   Tooltip,
   TooltipContent,
@@ -311,7 +313,7 @@ export const ChatInterface = () => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const isMobile = window.innerWidth < 640;
+  const isMobile = useIsMobile();
 
   // Check if online periodically
   useEffect(() => {
@@ -390,6 +392,42 @@ export const ChatInterface = () => {
     setShowClearConfirm(true);
   };
 
+  // Force header visibility on first render and responsive changes
+  useEffect(() => {
+    // Create an observer to detect when the header might be hidden
+    const headerElement = document.querySelector('.chat-header');
+    if (headerElement) {
+      // Force a repaint of the header by temporarily modifying a style property
+      const forceRepaint = () => {
+        headerElement.classList.add('force-visible');
+        setTimeout(() => {
+          headerElement.classList.remove('force-visible');
+        }, 100);
+      };
+      
+      // Apply forced visibility of header on mobile
+      if (isMobile) {
+        // Force repaint multiple times to ensure header visibility
+        forceRepaint();
+        
+        // Add a delayed call to catch any potential issues after initial render
+        setTimeout(forceRepaint, 300);
+        setTimeout(forceRepaint, 1000);
+      }
+      
+      // Call immediately and on resize
+      forceRepaint();
+      window.addEventListener('resize', forceRepaint);
+      
+      // Force scroll to top to ensure header is visible
+      window.scrollTo(0, 0);
+      
+      return () => {
+        window.removeEventListener('resize', forceRepaint);
+      };
+    }
+  }, [isMobile]);
+  
   // Scroll to bottom when messages change
   useEffect(() => {
     if (messageEndRef.current) {
@@ -527,8 +565,8 @@ export const ChatInterface = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Fixed Chat Header */}
-      <div className="flex-shrink-0 border-b p-2 flex justify-between items-center bg-muted/30 sticky top-0 left-0 right-0 z-20">
+      {/* Chat Header */}
+      <div className="chat-header flex-shrink-0 border-b p-2 flex justify-between items-center bg-muted/30 sticky top-0 left-0 right-0 z-20 will-change-transform">
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-blue-400" />
 
@@ -558,9 +596,9 @@ export const ChatInterface = () => {
       </div>
 
       {/* Scrollable Chat Area */}
-      <div className="flex-1 overflow-hidden">
-        <ScrollArea className="h-full px-1 sm:px-4 py-3 w-full" ref={scrollAreaRef}>
-          <div className="space-y-2 w-full max-w-full">
+      <div className="flex-1 overflow-hidden overscroll-none">
+        <ScrollArea className="h-full px-1 sm:px-4 py-3 w-full -webkit-overflow-scrolling-touch" ref={scrollAreaRef}>
+          <div className="space-y-0 w-full max-w-full">
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-60 text-center">
                 <motion.div
@@ -588,8 +626,13 @@ export const ChatInterface = () => {
                   }
                 };
 
+                // Add subtle visual separator between consecutive messages from the same sender
+                const prevMessage = messages[messages.indexOf(message) - 1];
+                const showSeparator = prevMessage && prevMessage.isBot === message.isBot;
+                
                 return (
-                  <div className="w-full max-w-full" key={typeof message.id === 'string' ? message.id : `msg-${message.id}`}>
+                  <div className="w-full max-w-full px-1 sm:px-2" key={typeof message.id === 'string' ? message.id : `msg-${message.id}`}>
+                    {showSeparator && message.isBot && <div className="w-full border-t border-blue-400/5 my-1 mx-auto" />}
                     <ChatMessage
                       message={{
                         ...message,

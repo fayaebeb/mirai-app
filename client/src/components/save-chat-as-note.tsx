@@ -19,7 +19,7 @@ export function SaveChatAsNote({ message }: SaveChatAsNoteProps) {
   const [content, setContent] = useState("");
   const { toast } = useToast();
 
-  // ノートを作成 mutation
+  // Create note mutation
   const createNoteMutation = useMutation({
     mutationFn: async (data: { title: string; content: string }) => {
       const response = await apiRequest('POST', '/api/notes', data);
@@ -109,18 +109,20 @@ export function SaveChatAsNote({ message }: SaveChatAsNoteProps) {
             </p>
           </div>
         </div>
-        <DialogFooter>
+        <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
           <Button
             onClick={() => setIsOpen(false)}
             variant="outline"
+            className="w-full sm:w-auto"
           >
             キャンセル
           </Button>
           <Button 
             onClick={handleSaveAsNote}
             disabled={createNoteMutation.isPending}
+            className="w-full sm:w-auto"
           >
-            {createNoteMutation.isPending ? "Saving..." : "Save Note"}
+            {createNoteMutation.isPending ? "保存中..." : "ノートに保存"}
           </Button>
         </DialogFooter>
       </DialogContent>

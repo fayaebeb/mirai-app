@@ -68,7 +68,7 @@ const MessageSection = ({
     <Collapsible 
       open={isOpen} 
       onOpenChange={setIsOpen}
-      className="mt-2 rounded-md border border-blue-400/20 overflow-hidden transition-all duration-200"
+      className="mt-2 rounded-md border border-blue-400/20 overflow-hidden transition-all duration-200 w-full"
     >
       <CollapsibleTrigger asChild>
         <Button
@@ -92,10 +92,29 @@ const MessageSection = ({
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
-          className="p-2 bg-slate-900/50 backdrop-blur-sm"
+          className="p-2 bg-slate-900/50 backdrop-blur-sm w-full"
+          style={{ width: '100%' }}
         >
-          <div className="prose prose-xs prose-invert max-w-none text-[10px] sm:text-xs">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          <div className="prose prose-xs prose-invert max-w-none w-full text-[10px] sm:text-xs">
+            <ReactMarkdown 
+              remarkPlugins={[remarkGfm]}
+              components={{
+                p: ({ node, ...props }) => (
+                  <p className="w-full block text-white my-1.5 whitespace-normal text-left" style={{width: '100%'}} {...props} />
+                ),
+                table: ({ node, ...props }) => (
+                  <div className="overflow-x-auto w-full max-w-full -mx-2 px-2">
+                    <table className="text-[10px] sm:text-[11px] border-collapse w-full table-fixed" {...props} />
+                  </div>
+                ),
+                td: ({ node, ...props }) => (
+                  <td className="border border-blue-400/30 px-1 py-0.5 sm:px-2 sm:py-1 break-words" {...props} />
+                ),
+                th: ({ node, ...props }) => (
+                  <th className="border border-blue-400/50 bg-slate-800 px-1 py-0.5 sm:px-2 sm:py-1 break-words" {...props} />
+                ),
+              }}
+            >
               {content}
             </ReactMarkdown>
           </div>
@@ -132,9 +151,9 @@ export default function ChatMessage({ message }: { message: Message }) {
 
   return (
     <div
-      className={cn("flex w-full my-2.5 relative", {
-        "justify-end": !message.isBot,
-        "justify-start": message.isBot
+      className={cn("flex w-full relative", {
+        "justify-end mt-4 mb-2": !message.isBot,
+        "justify-start mt-5 mb-3 pr-1 sm:pr-3": message.isBot
       })}
     >
       {showEmoji && message.isBot && (
@@ -201,17 +220,17 @@ export default function ChatMessage({ message }: { message: Message }) {
         transition={{ duration: 0.3 }}
         whileHover={message.isBot ? { scale: 1.02 } : { scale: 1 }}
         onHoverStart={handleBotMessageHover}
-        className={cn("w-full rounded-xl", {
-          "justify-end flex": !message.isBot,
-          "justify-start flex ml-2 sm:ml-3": message.isBot,
+        className={cn("rounded-xl", {
+          "w-auto max-w-[85%] ml-auto flex justify-end": !message.isBot,
+          "w-full max-w-full flex-1 flex justify-start ml-2 sm:ml-3": message.isBot,
         })}
       >
         <Card
           className={cn(
-            "px-2 py-1 sm:px-2.5 sm:py-1.5 text-[10px] sm:text-xs",
+            "px-2.5 py-1.5 sm:px-3 sm:py-2 text-[10px] sm:text-xs overflow-hidden",
             {
-              "bg-blue-600 text-white border border-blue-500/50 shadow-lg": !message.isBot,
-              "bg-slate-900/90 backdrop-blur-md text-white border border-blue-400/30 shadow-lg": message.isBot,
+              "bg-blue-600 text-white border border-blue-500/50 shadow-md hover:shadow-lg w-auto inline-block": !message.isBot,
+              "bg-slate-900/90 backdrop-blur-md text-white border border-blue-400/30 shadow-md hover:shadow-lg w-full flex-1 flex flex-col": message.isBot,
             }
           )}
         >
@@ -231,24 +250,29 @@ export default function ChatMessage({ message }: { message: Message }) {
             </div>
           )}
 
-          <div className={cn("prose prose-xs sm:prose-xs break-words font-normal w-full text-[11px] sm:text-xs", {
-            "prose-invert": true
+          <div className={cn("prose prose-xs break-words leading-relaxed text-[11px] sm:text-xs w-full", {
+            "prose-invert": true,
+            "flex flex-col items-stretch": message.isBot,
+            "w-auto max-w-full": !message.isBot
           })}>
             {message.isBot && sections ? (
               <>
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   components={{
+                    p: ({ node, ...props }) => (
+                      <p className="w-full block text-white my-1.5 whitespace-normal text-left" style={{width: '100%'}} {...props} />
+                    ),
                     table: ({ node, ...props }) => (
-                      <div className="overflow-x-auto w-full">
-                        <table className="text-[10px] sm:text-[11px] border-collapse w-full min-w-[300px]" {...props} />
+                      <div className="overflow-x-auto w-full max-w-full -mx-2 px-2">
+                        <table className="text-[10px] sm:text-[11px] border-collapse w-full table-fixed" {...props} />
                       </div>
                     ),
                     td: ({ node, ...props }) => (
-                      <td className="border border-blue-400/30 px-1 py-0.5 sm:px-2 sm:py-1" {...props} />
+                      <td className="border border-blue-400/30 px-1 py-0.5 sm:px-2 sm:py-1 break-words" {...props} />
                     ),
                     th: ({ node, ...props }) => (
-                      <th className="border border-blue-400/50 bg-slate-800 px-1 py-0.5 sm:px-2 sm:py-1" {...props} />
+                      <th className="border border-blue-400/50 bg-slate-800 px-1 py-0.5 sm:px-2 sm:py-1 break-words" {...props} />
                     ),
                   }}
                 >
@@ -278,16 +302,19 @@ export default function ChatMessage({ message }: { message: Message }) {
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
+                  p: ({ node, ...props }) => (
+                    <p className="w-full block text-white my-1.5 whitespace-normal text-left" style={{width: '100%'}} {...props} />
+                  ),
                   table: ({ node, ...props }) => (
-                    <div className="overflow-x-auto w-full">
-                      <table className="text-[10px] sm:text-[11px] border-collapse w-full min-w-[300px]" {...props} />
+                    <div className="overflow-x-auto w-full max-w-full -mx-2 px-2">
+                      <table className="text-[10px] sm:text-[11px] border-collapse w-full table-fixed" {...props} />
                     </div>
                   ),
                   td: ({ node, ...props }) => (
-                    <td className="border border-blue-400/30 px-1 py-0.5 sm:px-2 sm:py-1" {...props} />
+                    <td className="border border-blue-400/30 px-1 py-0.5 sm:px-2 sm:py-1 break-words" {...props} />
                   ),
                   th: ({ node, ...props }) => (
-                    <th className="border border-blue-400/50 bg-slate-800 px-1 py-0.5 sm:px-2 sm:py-1" {...props} />
+                    <th className="border border-blue-400/50 bg-slate-800 px-1 py-0.5 sm:px-2 sm:py-1 break-words" {...props} />
                   ),
                 }}
               >
