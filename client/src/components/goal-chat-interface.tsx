@@ -1,14 +1,14 @@
 import { useRef, useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Message } from "@shared/schema";
+import { Message, Goal } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { Send, Bot, Target, Eraser, AlertTriangle, Lightbulb, MessageSquare, Wand2 } from "lucide-react";
+import { Send, Target, Eraser, AlertTriangle, Lightbulb, MessageSquare, Wand2, Sparkles, Award, Star, Rocket, BrainCircuit } from "lucide-react";
 import ChatMessage from "@/components/chat-message";
 import { ChatLoadingIndicator } from "@/components/chat-loading-indicator";
 import { v4 as uuidv4 } from 'uuid';
@@ -30,6 +30,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 
 // Import the Message interface from chat-message.tsx which includes onRegenerateAnswer
 interface MessageWithRegenerate extends Message {
@@ -62,59 +63,90 @@ interface PromptCategory {
 
 const promptCategories: PromptCategory[] = [
   {
-    name: "出力形式 📄",
-    icon: <MessageSquare className="h-4 w-4" />,
+    name: "目標管理 🎯",
+    icon: <Target className="h-4 w-4" />,
     prompts: [
       {
-        text: "会話形式で💬",
-        message: "AさんとBさんの会話形式で出力して",
-        description: "フレンドリーな会話形式で回答します",
+        text: "目標達成プラン✨",
+        message: "私の目標を達成するための具体的なアクションプランを教えてください。ステップごとに分解して、期日も含めて詳しく説明してください。",
+        description: "目標達成のための具体的なステップ計画を提案",
       },
       {
-        text: "箇条書き形式で📝",
-        message: "箇条書き形式で出力して",
-        description: "箇条書き形式で出力します",
+        text: "目標設定アドバイス📝",
+        message: "効果的な目標設定のポイントについて教えてください。SMART目標とは何ですか？",
+        description: "適切な目標設定方法についてのアドバイス",
       },
       {
-        text: "表形式で📊",
-        message: "表形式で出力して",
-        description: "表形式で出力します",
+        text: "モチベーション維持法🚀",
+        message: "目標達成のためのモチベーションを維持する方法を教えてください。やる気が出ない時の対処法も含めて。",
+        description: "モチベーション維持の戦略を提案",
       },
       {
-        text: "FAQ形式で❓",
-        message: "FAQ形式で出力して",
-        description: "FAQ形式で出力します",
+        text: "目標進捗確認📊",
+        message: "目標の進捗状況を効果的に確認・管理する方法について教えてください。",
+        description: "進捗管理のベストプラクティス",
       },
       {
-        text: "比喩・たとえ話形式🎭",
-        message: "比喩・たとえ話形式で出力して",
-        description: "比喩・たとえ話形式で出力します",
+        text: "困難克服法💪",
+        message: "目標達成の過程で直面する困難や障害を克服するための方法を教えてください。",
+        description: "障害を乗り越えるための戦略",
       },
       {
-        text: "簡潔に要約✨",
-        message: "簡潔に要約で出力して",
-        description: "簡潔に要約で出力します",
+        text: "目標見直し方法🔄",
+        message: "目標が現実的でないと感じた時、どのように見直すべきですか？目標を調整する際のポイントを教えてください。",
+        description: "目標の再評価と調整方法",
       },
     ]
   },
   {
-    name: "アシスタント 🤖",
-    icon: <Wand2 className="h-4 w-4" />,
+    name: "習慣形成 ⏱️",
+    icon: <Rocket className="h-4 w-4" />,
     prompts: [
       {
-        text: "＋指示のコツ🎯",
-        message: "質問に対してさらに理解を深めるために、どのような指示をすればよいか提案して",
-        description: "より良い指示の出し方をアドバイスします",
+        text: "習慣化の秘訣🔑",
+        message: "目標達成につながる良い習慣を形成するための効果的な方法を教えてください。",
+        description: "持続可能な習慣を作るコツ",
       },
       {
-        text: "「外部情報なし」🚫",
-        message: "インターネットからの情報を利用しないで",
-        description: "外部情報を使わずに回答します",
+        text: "朝のルーティン☀️",
+        message: "生産性を高める朝のルーティンについてアドバイスください。目標達成に役立つ朝の習慣は？",
+        description: "目標達成を促進する朝の習慣",
       },
       {
-        text: "初心者向け📘",
-        message: "説明に出てくる専門用語には、それぞれ説明を加え、初心者でも理解しやすいように。具体的な例を挙げながら丁寧に解説して",
-        description: "具体的な例を挙げながら丁寧に解説します",
+        text: "小さな成功の積み重ね📈",
+        message: "小さな成功体験を積み重ねて大きな目標を達成する方法について教えてください。",
+        description: "小さな成功の活用法",
+      },
+      {
+        text: "悪習慣の断ち切り方🚫",
+        message: "目標達成の妨げになる悪い習慣を断ち切るための効果的な方法を教えてください。",
+        description: "悪習慣を克服する戦略",
+      },
+    ]
+  },
+  {
+    name: "分析・振り返り 🔍",
+    icon: <BrainCircuit className="h-4 w-4" />,
+    prompts: [
+      {
+        text: "目標進捗分析📊",
+        message: "私の目標達成状況を分析して、改善点を指摘してください。",
+        description: "目標進捗の分析と改善点提案",
+      },
+      {
+        text: "週間振り返り🔄",
+        message: "週間目標の振り返りをサポートしてください。何を振り返るべきかも教えてください。",
+        description: "効果的な週間振り返りのガイド",
+      },
+      {
+        text: "次のステップ提案➡️",
+        message: "現在の目標達成状況を踏まえて、次に取るべきステップを提案してください。",
+        description: "次のアクションの提案",
+      },
+      {
+        text: "成功要因分析✨",
+        message: "これまでの成功パターンを分析して、今後の目標達成にどう活かせるか教えてください。",
+        description: "成功パターンの分析と活用法",
       },
     ]
   },
@@ -365,72 +397,168 @@ export function GoalChatInterface() {
   });
 
   return (
-    <Card className="flex flex-col h-full w-full">
-      <CardHeader className="pb-2">
-                <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <Target className="h-5 w-5 text-blue-500" />
-                    <span className="text-lg sm:text-xl md:text-2xl font-semibold">目標アシスタント</span>
-                  </div>
+    <Card className="flex flex-col h-full w-full overflow-hidden flex-grow">
+      <CardHeader className="py-2 px-4 flex-shrink-0">
+        <div className="flex flex-col space-y-1.5">
+          <CardTitle className="flex items-center justify-between gap-1">
+            <div className="flex items-center gap-2">
+              <div className="relative hidden sm:block">
+                <Target className="h-5 w-5 text-blue-500" />
+                <motion.div
+                  className="absolute inset-0 rounded-full border border-blue-500/20"
+                  animate={{ scale: [1, 1.15, 1], opacity: [0.7, 0.2, 0] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+              </div>
+              <span className="text-sm sm:text-base font-semibold">目標アシスタント</span>
+              <Badge variant="outline" className="ml-1 bg-blue-500/10 text-xs py-0">AI</Badge>
+            </div>
 
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="text-xs flex items-center gap-1 self-end sm:self-auto"
-                        disabled={!allMessages.length}
-                      >
-                <Eraser className="h-3.5 w-3.5" />
-                履歴削除
+            <div className="flex items-center gap-1">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-xs h-6 w-6 sm:h-7 sm:w-auto px-0 sm:px-2 rounded-full sm:rounded-md"
+                onClick={() => setShowEmotions(true)}
+              >
+                <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+                <span className="hidden sm:inline ml-1">ガイド</span>
               </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle className="flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-amber-500" />
-                  チャット履歴を削除しますか？
-                </AlertDialogTitle>
-                <AlertDialogDescription>
-                  この操作は元に戻せません。すべての会話履歴がデータベースから完全に削除されます。
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                <AlertDialogAction 
-                  onClick={() => clearChatHistoryMutation.mutate()}
-                  className="bg-destructive hover:bg-destructive/90"
-                  disabled={clearChatHistoryMutation.isPending}
-                >
-                  {clearChatHistoryMutation.isPending ? "削除中..." : "削除する"}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </CardTitle>
+
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-xs h-6 w-6 sm:h-7 sm:w-auto px-0 sm:px-2 rounded-full sm:rounded-md"
+                    disabled={!allMessages.length}
+                  >
+                    <Eraser className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline ml-1">履歴削除</span>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5 text-amber-500" />
+                      チャット履歴を削除しますか？
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      この操作は元に戻せません。すべての会話履歴がデータベースから完全に削除されます。
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={() => clearChatHistoryMutation.mutate()}
+                      className="bg-destructive hover:bg-destructive/90"
+                      disabled={clearChatHistoryMutation.isPending}
+                    >
+                      {clearChatHistoryMutation.isPending ? "削除中..." : "削除する"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </CardTitle>
+          
+        </div>
       </CardHeader>
       
       <CardContent className="flex-grow overflow-hidden p-0">
-        <ScrollArea ref={scrollAreaRef} className="min-h-[300px] h-[calc(100vh-13rem)] px-4 pt-4">
+        <ScrollArea ref={scrollAreaRef} className="min-h-[200px] h-full max-h-[calc(100vh-22rem)] md:max-h-[calc(100vh-11rem)] px-4 pt-4 flex-grow">
           {isLoadingMessages ? (
-            <div className="flex h-full min-h-[300px] items-center justify-center">
+            <div className="flex h-full min-h-[200px] items-center justify-center">
               <ChatLoadingIndicator message="チャット履歴を読み込んでいます..." />
             </div>
           ) : allMessages.length === 0 ? (
-            <div className="flex flex-col h-full min-h-[300px] items-center justify-center text-center text-muted-foreground p-4">
-              <img
-                src="/images/mirai.png"
-                alt="Chat Icon"
-                className="h-20 w-20 mb-4 opacity-80"
-              />
-              <h3 className="text-lg font-medium">目標アシスタントへようこそ</h3>
-              <p className="max-w-sm">
-                目標の設定や進捗確認について質問してください。
-                いつでもあなたの目標達成をサポートします。
+            <div className="flex flex-col h-full min-h-[200px] items-center justify-center text-center p-2 sm:p-4">
+              <div className="relative">
+                <motion.div
+                  className="absolute inset-0 rounded-full border-2 border-blue-500/30"
+                  animate={{ 
+                    scale: [1, 1.2, 1],
+                    opacity: [0.7, 0.2, 0.7],
+                    borderColor: ["rgba(59, 130, 246, 0.3)", "rgba(59, 130, 246, 0.1)", "rgba(59, 130, 246, 0.3)"]
+                  }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                />
+                <img
+                  src="/images/mirai.png"
+                  alt="Chat Icon"
+                  className="h-16 w-16 mb-6 relative z-10"
+                />
+              </div>
+              
+              <h3 className="text-xl font-medium mb-3 text-blue-500">目標アシスタントへようこそ</h3>
+              <p className="max-w-md text-muted-foreground mb-6">
+                目標の設定から達成までをサポートします。何でもお気軽にご相談ください。
+              </p>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-lg w-full mb-4">
+                <Button 
+                  variant="outline" 
+                  className="text-left h-auto py-2 sm:py-3 justify-start border-blue-500/20 hover:bg-blue-500/5"
+                  onClick={() => handleEmotionSelect("目標達成のためのベストなアクションプランを教えてください。")}
+                >
+                  <div className="flex items-start gap-2">
+                    <Rocket className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-sm sm:text-base">目標達成プラン</p>
+                      <p className="text-xs text-muted-foreground hidden sm:block">ステップごとの実行計画を提案</p>
+                    </div>
+                  </div>
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="text-left h-auto py-2 sm:py-3 justify-start border-blue-500/20 hover:bg-blue-500/5"
+                  onClick={() => handleEmotionSelect("目標達成のモチベーションを維持する方法を教えてください。")}
+                >
+                  <div className="flex items-start gap-2">
+                    <Star className="h-4 w-4 sm:h-5 sm:w-5 text-amber-500 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-sm sm:text-base">モチベーション維持</p>
+                      <p className="text-xs text-muted-foreground hidden sm:block">継続するためのコツを紹介</p>
+                    </div>
+                  </div>
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="text-left h-auto py-2 sm:py-3 justify-start border-blue-500/20 hover:bg-blue-500/5"
+                  onClick={() => handleEmotionSelect("SMART目標の設定方法について教えてください。")}
+                >
+                  <div className="flex items-start gap-2">
+                    <Target className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-sm sm:text-base">効果的な目標設定</p>
+                      <p className="text-xs text-muted-foreground hidden sm:block">達成しやすい目標の立て方</p>
+                    </div>
+                  </div>
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="text-left h-auto py-2 sm:py-3 justify-start border-blue-500/20 hover:bg-blue-500/5"
+                  onClick={() => handleEmotionSelect("目標達成を妨げる障害を克服する方法を教えてください。")}
+                >
+                  <div className="flex items-start gap-2">
+                    <BrainCircuit className="h-4 w-4 sm:h-5 sm:w-5 text-purple-500 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-sm sm:text-base">障害の克服</p>
+                      <p className="text-xs text-muted-foreground hidden sm:block">問題解決のためのアドバイス</p>
+                    </div>
+                  </div>
+                </Button>
+              </div>
+              
+              <p className="text-xs text-muted-foreground">
+                または、上のメニューから「ガイド」をクリックして、その他の質問例を見ることもできます
               </p>
             </div>
           ) : (
-            <div className="space-y-4 pb-4 min-h-[300px]">
+            <div className="space-y-3 sm:space-y-4 pb-4 min-h-[200px]">
               {allMessages.map((message) => {
                 // Ensure id is treated as a number for the ChatMessage component
                 const messageForChat = {
@@ -458,8 +586,8 @@ export function GoalChatInterface() {
         </ScrollArea>
       </CardContent>
       
-      <CardFooter className="p-4 pt-2">
-        <form onSubmit={handleSubmit} className="flex w-full gap-2 relative">
+      <CardFooter className="p-2 sm:p-4 pt-2 flex-shrink-0 bg-slate-900/90 border-t border-blue-500/20 mt-auto">
+        <form onSubmit={handleSubmit} className="flex w-full gap-1 sm:gap-2 relative">
           <AnimatePresence>
             {showEmotions && (
               <div className="absolute bottom-full left-0 w-full flex justify-center">
@@ -471,11 +599,11 @@ export function GoalChatInterface() {
           <div className="relative w-full">
             <Textarea
               ref={inputRef}
-              placeholder="目標についてミライに質問する..."
+              placeholder="目標について質問する..."
               value={messageText}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setMessageText(e.target.value)}
               disabled={sendMessage.isPending}
-              className="w-full pr-8 min-h-[40px] max-h-[200px] resize-none"
+              className="w-full pr-8 min-h-[36px] sm:min-h-[40px] max-h-[100px] sm:max-h-[200px] resize-none text-sm sm:text-base"
               rows={1}
               onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
                 if (e.key === "Enter" && !e.shiftKey && !isMobile) {
@@ -488,7 +616,7 @@ export function GoalChatInterface() {
                 target.style.height = `${Math.min(target.scrollHeight, 200)}px`;
               }}
             />
-            <TooltipProvider key="prompt-tooltip">
+            <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <motion.button

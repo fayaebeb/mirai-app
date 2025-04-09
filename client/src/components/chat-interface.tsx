@@ -395,7 +395,7 @@ export const ChatInterface = () => {
   useEffect(() => {
     // Force scroll to top on component mount
     window.scrollTo(0, 0);
-    
+
     // Function to ensure header is visible on mobile devices
     const ensureHeaderVisible = () => {
       const header = document.querySelector('.chat-header');
@@ -404,7 +404,7 @@ export const ChatInterface = () => {
         header.style.opacity = '1';
         header.style.visibility = 'visible';
         header.style.display = 'flex';
-        
+
         // Fix position (ensure it stays fixed at top)
         header.style.position = 'sticky';
         header.style.top = '0';
@@ -413,24 +413,24 @@ export const ChatInterface = () => {
 
     // Run immediately and set a timer for after load
     ensureHeaderVisible();
-    
+
     // Run multiple times to catch various render/painting issues
     const timers = [
       setTimeout(ensureHeaderVisible, 100),
       setTimeout(ensureHeaderVisible, 500),
       setTimeout(ensureHeaderVisible, 1000),
     ];
-    
+
     // Also run on resize events
     window.addEventListener('resize', ensureHeaderVisible);
-    
+
     // Clean up timers and event listener
     return () => {
       timers.forEach(clearTimeout);
       window.removeEventListener('resize', ensureHeaderVisible);
     };
   }, []);
-  
+
   // Scroll to bottom when messages change
   useEffect(() => {
     if (messageEndRef.current) {
@@ -544,7 +544,7 @@ export const ChatInterface = () => {
   };
 
   return (
-    <Card className="w-full h-[calc(100vh-8rem)] sm:h-[calc(100vh-8rem)] md:max-w-[90%] mx-auto flex flex-col overflow-hidden relative border-muted-foreground/20">
+    <Card className="w-full h-full md:max-w-[90%] mx-auto flex flex-col overflow-hidden relative border-muted-foreground/20">
       {showTutorial && <Tutorial onClose={() => setShowTutorial(false)} />}
 
       {/* Confirmation Dialog for clearing chat history */}
@@ -632,7 +632,7 @@ export const ChatInterface = () => {
                 // Add subtle visual separator between consecutive messages from the same sender
                 const prevMessage = messages[messages.indexOf(message) - 1];
                 const showSeparator = prevMessage && prevMessage.isBot === message.isBot;
-                
+
                 return (
                   <div className="w-full max-w-full px-1 sm:px-2" key={typeof message.id === 'string' ? message.id : `msg-${message.id}`}>
                     {showSeparator && message.isBot && <div className="w-full border-t border-blue-400/5 my-1 mx-auto" />}

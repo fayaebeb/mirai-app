@@ -120,7 +120,7 @@ export default function HomePage() {
     if (activeTab === "chat") {
       return (
         <motion.div 
-          className="bg-slate-900/90 backdrop-blur-md rounded-xl shadow-xl p-4 max-w-3xl md:max-w-4xl lg:max-w-5xl mx-auto border border-blue-500/20 overflow-hidden relative"
+          className="bg-slate-900/90 backdrop-blur-md rounded-xl shadow-xl p-4 max-w-3xl md:max-w-4xl lg:max-w-5xl mx-auto border border-blue-500/20 overflow-hidden relative h-[calc(100vh-8rem)]"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
@@ -156,7 +156,7 @@ export default function HomePage() {
             <Database size={14} />
           </div>
 
-          <div className="relative z-10">
+          <div className="relative z-10 h-full">
             <ChatInterface />
           </div>
         </motion.div>
@@ -164,7 +164,7 @@ export default function HomePage() {
     } else if (activeTab === "notes") {
       return (
         <motion.div 
-          className="bg-slate-900/90 backdrop-blur-md rounded-xl shadow-xl p-4 max-w-3xl md:max-w-4xl lg:max-w-5xl mx-auto border border-blue-500/20 overflow-hidden relative"
+          className="bg-slate-900/90 backdrop-blur-md rounded-xl shadow-xl p-4 max-w-3xl md:max-w-4xl lg:max-w-5xl mx-auto border border-blue-500/20 overflow-hidden relative h-[calc(100vh-8rem)]"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
@@ -193,86 +193,91 @@ export default function HomePage() {
             <Cpu size={14} />
           </div>
 
-          <div className="relative z-10">
+          <div className="relative z-10 h-full">
             <NotesList />
           </div>
         </motion.div>
       );
     } else if (activeTab === "goals") {
       return (
-        <div className="flex flex-col gap-6">
-          {/* Goal tracker */}
-          <motion.div 
-            className="bg-slate-900/90 backdrop-blur-md rounded-xl shadow-xl p-4 max-w-3xl md:max-w-4xl lg:max-w-5xl mx-auto border border-blue-500/20 overflow-hidden relative"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-          >
-            {/* Circuit-like pattern background */}
-            <div className="absolute inset-0 z-0 opacity-5 pointer-events-none">
-              <div className="absolute top-1/4 left-1/4 w-1/2 h-px bg-blue-400" />
-              <div className="absolute top-1/2 left-1/6 w-2/3 h-px bg-blue-400" />
-              <div className="absolute top-3/4 left-1/3 w-1/3 h-px bg-blue-400" />
-              <div className="absolute top-1/6 left-1/2 w-px h-2/3 bg-blue-400" />
-              <div className="absolute top-1/4 left-2/3 w-px h-1/2 bg-blue-400" />
-              <div className="absolute top-1/3 left-1/3 w-px h-1/3 bg-blue-400" />
-            </div>
+        <motion.div 
+          className="bg-slate-900/90 backdrop-blur-md rounded-xl shadow-xl p-4 max-w-3xl md:max-w-4xl lg:max-w-5xl mx-auto border border-blue-500/20 overflow-hidden relative h-[calc(100vh-8rem)]"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+        >
+          {/* Circuit-like pattern background */}
+          <div className="absolute inset-0 z-0 opacity-5 pointer-events-none">
+            <div className="absolute top-1/4 left-1/4 w-1/2 h-px bg-blue-400" />
+            <div className="absolute top-1/2 left-1/6 w-2/3 h-px bg-blue-400" />
+            <div className="absolute top-3/4 left-1/3 w-1/3 h-px bg-blue-400" />
+            <div className="absolute top-1/6 left-1/2 w-px h-2/3 bg-blue-400" />
+            <div className="absolute top-1/4 left-2/3 w-px h-1/2 bg-blue-400" />
+            <div className="absolute top-1/3 left-1/3 w-px h-1/3 bg-blue-400" />
+          </div>
 
-            {/* Tech corner elements */}
-            <div className="absolute top-2 left-2 text-blue-400 opacity-30">
-              <Target size={14} />
-            </div>
-            <div className="absolute top-2 right-2 text-blue-500 opacity-30">
-              <Cpu size={14} />
-            </div>
-            <div className="absolute bottom-2 left-2 text-blue-400 opacity-30">
-              <Database size={14} />
-            </div>
-            <div className="absolute bottom-2 right-2 text-blue-500 opacity-30">
-              <Network size={14} />
-            </div>
+          {/* Tech corner elements */}
+          <div className="absolute top-2 left-2 text-blue-400 opacity-30">
+            <Target size={14} />
+          </div>
+          <div className="absolute top-2 right-2 text-blue-500 opacity-30">
+            <Cpu size={14} />
+          </div>
+          <div className="absolute bottom-2 left-2 text-blue-400 opacity-30">
+            <Database size={14} />
+          </div>
+          <div className="absolute bottom-2 right-2 text-blue-500 opacity-30">
+            <Network size={14} />
+          </div>
 
-            <div className="relative z-10">
-              <GoalTracker />
+          <div className="relative z-10 h-full">
+            <div className="h-full flex flex-col md:flex-row gap-4">
+              {/* Mobile tabs to switch between goal tracker and chat */}
+              <div className="flex md:hidden mb-2">
+                <Tabs defaultValue="tracker" className="w-full">
+                  <TabsList className="bg-slate-800/50 border border-blue-500/20 w-full sticky top-0 z-10">
+                    <TabsTrigger value="tracker" className="flex-1 gap-1.5">
+                      <Target className="h-3.5 w-3.5" />
+                      <span>目標</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="chat" className="flex-1 gap-1.5">
+                      <Zap className="h-3.5 w-3.5" />
+                      <span>アシスタント</span>
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="tracker" className="mt-2 h-[calc(100vh-14rem)] overflow-hidden">
+                    <div className="h-full flex flex-col">
+                      <div className="flex-grow flex">
+                        <GoalTracker />
+                      </div>
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="chat" className="mt-2 h-[calc(100vh-14rem)] overflow-hidden">
+                    <div className="h-full flex flex-col">
+                      <div className="flex-grow flex">
+                        <GoalChatInterface />
+                      </div>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </div>
+              
+              {/* Desktop layout with side-by-side view */}
+              <div className="hidden md:flex md:flex-row w-full h-full gap-4">
+                <div className="md:w-1/3 h-full flex">
+                  <div className="flex-grow flex">
+                    <GoalTracker />
+                  </div>
+                </div>
+                <div className="md:w-2/3 h-full border-l border-blue-500/20 pl-4">
+                  <GoalChatInterface />
+                </div>
+              </div>
             </div>
-          </motion.div>
-
-          {/* Goal chat interface */}
-          <motion.div 
-            className="bg-slate-900/90 backdrop-blur-md rounded-xl shadow-xl p-4 max-w-3xl md:max-w-4xl lg:max-w-5xl mx-auto border border-blue-500/20 overflow-hidden relative"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-          >
-            {/* Circuit-like pattern background */}
-            <div className="absolute inset-0 z-0 opacity-5 pointer-events-none">
-              <div className="absolute top-1/4 left-1/4 w-1/2 h-px bg-blue-400" />
-              <div className="absolute top-1/2 left-1/6 w-2/3 h-px bg-blue-400" />
-              <div className="absolute top-3/4 left-1/3 w-1/3 h-px bg-blue-400" />
-              <div className="absolute top-1/6 left-1/2 w-px h-2/3 bg-blue-400" />
-              <div className="absolute top-1/4 left-2/3 w-px h-1/2 bg-blue-400" />
-              <div className="absolute top-1/3 left-1/3 w-px h-1/3 bg-blue-400" />
-            </div>
-
-            {/* Tech corner elements */}
-            <div className="absolute top-2 left-2 text-blue-400 opacity-30">
-              <Target size={14} />
-            </div>
-            <div className="absolute top-2 right-2 text-blue-500 opacity-30">
-              <Cpu size={14} />
-            </div>
-            <div className="absolute bottom-2 left-2 text-blue-400 opacity-30">
-              <Database size={14} />
-            </div>
-            <div className="absolute bottom-2 right-2 text-blue-500 opacity-30">
-              <Network size={14} />
-            </div>
-
-            <div className="relative z-10">
-              <GoalChatInterface />
-            </div>
-          </motion.div>
-        </div>
+          </div>
+        </motion.div>
       );
     }
     return null;
@@ -474,7 +479,7 @@ export default function HomePage() {
       </header>
 
       {/* Greeting message */}
-      {activeTab !== "chat" && (
+        {activeTab !== "chat" && activeTab !== "goals" &&  (
         <motion.div 
           className="container mx-auto px-4 py-2 text-center"
           initial={{ opacity: 0, y: -10 }}
