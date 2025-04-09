@@ -1,0 +1,22 @@
+/* Custom styles for chat interface */
+.chat-header {
+    /* Ensure header is visible on all devices */
+    display: flex !important;
+    visibility: visible !important;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+  
+  .force-visible {
+    /* Force repaint by modifying a property */
+    opacity: 0.99 !important;
+  }
+  
+  /* Improve scrolling on mobile devices */
+  @media (max-width: 768px) {
+    .chat-header {
+      position: sticky !important;
+      top: 0 !important;
+    }
+  }
