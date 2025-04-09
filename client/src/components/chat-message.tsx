@@ -68,7 +68,7 @@ const MessageSection = ({
     <Collapsible 
       open={isOpen} 
       onOpenChange={setIsOpen}
-      className="mt-2 rounded-md border border-blue-400/20 overflow-hidden transition-all duration-200 w-full"
+      className="mt-2 rounded-md border border-blue-400/20 overflow-hidden transition-all duration-200"
     >
       <CollapsibleTrigger asChild>
         <Button
@@ -92,15 +92,14 @@ const MessageSection = ({
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
-          className="p-2 bg-slate-900/50 backdrop-blur-sm w-full"
-          style={{ width: '100%' }}
+          className="p-2 bg-slate-900/50 backdrop-blur-sm"
         >
           <div className="prose prose-xs prose-invert max-w-none w-full text-[10px] sm:text-xs">
             <ReactMarkdown 
               remarkPlugins={[remarkGfm]}
               components={{
                 p: ({ node, ...props }) => (
-                  <p className="w-full block text-white my-1.5 whitespace-normal text-left" style={{width: '100%'}} {...props} />
+                  <p className="w-full block text-white my-1.5" {...props} />
                 ),
                 table: ({ node, ...props }) => (
                   <div className="overflow-x-auto w-full max-w-full -mx-2 px-2">
@@ -250,10 +249,12 @@ export default function ChatMessage({ message }: { message: Message }) {
             </div>
           )}
 
-          <div className={cn("prose prose-xs break-words leading-relaxed text-[11px] sm:text-xs w-full", {
+          <div className={cn("prose prose-xs sm:prose-xs break-words leading-relaxed font-normal text-[11px] sm:text-xs", {
             "prose-invert": true,
-            "flex flex-col items-stretch": message.isBot,
-            "w-auto max-w-full": !message.isBot
+            "w-full min-w-0 max-w-full": message.isBot,
+            "w-auto max-w-full": !message.isBot,
+            "prose-p:my-1.5 prose-p:w-full": true,
+            "prose-pre:whitespace-pre-wrap prose-pre:break-words prose-p:text-left prose-p:text-white prose-p:inline-flex prose-p:w-full": message.isBot
           })}>
             {message.isBot && sections ? (
               <>
@@ -261,7 +262,7 @@ export default function ChatMessage({ message }: { message: Message }) {
                   remarkPlugins={[remarkGfm]}
                   components={{
                     p: ({ node, ...props }) => (
-                      <p className="w-full block text-white my-1.5 whitespace-normal text-left" style={{width: '100%'}} {...props} />
+                      <p className="w-full block text-white my-1.5" {...props} />
                     ),
                     table: ({ node, ...props }) => (
                       <div className="overflow-x-auto w-full max-w-full -mx-2 px-2">
@@ -303,7 +304,7 @@ export default function ChatMessage({ message }: { message: Message }) {
                 remarkPlugins={[remarkGfm]}
                 components={{
                   p: ({ node, ...props }) => (
-                    <p className="w-full block text-white my-1.5 whitespace-normal text-left" style={{width: '100%'}} {...props} />
+                    <p className="w-full block text-white my-1.5" {...props} />
                   ),
                   table: ({ node, ...props }) => (
                     <div className="overflow-x-auto w-full max-w-full -mx-2 px-2">
