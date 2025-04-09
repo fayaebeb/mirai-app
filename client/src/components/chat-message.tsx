@@ -102,15 +102,17 @@ const MessageSection = ({
                   <p className="w-full block text-white my-1.5" {...props} />
                 ),
                 table: ({ node, ...props }) => (
-                  <div className="overflow-x-auto w-full max-w-full -mx-2 px-2">
-                    <table className="text-[10px] sm:text-[11px] border-collapse w-full table-fixed" {...props} />
+                  <div className="overflow-x-auto w-full max-w-[calc(100%-16px)] mx-auto pb-1 relative">
+                    <div>
+                      <table className="text-[10px] sm:text-[11px] border-collapse table-auto border-spacing-0" {...props} />
+                    </div>
                   </div>
                 ),
                 td: ({ node, ...props }) => (
-                  <td className="border border-blue-400/30 px-1 py-0.5 sm:px-2 sm:py-1 break-words" {...props} />
+                  <td className="border border-blue-400/30 px-1 py-0.5 sm:px-2 sm:py-1 break-words whitespace-normal min-w-[50px] max-w-[150px]" {...props} />
                 ),
                 th: ({ node, ...props }) => (
-                  <th className="border border-blue-400/50 bg-slate-800 px-1 py-0.5 sm:px-2 sm:py-1 break-words" {...props} />
+                  <th className="border border-blue-400/50 bg-slate-800 px-1 py-0.5 sm:px-2 sm:py-1 break-words whitespace-normal min-w-[50px] max-w-[150px]" {...props} />
                 ),
               }}
             >
@@ -150,9 +152,9 @@ export default function ChatMessage({ message }: { message: Message }) {
 
   return (
     <div
-      className={cn("flex w-full relative", {
+      className={cn("flex w-full relative overflow-visible", {
         "justify-end mt-4 mb-2": !message.isBot,
-        "justify-start mt-5 mb-3 pr-1 sm:pr-3": message.isBot
+        "justify-start mt-5 mb-3": message.isBot
       })}
     >
       {showEmoji && message.isBot && (
@@ -221,7 +223,7 @@ export default function ChatMessage({ message }: { message: Message }) {
         onHoverStart={handleBotMessageHover}
         className={cn("rounded-xl", {
           "w-auto max-w-[85%] ml-auto flex justify-end": !message.isBot,
-          "w-full max-w-full flex-1 flex justify-start ml-2 sm:ml-3": message.isBot,
+          "w-auto max-w-[85%] flex flex-initial justify-start ml-2 sm:ml-3": message.isBot,
         })}
       >
         <Card
@@ -229,7 +231,7 @@ export default function ChatMessage({ message }: { message: Message }) {
             "px-2.5 py-1.5 sm:px-3 sm:py-2 text-[10px] sm:text-xs overflow-hidden",
             {
               "bg-blue-600 text-white border border-blue-500/50 shadow-md hover:shadow-lg w-auto inline-block": !message.isBot,
-              "bg-slate-900/90 backdrop-blur-md text-white border border-blue-400/30 shadow-md hover:shadow-lg w-full flex-1 flex flex-col": message.isBot,
+              "bg-slate-900/90 backdrop-blur-md text-white border border-blue-400/30 shadow-md hover:shadow-lg w-auto flex flex-col": message.isBot,
             }
           )}
         >
@@ -249,7 +251,7 @@ export default function ChatMessage({ message }: { message: Message }) {
             </div>
           )}
 
-          <div className={cn("prose prose-xs sm:prose-xs break-words leading-relaxed font-normal text-[11px] sm:text-xs", {
+          <div className={cn("prose prose-xs sm:prose-xs break-words leading-relaxed font-normal text-[11px] sm:text-xs overflow-hidden", {
             "prose-invert": true,
             "w-full min-w-0 max-w-full": message.isBot,
             "w-auto max-w-full": !message.isBot,
@@ -265,15 +267,17 @@ export default function ChatMessage({ message }: { message: Message }) {
                       <p className="w-full block text-white my-1.5" {...props} />
                     ),
                     table: ({ node, ...props }) => (
-                      <div className="overflow-x-auto w-full max-w-full -mx-2 px-2">
-                        <table className="text-[10px] sm:text-[11px] border-collapse w-full table-fixed" {...props} />
+                      <div className="overflow-x-auto w-full max-w-[calc(100%-16px)] mx-auto pb-1 relative">
+                        <div>
+                          <table className="text-[10px] sm:text-[11px] border-collapse table-auto border-spacing-0" {...props} />
+                        </div>
                       </div>
                     ),
                     td: ({ node, ...props }) => (
-                      <td className="border border-blue-400/30 px-1 py-0.5 sm:px-2 sm:py-1 break-words" {...props} />
+                      <td className="border border-blue-400/30 px-1 py-0.5 sm:px-2 sm:py-1 break-words whitespace-normal min-w-[50px] max-w-[150px]" {...props} />
                     ),
                     th: ({ node, ...props }) => (
-                      <th className="border border-blue-400/50 bg-slate-800 px-1 py-0.5 sm:px-2 sm:py-1 break-words" {...props} />
+                      <th className="border border-blue-400/50 bg-slate-800 px-1 py-0.5 sm:px-2 sm:py-1 break-words whitespace-normal min-w-[50px] max-w-[150px]" {...props} />
                     ),
                   }}
                 >
@@ -307,15 +311,17 @@ export default function ChatMessage({ message }: { message: Message }) {
                     <p className="w-full block text-white my-1.5" {...props} />
                   ),
                   table: ({ node, ...props }) => (
-                    <div className="overflow-x-auto w-full max-w-full -mx-2 px-2">
-                      <table className="text-[10px] sm:text-[11px] border-collapse w-full table-fixed" {...props} />
+                    <div className="overflow-x-auto w-full max-w-[calc(100%-16px)] mx-auto pb-1 relative">
+                      <div>
+                        <table className="text-[10px] sm:text-[11px] border-collapse table-auto border-spacing-0" {...props} />
+                      </div>
                     </div>
                   ),
                   td: ({ node, ...props }) => (
-                    <td className="border border-blue-400/30 px-1 py-0.5 sm:px-2 sm:py-1 break-words" {...props} />
+                    <td className="border border-blue-400/30 px-1 py-0.5 sm:px-2 sm:py-1 break-words whitespace-normal min-w-[50px] max-w-[150px]" {...props} />
                   ),
                   th: ({ node, ...props }) => (
-                    <th className="border border-blue-400/50 bg-slate-800 px-1 py-0.5 sm:px-2 sm:py-1 break-words" {...props} />
+                    <th className="border border-blue-400/50 bg-slate-800 px-1 py-0.5 sm:px-2 sm:py-1 break-words whitespace-normal min-w-[50px] max-w-[150px]" {...props} />
                   ),
                 }}
               >
