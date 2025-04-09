@@ -14,7 +14,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import ChatLoadingIndicator, { SakuraPetalLoading } from "./chat-loading-indicator";
 import { motion, AnimatePresence } from "framer-motion";
-import "./chat-header.css";
 import {
   Tooltip,
   TooltipContent,
@@ -392,41 +391,45 @@ export const ChatInterface = () => {
     setShowClearConfirm(true);
   };
 
-  // Force header visibility on first render and responsive changes
+  // Effect to handle initial display and make header always visible on mobile
   useEffect(() => {
-    // Create an observer to detect when the header might be hidden
-    const headerElement = document.querySelector('.chat-header');
-    if (headerElement) {
-      // Force a repaint of the header by temporarily modifying a style property
-      const forceRepaint = () => {
-        headerElement.classList.add('force-visible');
-        setTimeout(() => {
-          headerElement.classList.remove('force-visible');
-        }, 100);
-      };
-      
-      // Apply forced visibility of header on mobile
-      if (isMobile) {
-        // Force repaint multiple times to ensure header visibility
-        forceRepaint();
+    // Force scroll to top on component mount
+    window.scrollTo(0, 0);
+    
+    // Function to ensure header is visible on mobile devices
+    const ensureHeaderVisible = () => {
+      const header = document.querySelector('.chat-header');
+      if (header && header instanceof HTMLElement) {
+        // Set visibility directly through style
+        header.style.opacity = '1';
+        header.style.visibility = 'visible';
+        header.style.display = 'flex';
         
-        // Add a delayed call to catch any potential issues after initial render
-        setTimeout(forceRepaint, 300);
-        setTimeout(forceRepaint, 1000);
+        // Fix position (ensure it stays fixed at top)
+        header.style.position = 'sticky';
+        header.style.top = '0';
       }
-      
-      // Call immediately and on resize
-      forceRepaint();
-      window.addEventListener('resize', forceRepaint);
-      
-      // Force scroll to top to ensure header is visible
-      window.scrollTo(0, 0);
-      
-      return () => {
-        window.removeEventListener('resize', forceRepaint);
-      };
-    }
-  }, [isMobile]);
+    };
+
+    // Run immediately and set a timer for after load
+    ensureHeaderVisible();
+    
+    // Run multiple times to catch various render/painting issues
+    const timers = [
+      setTimeout(ensureHeaderVisible, 100),
+      setTimeout(ensureHeaderVisible, 500),
+      setTimeout(ensureHeaderVisible, 1000),
+    ];
+    
+    // Also run on resize events
+    window.addEventListener('resize', ensureHeaderVisible);
+    
+    // Clean up timers and event listener
+    return () => {
+      timers.forEach(clearTimeout);
+      window.removeEventListener('resize', ensureHeaderVisible);
+    };
+  }, []);
   
   // Scroll to bottom when messages change
   useEffect(() => {

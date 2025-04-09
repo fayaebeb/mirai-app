@@ -11,3 +11,32 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
+
+/* Fix for mobile header visibility issue */
+.chat-header {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: flex !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 20 !important;
+  transform: none !important; /* Prevent any transforms from hiding */
+  will-change: auto; /* Reset to default if needed */
+  transition: none !important; /* Disable transitions that might affect visibility */
+}
+
+/* Make scroll behavior smooth but disable when in a scroll to prevent jankiness */
+.scrollarea-viewport {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Temporary force-visible to fix Safari issues */
+.force-visible {
+  transform: translateZ(0);
+}
+
+/* Ensure content is styled properly for iOS */
+html {
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
+}
