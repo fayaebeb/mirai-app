@@ -482,7 +482,11 @@ export function NotesList() {
     if (scrollAreaRef.current && isNoteChatOpen) {
       const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
       if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+        scrollContainer.scrollTo({
+  top: scrollContainer.scrollHeight,
+  behavior: 'smooth',
+});
+
       }
     }
   }, [notesChatMessages, optimisticMessages, sendNotesChatMessage.isPending, isNoteChatOpen]);

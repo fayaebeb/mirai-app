@@ -241,7 +241,7 @@ export function GoalTracker() {
         )}
       </CardHeader>
       
-      <CardContent className="flex-grow overflow-hidden pb-1 flex flex-col min-h-[70vh] sm:min-h-[65vh] md:min-h-0">
+      <CardContent className="flex-grow overflow-hidden pb-1 flex flex-col min-h-0">
         {isLoading ? (
           <div className="flex justify-center items-center h-24">
             <div className="loading-spinner"></div>

@@ -341,7 +341,11 @@ export function GoalChatInterface() {
     if (scrollAreaRef.current) {
       const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
       if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+        scrollContainer.scrollTo({
+  top: scrollContainer.scrollHeight,
+  behavior: 'smooth',
+});
+
       }
     }
   }, [messages, optimisticMessages, sendMessage.isPending]);
