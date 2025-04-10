@@ -5,7 +5,7 @@ import { Card } from "./ui/card";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, Database, Globe, Cpu, Server } from "lucide-react";
 import { Button } from "./ui/button";
@@ -125,10 +125,31 @@ const MessageSection = ({
   );
 };
 
-export default function ChatMessage({ message }: { message: Message }) {
+export default function ChatMessage({ 
+  message, 
+  isFirstInGroup = true,
+  isLastInGroup = true
+}: { 
+  message: Message;
+  isFirstInGroup?: boolean;
+  isLastInGroup?: boolean;
+}) {
   const [showEmoji, setShowEmoji] = useState(false);
   const [emojiPosition, setEmojiPosition] = useState({ x: 0, y: 0 });
   const [decoration, setDecoration] = useState<string | null>(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const [displayedContent, setDisplayedContent] = useState(message.content);
+  const contentRef = useRef(message.content);
+
+  // Only show typing animation for NEW bot messages (not existing ones on page load)
+  useEffect(() => {
+    // For all existing messages, display content immediately without animation
+    setDisplayedContent(message.content);
+    setIsTyping(false);
+    
+    // Typing animation is now handled by a separate mechanism in the chat interface
+    // when new messages are received from the API
+  }, [message.content]);
 
   useEffect(() => {
     if (message.isBot && Math.random() > 0.7) {
@@ -148,22 +169,58 @@ export default function ChatMessage({ message }: { message: Message }) {
   };
 
   // Parse message content if it's a bot message
-  const sections = message.isBot ? parseMessageContent(message.content) : null;
+  const sections = message.isBot ? parseMessageContent(displayedContent) : null;
+
+  // Determine message bubble styling based on position in the group
+  const getBubbleStyles = () => {
+    if (message.isBot) {
+      return {
+        borderRadius: isFirstInGroup && isLastInGroup 
+          ? '0.75rem' 
+          : isFirstInGroup 
+            ? '0.75rem 0.75rem 0.25rem 0.75rem' 
+            : isLastInGroup 
+              ? '0.25rem 0.75rem 0.75rem 0.75rem' 
+              : '0.25rem 0.75rem 0.25rem 0.75rem',
+        marginTop: isFirstInGroup ? '0.375rem' : '0.125rem',
+        marginBottom: isLastInGroup ? '0.375rem' : '0.125rem'
+      };
+    } else {
+      return {
+        borderRadius: isFirstInGroup && isLastInGroup 
+          ? '0.75rem' 
+          : isFirstInGroup 
+            ? '0.75rem 0.75rem 0.75rem 0.25rem' 
+            : isLastInGroup 
+              ? '0.75rem 0.25rem 0.75rem 0.75rem' 
+              : '0.75rem 0.25rem 0.25rem 0.75rem',
+        marginTop: isFirstInGroup ? '0.375rem' : '0.125rem',
+        marginBottom: isLastInGroup ? '0.375rem' : '0.125rem'  
+      };
+    }
+  };
+
+  // Get message bubble styles
+  const bubbleStyles = getBubbleStyles();
 
   return (
     <div
       className={cn("flex w-full relative overflow-visible", {
-        "justify-end mt-4 mb-2": !message.isBot,
-        "justify-start mt-5 mb-3": message.isBot
+        "justify-end": !message.isBot,
+        "justify-start": message.isBot,
+        "mt-3": isFirstInGroup,
+        "mt-0.5": !isFirstInGroup,
+        "mb-0.5": !isLastInGroup,
+        "mb-1": isLastInGroup
       })}
     >
       {showEmoji && message.isBot && (
         <motion.div
-          className="absolute text-base sm:text-lg z-10"
+          className="absolute text-blue-300 z-10"
           style={{
-            left: message.isBot ? "2rem" : "auto",
-            right: message.isBot ? "auto" : "2rem",
-            top: "0",
+            left: message.isBot ? "2.5rem" : "auto",
+            right: message.isBot ? "auto" : "2.5rem",
+            top: "-8px",
           }}
           initial={{ x: 0, y: 0, opacity: 0, scale: 0.5 }}
           animate={{
@@ -175,11 +232,11 @@ export default function ChatMessage({ message }: { message: Message }) {
           }}
           transition={{ duration: 1, ease: "easeOut" }}
         >
-          {Math.random() > 0.5 ? <Server size={16} /> : <Cpu size={16} className="text-blue-400" />}
+          {Math.random() > 0.5 ? <Server size={14} /> : <Cpu size={14} />}
         </motion.div>
       )}
 
-      {message.isBot && decoration && (
+      {message.isBot && decoration && isFirstInGroup && (
         <motion.div 
           className="absolute -top-2 sm:-top-3 -left-1 text-xs sm:text-sm text-blue-400"
           animate={{ 
@@ -197,61 +254,78 @@ export default function ChatMessage({ message }: { message: Message }) {
         </motion.div>
       )}
 
-      {message.isBot && (
-        <Avatar className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 border border-blue-500/50 shadow-lg bg-slate-900">
+      {/* Only show avatar for bot messages at the start of a group */}
+      {message.isBot && isFirstInGroup ? (
+        <Avatar className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 border border-blue-500/30 shadow-md bg-slate-950 mr-0.5">
           <motion.div
-            whileHover={{ scale: 1.1, rotate: [0, -5, 5, 0] }}
+            whileHover={{ scale: 1.05, rotate: [0, -5, 5, 0] }}
             transition={{ rotate: { duration: 0.5 } }}
           >
-            <div className="w-full h-full rounded-full flex items-center justify-center bg-gradient-to-br from-blue-900 to-slate-900 border border-blue-500/30">
+            <div className="w-full h-full rounded-full flex items-center justify-center bg-gradient-to-br from-blue-900 to-slate-950 border border-blue-500/20">
               <img
                 src="/images/mirai.png"
-                alt="Bot Logo"
-                className="w-full h-full object-contain rounded-full"
+                alt="AI Assistant"
+                className="w-full h-full p-1 object-contain rounded-full"
               />
             </div>
           </motion.div>
         </Avatar>
-      )}
-
+      ) : message.isBot ? (
+        <div className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 mr-0.5"></div>
+      ) : null}
 
       <motion.div
         initial={message.isBot ? { x: -10, opacity: 0 } : { x: 10, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.3 }}
-        whileHover={message.isBot ? { scale: 1.02 } : { scale: 1 }}
+        whileHover={message.isBot && !isTyping ? { scale: 1.01 } : { scale: 1 }}
         onHoverStart={handleBotMessageHover}
-        className={cn("rounded-xl", {
+        className={cn("", {
           "w-auto max-w-[85%] ml-auto flex justify-end": !message.isBot,
-          "w-auto max-w-[85%] flex flex-initial justify-start ml-2 sm:ml-3": message.isBot,
+          "w-auto max-w-[85%] flex flex-initial justify-start": message.isBot,
         })}
       >
         <Card
           className={cn(
-            "px-2.5 py-1.5 sm:px-3 sm:py-2 text-[10px] sm:text-xs overflow-hidden",
+            "px-3 py-1.5 sm:px-3.5 sm:py-2 text-[11px] sm:text-xs overflow-hidden",
             {
-              "bg-blue-600 text-white border border-blue-500/50 shadow-md hover:shadow-lg w-auto inline-block": !message.isBot,
-              "bg-slate-900/90 backdrop-blur-md text-white border border-blue-400/30 shadow-md hover:shadow-lg w-auto flex flex-col": message.isBot,
+              "bg-gradient-to-r from-blue-600 to-blue-700 text-white border border-blue-500/50 shadow-md hover:shadow-lg w-auto inline-block": !message.isBot,
+              "bg-slate-900/90 backdrop-blur-md text-white border border-blue-400/20 shadow-md hover:shadow-lg w-auto flex flex-col": message.isBot,
             }
           )}
+          style={bubbleStyles}
         >
-          {/* Futuristic tech pattern overlay */}
+          {/* Enhanced futuristic tech pattern overlay for bot messages */}
           {message.isBot && (
-            <div className="absolute inset-0 opacity-5 pointer-events-none">
+            <div className="absolute inset-0 opacity-5 pointer-events-none overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-full" 
                 style={{ 
                   backgroundImage: `
-                    radial-gradient(circle at 10% 20%, rgba(30, 64, 255, 0.2) 0%, transparent 20%),
-                    radial-gradient(circle at 90% 80%, rgba(30, 64, 255, 0.2) 0%, transparent 20%),
-                    linear-gradient(60deg, transparent 0%, rgba(30, 64, 255, 0.1) 100%)
+                    radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.3) 0%, transparent 15%),
+                    radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.3) 0%, transparent 15%),
+                    linear-gradient(60deg, transparent 0%, rgba(59, 130, 246, 0.1) 100%)
                   `,
                   backgroundSize: '100% 100%'
+                }}
+              />
+              {/* Animated gradient line */}
+              <motion.div 
+                className="absolute h-[1px] bg-gradient-to-r from-transparent via-blue-400/40 to-transparent"
+                style={{ width: '150%', left: '-25%' }}
+                animate={{ 
+                  top: ['0%', '100%', '0%'],
+                  opacity: [0, 0.5, 0],
+                }}
+                transition={{ 
+                  duration: Math.random() * 5 + 10, 
+                  repeat: Infinity,
+                  ease: 'linear' 
                 }}
               />
             </div>
           )}
 
-          <div className={cn("prose prose-xs sm:prose-xs break-words leading-relaxed font-normal text-[11px] sm:text-xs overflow-hidden", {
+          <div className={cn("prose prose-sm break-words leading-relaxed font-normal text-[11px] sm:text-xs overflow-hidden", {
             "prose-invert": true,
             "w-full min-w-0 max-w-full": message.isBot,
             "w-auto max-w-full": !message.isBot,
@@ -325,48 +399,79 @@ export default function ChatMessage({ message }: { message: Message }) {
                   ),
                 }}
               >
-                {message.content}
+                {displayedContent}
               </ReactMarkdown>
             )}
-          </div>
-
-          <div className="flex justify-between items-center mt-1">
-            <div className="flex items-center gap-2">
-              {message.isBot && (
-                <>
-                  <button 
-                    onClick={() => message.onRegenerateAnswer && message.onRegenerateAnswer()}
-                    className="text-[9px] sm:text-[10px] text-blue-400 hover:text-blue-300 flex items-center gap-1 opacity-60 hover:opacity-100 transition-opacity"
-                  >
-                    <svg 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      width="12" 
-                      height="12" 
-                      viewBox="0 0 24 24" 
-                      fill="none" 
-                      stroke="currentColor" 
-                      strokeWidth="2" 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round"
-                    >
-                      <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                      <path d="M3 3v5h5" />
-                      <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
-                      <path d="M16 16h5v5" />
-                    </svg>
-                    再生成
-                  </button>
-
-                  <SaveChatAsNote message={message} />
-                </>
-              )}
-            </div>
-            {message.timestamp && (
-              <div className="text-[9px] sm:text-[10px] text-blue-300/70 font-mono ml-auto">
-                {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-              </div>
+            
+            {/* Typing indicator */}
+            {isTyping && (
+              <motion.div 
+                className="inline-flex items-center gap-1 text-blue-300 h-4 pl-1"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                <div className="w-1 h-1 rounded-full bg-blue-400 animate-pulse" style={{ animationDelay: "0ms" }}></div>
+                <div className="w-1 h-1 rounded-full bg-blue-400 animate-pulse" style={{ animationDelay: "150ms" }}></div>
+                <div className="w-1 h-1 rounded-full bg-blue-400 animate-pulse" style={{ animationDelay: "300ms" }}></div>
+              </motion.div>
             )}
           </div>
+
+          {/* Show action buttons only when last in a group */}
+          {isLastInGroup && !isTyping && (
+            <div className="flex justify-between items-center mt-1.5">
+              <div className="flex items-center gap-2">
+                {message.isBot && (
+                  <>
+                    <button 
+                      onClick={() => message.onRegenerateAnswer && message.onRegenerateAnswer()}
+                      className="text-[9px] sm:text-[10px] text-blue-400 hover:text-blue-300 flex items-center gap-1 opacity-60 hover:opacity-100 transition-all hover:scale-105"
+                    >
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        width="12" 
+                        height="12" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        strokeWidth="2" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round"
+                      >
+                        <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                        <path d="M3 3v5h5" />
+                        <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                        <path d="M16 16h5v5" />
+                      </svg>
+                      再生成
+                    </button>
+
+                    <SaveChatAsNote message={message} />
+                  </>
+                )}
+              </div>
+              
+              {/* Reaction buttons (new feature) */}
+              {message.isBot && (
+                <div className="flex gap-1 mr-1">
+                  <motion.button
+                    className="text-blue-400/50 hover:text-blue-300 transition-colors text-[10px]"
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    👍
+                  </motion.button>
+                  <motion.button
+                    className="text-blue-400/50 hover:text-blue-300 transition-colors text-[10px]"
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    👎
+                  </motion.button>
+                </div>
+              )}
+            </div>
+          )}
         </Card>
       </motion.div>
     </div>

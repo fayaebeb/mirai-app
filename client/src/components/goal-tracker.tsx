@@ -59,15 +59,15 @@ export function GoalTracker() {
       setDueDate(undefined);
       setIsAddDialogOpen(false);
       toast({
-        title: "目標を追加しました",
-        description: "新しい目標が追加されました。",
+        title: "タスクを追加しました",
+        description: "新しいタスクが追加されました。",
       });
     },
     onError: (error) => {
       console.error("Error creating goal:", error);
       toast({
         title: "エラーが発生しました",
-        description: "目標の追加に失敗しました。もう一度お試しください。",
+        description: "タスクの追加に失敗しました。もう一度お試しください。",
         variant: "destructive"
       });
     }
@@ -97,7 +97,7 @@ export function GoalTracker() {
       console.error("Error updating goal:", error);
       toast({
         title: "エラーが発生しました",
-        description: "目標の更新に失敗しました。もう一度お試しください。",
+        description: "タスクの更新に失敗しました。もう一度お試しください。",
         variant: "destructive"
       });
     }
@@ -112,15 +112,15 @@ export function GoalTracker() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/goals'] });
       toast({
-        title: "目標を削除しました",
-        description: "目標が削除されました。",
+        title: "タスクを削除しました",
+        description: "タスクが削除されました。",
       });
     },
     onError: (error) => {
       console.error("Error deleting goal:", error);
       toast({
         title: "エラーが発生しました",
-        description: "目標の削除に失敗しました。もう一度お試しください。",
+        description: "タスクの削除に失敗しました。もう一度お試しください。",
         variant: "destructive"
       });
     }
@@ -146,7 +146,7 @@ export function GoalTracker() {
   if (error) {
     return (
       <div className="p-4 bg-red-100 text-red-800 rounded-md">
-        目標の読み込み中にエラーが発生しました。
+        タスクの読み込み中にエラーが発生しました。
       </div>
     );
   }
@@ -202,7 +202,7 @@ export function GoalTracker() {
                 transition={{ duration: 2, repeat: Infinity }}
               />
             </div>
-            <CardTitle className="text-base sm:text-lg">目標トラッカー</CardTitle>
+            <CardTitle className="text-base sm:text-lg">タスク</CardTitle>
           </div>
           
           <div className="flex items-center gap-2 mt-1 sm:mt-0">
@@ -241,7 +241,8 @@ export function GoalTracker() {
         )}
       </CardHeader>
       
-      <CardContent className="flex-grow overflow-hidden pb-1 flex flex-col min-h-0">
+        <CardContent className="flex-grow overflow-hidden pb-1 flex flex-col min-h-0">
+
         {isLoading ? (
           <div className="flex justify-center items-center h-24">
             <div className="loading-spinner"></div>
@@ -249,8 +250,8 @@ export function GoalTracker() {
         ) : goals.length === 0 ? (
           <div className="text-center py-6 text-muted-foreground">
             <Target className="mx-auto h-12 w-12 text-muted-foreground/30 mb-2" />
-            <p>まだ目標が設定されていません。</p>
-            <p className="text-sm">新しい目標を追加して、進捗を追跡しましょう。</p>
+            <p>まだタスクが設定されていません。</p>
+            <p className="text-sm">新しいタスクを追加して、進捗を追跡しましょう。</p>
           </div>
         ) : (
           <ScrollArea className="h-full pr-4 min-h-[calc(100%-20px)] flex-grow flex-1">
@@ -260,7 +261,7 @@ export function GoalTracker() {
                 <div className="mb-4">
                   <h3 className="flex items-center gap-1.5 font-medium mb-2 text-amber-500">
                     <Clock className="h-4 w-4" />
-                    <span>期限間近の目標</span>
+                    <span>期限間近のタスク</span>
                   </h3>
                   <div className="space-y-2">
                     <AnimatePresence>
@@ -309,7 +310,7 @@ export function GoalTracker() {
                 <div className="mb-4">
                   <h3 className="flex items-center gap-1.5 font-medium mb-2 text-red-500">
                     <ArrowUpCircle className="h-4 w-4" />
-                    <span>期限超過の目標</span>
+                    <span>期限超過のタスク</span>
                   </h3>
                   <div className="space-y-2">
                     <AnimatePresence>
@@ -360,7 +361,7 @@ export function GoalTracker() {
                 <div>
                   <h3 className="flex items-center gap-1.5 font-medium mb-2">
                     <Rocket className="h-4 w-4 text-blue-500" />
-                    <span>進行中の目標</span>
+                    <span>進行中のタスク</span>
                   </h3>
                   <div className="space-y-2">
                     <AnimatePresence>
@@ -411,7 +412,7 @@ export function GoalTracker() {
                 <div>
                   <h3 className="flex items-center gap-1.5 font-medium mb-2 text-muted-foreground">
                     <TrendingUp className="h-4 w-4 text-green-500" />
-                    <span>達成済みの目標</span>
+                    <span>達成済みのタスク</span>
                   </h3>
                   <div className="space-y-2">
                     <AnimatePresence>
@@ -464,20 +465,20 @@ export function GoalTracker() {
           <DialogTrigger asChild>
             <Button className="w-full hidden sm:flex" variant="outline">
               <Plus className="h-4 w-4 mr-2" />
-              新しい目標を追加
+              新しいタスクを追加
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>新しい目標を追加</DialogTitle>
+              <DialogTitle>新しいタスクを追加</DialogTitle>
               <DialogDescription>
-                達成したい目標を入力してください。
+                達成したいタスクを入力してください。
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmitGoal}>
               <div className="py-4 space-y-4">
                 <Input
-                  placeholder="目標を入力..."
+                  placeholder="タスクを入力..."
                   value={newGoalDescription}
                   onChange={(e) => setNewGoalDescription(e.target.value)}
                   className="w-full"

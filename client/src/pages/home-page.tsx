@@ -381,21 +381,21 @@ export default function HomePage() {
                     className="data-[state=active]:bg-blue-600/20 data-[state=active]:text-blue-300 gap-1.5"
                   >
                     <Server className="h-3.5 w-3.5" />
-                    <span>Chat</span>
+                    <span>ホーム</span>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="notes" 
                     className="data-[state=active]:bg-blue-600/20 data-[state=active]:text-blue-300 gap-1.5"
                   >
                     <Book className="h-3.5 w-3.5" />
-                    <span>Notes</span>
+                    <span>ノート</span>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="goals" 
                     className="data-[state=active]:bg-blue-600/20 data-[state=active]:text-blue-300 gap-1.5"
                   >
                     <Target className="h-3.5 w-3.5" />
-                    <span>Goals</span>
+                    <span>タスク</span>
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -419,17 +419,17 @@ export default function HomePage() {
                   {activeTab === "chat" ? (
                     <>
                       <Book className="h-4 w-4" />
-                      <span className="sr-only sm:not-sr-only sm:text-xs">Notes</span>
+                      <span className="sr-only sm:not-sr-only sm:text-xs">ノート</span>
                     </>
                   ) : activeTab === "notes" ? (
                     <>
                       <Target className="h-4 w-4" />
-                      <span className="sr-only sm:not-sr-only sm:text-xs">Goals</span>
+                      <span className="sr-only sm:not-sr-only sm:text-xs">タスク</span>
                     </>
                   ) : (
                     <>
                       <Server className="h-4 w-4" />
-                      <span className="sr-only sm:not-sr-only sm:text-xs">Chat</span>
+                      <span className="sr-only sm:not-sr-only sm:text-xs">ホーム</span>
                     </>
                   )}
                 </Button>

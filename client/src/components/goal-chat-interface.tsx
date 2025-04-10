@@ -342,9 +342,9 @@ export function GoalChatInterface() {
       const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
       if (scrollContainer) {
         scrollContainer.scrollTo({
-  top: scrollContainer.scrollHeight,
-  behavior: 'smooth',
-});
+          top: scrollContainer.scrollHeight,
+          behavior: 'smooth',
+        });
 
       }
     }
@@ -414,8 +414,8 @@ export function GoalChatInterface() {
                   transition={{ duration: 2, repeat: Infinity }}
                 />
               </div>
-              <span className="text-sm sm:text-base font-semibold">目標アシスタント</span>
-              <Badge variant="outline" className="ml-1 bg-blue-500/10 text-xs py-0">AI</Badge>
+              <span className="text-sm sm:text-base font-semibold">タスクアシスタント</span>
+              <Badge variant="outline" className="ml-1 bg-blue-500/10 text-xs py-0">ミライAI</Badge>
             </div>
 
             <div className="flex items-center gap-1">
@@ -494,7 +494,7 @@ export function GoalChatInterface() {
                 />
               </div>
               
-              <h3 className="text-xl font-medium mb-3 text-blue-500">目標アシスタントへようこそ</h3>
+              <h3 className="text-xl font-medium mb-3 text-blue-500">ミライタスクアシスタントへようこそ</h3>
               <p className="max-w-md text-muted-foreground mb-6">
                 目標の設定から達成までをサポートします。何でもお気軽にご相談ください。
               </p>

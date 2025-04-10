@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ChatPDFExport } from "./chat-pdf-export";
+
 
 // Define a type for optimistic messages that uses string IDs instead of numbers
 type OptimisticMessage = {
@@ -69,7 +70,7 @@ const Tutorial = ({ onClose }: { onClose: () => void }) => {
 
   return (
     <motion.div
-      className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 overflow-y-auto py-10"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -506,6 +507,13 @@ export const ChatInterface = () => {
 
       // Force a refresh of the messages query
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+      
+      // Scroll to bottom when the new message appears
+      setTimeout(() => {
+        if (messageEndRef.current) {
+          messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
     },
     onError: (error) => {
       console.error("Error sending message:", error);
@@ -543,24 +551,92 @@ export const ChatInterface = () => {
     sendMessage.mutate(input);
   };
 
+  // Define type for grouped messages
+  type MessageGroup = {
+    sender: 'user' | 'bot';
+    messages: Message[];
+    lastTimestamp: Date;
+  };
+
+  // Group messages by sender to enable better visualization and collapsing
+  const groupedMessages = useMemo(() => {
+    if (!messages.length) return [];
+    
+    return messages.reduce((groups: MessageGroup[], message) => {
+      const lastGroup = groups[groups.length - 1];
+      
+      if (lastGroup && (lastGroup.sender === 'bot') === message.isBot) {
+        // Same sender as previous message group - add to existing group
+        lastGroup.messages.push(message);
+        lastGroup.lastTimestamp = new Date(message.timestamp);
+      } else {
+        // Different sender - create a new group
+        groups.push({
+          sender: message.isBot ? 'bot' : 'user',
+          messages: [message],
+          lastTimestamp: new Date(message.timestamp)
+        });
+      }
+      
+      return groups;
+    }, []);
+  }, [messages]);
+
+  // Common quick replies/suggestions based on conversation context
+  const quickReplies = [
+    { text: "詳細を教えて", icon: <Sparkles className="h-3 w-3" /> },
+    { text: "例を示して", icon: <Lightbulb className="h-3 w-3" /> },
+    { text: "まとめて", icon: <FileText className="h-3 w-3" /> },
+  ];
+
+  // Handle quick reply selection
+  const handleQuickReplySelect = (text: string) => {
+    setInput(text);
+    inputRef.current?.focus();
+  };
+
+  // Get random status message
+  const getStatusMessage = () => {
+    const messages = [
+      "接続完了", 
+      "データリンク確立", 
+      "ライブ接続", 
+      "メモリ最適化完了"
+    ];
+    return messages[Math.floor(Math.random() * messages.length)];
+  };
+
+  // Network status with emoji
+  const networkStatus = isOnline ? (
+    <span className="flex items-center gap-1 text-[10px] text-blue-400">
+      <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+      {getRandomEmoji(onlineEmojis)} {getStatusMessage()}
+    </span>
+  ) : (
+    <span className="flex items-center gap-1 text-[10px] text-red-400">
+      <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-400"></span>
+      {getRandomEmoji(offlineEmojis)} オフライン
+    </span>
+  );
+  
   return (
-    <Card className="w-full h-full md:max-w-[90%] mx-auto flex flex-col overflow-hidden relative border-muted-foreground/20">
+    <Card className="w-full h-full md:max-w-[90%] mx-auto flex flex-col overflow-hidden relative border-blue-600/20 shadow-lg shadow-blue-900/10 bg-gradient-to-b from-slate-950 to-slate-900">
       {showTutorial && <Tutorial onClose={() => setShowTutorial(false)} />}
 
       {/* Confirmation Dialog for clearing chat history */}
       <AlertDialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-slate-900 border border-blue-500/30">
           <AlertDialogHeader>
-            <AlertDialogTitle>チャット履歴をクリアしますか？</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-blue-100">チャット履歴をクリアしますか？</AlertDialogTitle>
+            <AlertDialogDescription className="text-blue-300/70">
               この操作は取り消せません。すべてのチャットメッセージがデータベースから削除されます。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <AlertDialogCancel className="border-blue-500/30 hover:bg-blue-950/50 text-blue-300">キャンセル</AlertDialogCancel>
             <AlertDialogAction 
               onClick={() => clearChatHistory.mutate()}
-              className="bg-red-500 hover:bg-red-600"
+              className="bg-red-600 hover:bg-red-700 text-white"
             >
               クリア
             </AlertDialogAction>
@@ -568,12 +644,26 @@ export const ChatInterface = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Chat Header */}
-      <div className="chat-header flex-shrink-0 border-b p-2 flex justify-between items-center bg-muted/30 sticky top-0 left-0 right-0 z-20 will-change-transform">
+      {/* Chat Header - Enhanced with network status and more visual cues */}
+      <div className="chat-header flex-shrink-0 border-b border-blue-900/30 p-2 sm:p-3 flex justify-between items-center bg-slate-900/80 backdrop-blur-md sticky top-0 left-0 right-0 z-20 shadow-sm">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-blue-400" />
-
+          <div className="flex items-center gap-1.5">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.3 }}
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-900 shadow-inner shadow-blue-500/20"
+            >
+              <Sparkles className="h-3.5 w-3.5 text-blue-100" />
+            </motion.div>
+            <div className="flex flex-col">
+              <span className="text-xs font-semibold text-blue-100">ミライ</span>
+              
+              {networkStatus}
+            </div>
+          </div>
         </div>
+        
         <div className="flex items-center gap-2">
           {messages.length > 0 && (
             <TooltipProvider>
@@ -582,85 +672,176 @@ export const ChatInterface = () => {
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    className="h-8 w-8 text-blue-400 hover:text-red-400 hover:bg-red-900/10 rounded-full"
                     onClick={handleClearChat}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>
+                <TooltipContent className="bg-slate-800 border border-blue-500/30">
                   <p>チャット履歴をクリア</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           )}
+          
           <ChatPDFExport messages={messages} />
         </div>
       </div>
 
-      {/* Scrollable Chat Area */}
-      <div className="flex-1 overflow-hidden overscroll-none">
-        <ScrollArea className="h-full px-1 sm:px-4 py-3 w-full -webkit-overflow-scrolling-touch" ref={scrollAreaRef}>
-          <div className="space-y-0 w-full max-w-full">
+      {/* Scrollable Chat Area - Enhanced with better visual hierarchy and feedback */}
+        <div className="flex-1 overflow-y-auto overscroll-none">
+
+        <ScrollArea 
+          className="h-full px-1 sm:px-4 py-3 w-full -webkit-overflow-scrolling-touch bg-gradient-to-b from-slate-900 to-slate-950" 
+          ref={scrollAreaRef}
+        >
+          <div className="space-y-2 w-full max-w-full">
             {messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-60 text-center">
+                <div className="flex flex-col items-center justify-center min-h-[300px] sm:min-h-[400px] text-center py-10">
+
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
+                  className="p-6 rounded-2xl bg-blue-900/10 border border-blue-500/10 max-w-sm"
                 >
-                  <Sparkles className="h-10 w-10 text-pink-300 mb-3" />
-                  <h3 className="text-lg font-medium mb-2">対話を始めましょう</h3>
-                  <p className="text-muted-foreground max-w-xs mx-auto text-sm sm:text-base">
+                  <div className="relative mb-4 mx-auto w-14 h-14 flex items-center justify-center">
+                    <motion.div
+                      className="absolute inset-0 rounded-full border border-blue-400/30"
+                      animate={{ 
+                        scale: [1, 1.1, 1],
+                        opacity: [0.3, 0.5, 0.3],
+                        rotate: 360
+                      }}
+                      transition={{ 
+                        duration: 4, 
+                        repeat: Infinity, 
+                        ease: "linear" 
+                      }}
+                    />
+                    <Sparkles className="h-10 w-10 text-blue-400" />
+                  </div>
+                  
+                  <h3 className="text-lg font-medium mb-2 text-blue-100">対話を始めましょう</h3>
+                  <p className="text-blue-300/80 max-w-xs mx-auto text-sm">
                     下のテキストボックスにメッセージを入力して、ミライと対話を開始してください
                   </p>
+                  
+                  {/* New: Quick start suggestions */}
+                  <div className="mt-5 space-y-2">
+                    <p className="text-xs text-blue-400 font-semibold">試してみる:</p>
+                    <div className="flex flex-wrap gap-2 justify-center">
+                      {promptCategories[0].prompts.slice(0, 3).map((prompt, i) => (
+                        <motion.button
+                          key={i}
+                          onClick={() => handleEmotionSelect(prompt.message || prompt.text)}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="text-xs px-3 py-1.5 rounded-full bg-blue-900/30 text-blue-300 border border-blue-500/20 hover:bg-blue-800/40 transition-colors"
+                        >
+                          {prompt.text}
+                        </motion.button>
+                      ))}
+                    </div>
+                  </div>
                 </motion.div>
               </div>
             ) : (
-              messages.map((message: Message) => {
-                const lastUserMessageIndex = message.isBot
-                  ? messages.findIndex((m: Message) => m.id === message.id) - 1
-                  : -1;
-                const lastUserMessage = lastUserMessageIndex >= 0 ? messages[lastUserMessageIndex] : null;
+              // Enhanced with message grouping
+              groupedMessages.map((group: MessageGroup, groupIndex: number) => (
+                <div key={`group-${groupIndex}`} className="mb-3">
+                  {/* Messages from the same sender grouped together */}
+                  <div className={`flex flex-col ${group.sender === 'user' ? 'items-end' : 'items-start'}`}>
+                    {group.messages.map((message: Message, i: number) => {
+                      // Find the corresponding user message for bot messages to enable regeneration
+                      const lastUserMessageIndex = message.isBot
+                        ? messages.findIndex((m) => m.id === message.id) - 1
+                        : -1;
+                      const lastUserMessage = lastUserMessageIndex >= 0 ? messages[lastUserMessageIndex] : null;
 
-                const handleRegenerateAnswer = () => {
-                  if (lastUserMessage?.content) {
-                    sendMessage.mutate(lastUserMessage.content);
-                  }
-                };
+                      const handleRegenerateAnswer = () => {
+                        if (lastUserMessage?.content) {
+                          sendMessage.mutate(lastUserMessage.content);
+                        }
+                      };
 
-                // Add subtle visual separator between consecutive messages from the same sender
-                const prevMessage = messages[messages.indexOf(message) - 1];
-                const showSeparator = prevMessage && prevMessage.isBot === message.isBot;
-
-                return (
-                  <div className="w-full max-w-full px-1 sm:px-2" key={typeof message.id === 'string' ? message.id : `msg-${message.id}`}>
-                    {showSeparator && message.isBot && <div className="w-full border-t border-blue-400/5 my-1 mx-auto" />}
-                    <ChatMessage
-                      message={{
-                        ...message,
-                        onRegenerateAnswer: message.isBot ? handleRegenerateAnswer : undefined,
-                      }}
-                    />
+                      // First message in a group shows the avatar
+                      const isFirstInGroup = i === 0;
+                      
+                      return (
+                        <div 
+                          className={`w-full max-w-full ${i > 0 ? 'mt-1' : 'mt-0'}`} 
+                          key={typeof message.id === 'string' ? message.id : `msg-${message.id}`}
+                        >
+                          <ChatMessage
+                            message={{
+                              ...message,
+                              onRegenerateAnswer: message.isBot ? handleRegenerateAnswer : undefined,
+                            }}
+                            isFirstInGroup={isFirstInGroup}
+                            isLastInGroup={i === group.messages.length - 1}
+                          />
+                        </div>
+                      );
+                    })}
+                    
+                    {/* Timestamp shown once per group at the end */}
+                    <div className={`text-[9px] text-blue-400/50 font-mono mt-1 ${group.sender === 'user' ? 'mr-2' : 'ml-2'}`}>
+                      {group.lastTimestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </div>
                   </div>
-                );
-              })
+                  
+                  {/* Quick replies after bot messages */}
+                  {group.sender === 'bot' && groupIndex === groupedMessages.length - 1 && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3, duration: 0.3 }}
+                      className="ml-10 mt-2 flex flex-wrap gap-2"
+                    >
+                      {quickReplies.map((reply, i) => (
+                        <motion.button
+                          key={i}
+                          onClick={() => handleQuickReplySelect(reply.text)}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="text-xs px-2 py-1 rounded-full bg-blue-900/20 text-blue-400 border border-blue-500/20 hover:bg-blue-900/40 transition-colors flex items-center gap-1.5"
+                        >
+                          {reply.icon}
+                          <span>{reply.text}</span>
+                        </motion.button>
+                      ))}
+                    </motion.div>
+                  )}
+                </div>
+              ))
             )}
 
+            {/* Enhanced loading state */}
             {sendMessage.isPending && (
-              <div className="flex justify-center pt-2 pb-4">
+              <motion.div 
+                className="flex justify-start pt-2 pb-4 pl-2"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
+              >
                 <ChatLoadingIndicator variant="character" message="ミライちゃんが処理中..." />
-              </div>
+              </motion.div>
             )}
+            
             <div ref={messageEndRef} />
-            {/* Add some bottom padding to ensure content isn't hidden behind the input area on small screens */}
-            <div className="h-4" /> 
+            {/* Extra padding on bottom to prevent cut-off */}
+            <div className="h-6" /> 
           </div>
         </ScrollArea>
       </div>
 
-      {/* Message Input Form - Fixed at bottom */}
-      <form onSubmit={handleSubmit} className="flex-shrink-0 p-2 sm:p-3 border-t flex flex-col gap-1.5 bg-background sticky bottom-0 left-0 right-0 z-10">
+      {/* Message Input Form - Enhanced with visual feedback and better usability */}
+      <form 
+        onSubmit={handleSubmit} 
+        className="flex-shrink-0 p-2 sm:p-3 border-t border-blue-900/30 flex flex-col gap-1.5 bg-slate-900/90 backdrop-blur-md sticky bottom-0 left-0 right-0 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.2)]"
+      >
         <AnimatePresence>
           {showEmotions && (
             <div className="absolute bottom-full left-0 w-full flex justify-center">
@@ -669,7 +850,7 @@ export const ChatInterface = () => {
           )}
         </AnimatePresence>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-end">
           <div className="relative flex-1 min-w-0">
             <Textarea
               ref={inputRef}
@@ -680,7 +861,7 @@ export const ChatInterface = () => {
                 e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
               }}
               placeholder="ミライに何かお手伝いできますか？..."
-              className="pr-10 focus:ring-2 focus:ring-pink-100 text-xs sm:text-sm min-h-[36px] max-h-[180px] resize-none py-1.5"
+              className="pr-10 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-xs sm:text-sm min-h-[40px] max-h-[180px] resize-none py-2 px-3 bg-slate-800/50 border-blue-900/30 placeholder:text-blue-400/50 rounded-xl"
               rows={1}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey && !isMobile) {
@@ -689,42 +870,61 @@ export const ChatInterface = () => {
                 }
               }}
             />
+            
+            {/* Prompt suggestions button - enhanced with animation */}
             <TooltipProvider key="prompt-tooltip">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <motion.button
                     type="button"
-                    className="absolute right-2 top-2 text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 px-1.5 py-1 rounded-md hover:bg-accent/50"
-                    whileHover={{ scale: 1.1 }}
+                    className="absolute right-3 top-2 text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1 px-1.5 py-1 rounded-md hover:bg-blue-900/40"
+                    whileHover={{ scale: 1.1, rotate: [0, -5, 5, 0] }}
                     whileTap={{ scale: 0.9 }}
                     onClick={() => setShowEmotions((prev) => !prev)}
                   >
                     <Lightbulb className="h-4 w-4" />
                   </motion.button>
                 </TooltipTrigger>
-                <TooltipContent>
+                <TooltipContent className="bg-slate-800 border border-blue-500/30">
                   <p>プロンプト一覧</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
 
+          {/* Enhanced send button with loading animation */}
           <motion.button
             type="submit"
-            disabled={sendMessage.isPending}
-            className="px-2.5 sm:px-3.5 py-1.5 h-[36px] rounded-full bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 text-white shadow-[0_0_10px_rgba(255,255,255,0.3)] flex items-center gap-1 disabled:opacity-70 flex-shrink-0 hover:shadow-[0_0_20px_rgba(255,255,255,0.6)] transition-shadow"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            disabled={sendMessage.isPending || !input.trim()}
+            className={`px-3 sm:px-4 py-2 h-10 rounded-xl text-white flex items-center gap-1.5 flex-shrink-0 transition-all ${
+              input.trim() 
+                ? "bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 shadow-lg shadow-blue-900/30 hover:shadow-blue-900/50" 
+                : "bg-slate-700/50 text-slate-400"
+            }`}
+            whileHover={input.trim() ? { scale: 1.03 } : {}}
+            whileTap={input.trim() ? { scale: 0.97 } : {}}
           >
-            <Send className="h-4 w-4" />
-            <span className="text-xs hidden sm:inline">送信する</span>
-            <motion.span
-              className="absolute -top-1 -right-1 text-xs"
-              animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-              transition={{ duration: 3, repeat: Infinity }}
-            >
-              ⚡
-            </motion.span>
+            {sendMessage.isPending ? (
+              <div className="flex items-center gap-1.5">
+                <div className="w-1 h-1 rounded-full bg-white animate-bounce" style={{ animationDelay: "0ms" }} />
+                <div className="w-1 h-1 rounded-full bg-white animate-bounce" style={{ animationDelay: "150ms" }} />
+                <div className="w-1 h-1 rounded-full bg-white animate-bounce" style={{ animationDelay: "300ms" }} />
+              </div>
+            ) : (
+              <>
+                <Send className="h-4 w-4" />
+                <span className="text-xs hidden sm:inline font-medium">送信する</span>
+                {input.trim() && (
+                  <motion.span
+                    className="absolute -top-1 -right-1 text-xs"
+                    animate={{ rotate: 360, scale: [1, 1.2, 1] }}
+                    transition={{ duration: 3, repeat: Infinity }}
+                  >
+                    ⚡
+                  </motion.span>
+                )}
+              </>
+            )}
           </motion.button>
         </div>
       </form>
