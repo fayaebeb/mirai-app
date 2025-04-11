@@ -1074,7 +1074,7 @@ export function EnhancedTaskTracker() {
 
               <DropdownMenuContent
                 align="end"
-                className="w-56 max-w-[90vw] max-h-[60vh] overflow-y-auto px-2"
+                className="w-56 max-w-[90vw] max-h-[40vh] overflow-y-auto px-2"
               >
             <DropdownMenuLabel>フィルタを選択</DropdownMenuLabel>
             <DropdownMenuSeparator />
