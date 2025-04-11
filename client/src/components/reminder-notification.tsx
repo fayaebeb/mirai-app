@@ -176,7 +176,7 @@ export function ReminderNotification({ goal, onDismiss }: ReminderNotificationPr
     if ('Notification' in window && Notification.permission === 'granted') {
       new Notification('タスクリマインダー', {
         body: goal.title,
-        icon: '/images/favicon.png'
+        icon: '/images/mirai.png'
       });
     }
   }, [goal]);
