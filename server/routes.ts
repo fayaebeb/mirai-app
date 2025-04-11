@@ -994,6 +994,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+  
+  // Get goals by category
+  app.get("/api/goals/category/:category", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const goals = await storage.getGoalsByUserId(req.user!.id);
+      const categoryGoals = goals.filter(goal => goal.category === req.params.category);
+      res.json(categoryGoals);
+    } catch (error) {
+      console.error("Error retrieving goals by category:", error);
+      res.status(500).json({
+        message: "Failed to retrieve goals by category",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  });
+  
+  // Get goals by priority
+  app.get("/api/goals/priority/:priority", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const goals = await storage.getGoalsByUserId(req.user!.id);
+      const priorityGoals = goals.filter(goal => goal.priority === req.params.priority);
+      res.json(priorityGoals);
+    } catch (error) {
+      console.error("Error retrieving goals by priority:", error);
+      res.status(500).json({
+        message: "Failed to retrieve goals by priority",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  });
+  
+  // Search goals
+  app.get("/api/goals/search", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const searchTerm = req.query.q as string;
+    
+    if (!searchTerm) {
+      return res.status(400).json({ error: "Search term is required" });
+    }
+
+    try {
+      const goals = await storage.getGoalsByUserId(req.user!.id);
+      const searchResults = goals.filter(goal => {
+        const titleMatch = goal.title.toLowerCase().includes(searchTerm.toLowerCase());
+        const descriptionMatch = goal.description.toLowerCase().includes(searchTerm.toLowerCase());
+        const categoryMatch = goal.category?.toLowerCase().includes(searchTerm.toLowerCase());
+        const tagsMatch = goal.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+        
+        return titleMatch || descriptionMatch || categoryMatch || tagsMatch;
+      });
+      
+      res.json(searchResults);
+    } catch (error) {
+      console.error("Error searching goals:", error);
+      res.status(500).json({
+        message: "Failed to search goals",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  });
 
   app.get("/api/goals/:id", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);

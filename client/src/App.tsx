@@ -5,8 +5,18 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
-import { AuthProvider } from "@/hooks/use-auth";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ProtectedRoute } from "./lib/protected-route";
+import { TaskReminderService } from "@/components/task-reminder-service";
+
+// Wrapper component that only renders the reminder service when authenticated
+function TaskReminders() {
+  const { user } = useAuth();
+  
+  if (!user) return null;
+  
+  return <TaskReminderService />;
+}
 
 function Router() {
   return (
@@ -23,6 +33,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <Router />
+        <TaskReminders />
         <Toaster />
       </AuthProvider>
     </QueryClientProvider>

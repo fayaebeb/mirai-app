@@ -31,7 +31,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ChatPDFExport } from "./chat-pdf-export";
-
+import { Badge } from "@/components/ui/badge";
 
 // Define a type for optimistic messages that uses string IDs instead of numbers
 type OptimisticMessage = {
@@ -657,7 +657,8 @@ export const ChatInterface = () => {
               <Sparkles className="h-3.5 w-3.5 text-blue-100" />
             </motion.div>
             <div className="flex flex-col">
-              <span className="text-xs font-semibold text-blue-100">ミライ</span>
+              <span className="text-xs font-semibold text-blue-100">ミライ<Badge variant="outline" className="ml-1 bg-blue-500/10 text-[10px] px-1 py-0.5 h-4 leading-none">AI</Badge>
+</span>
               
               {networkStatus}
             </div>

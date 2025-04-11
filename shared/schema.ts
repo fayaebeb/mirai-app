@@ -44,9 +44,19 @@ export const goals = pgTable("goals", {
   userId: integer("user_id")
     .notNull()
     .references(() => users.id),
+  title: text("title").notNull(),
   description: text("description").notNull(),
   completed: boolean("completed").notNull().default(false),
   dueDate: timestamp("due_date"),
+  priority: text("priority").default("medium"),
+  category: text("category"),
+  tags: text("tags").array(),
+  reminderTime: timestamp("reminder_time"),
+  // Recurring task fields
+  isRecurring: boolean("is_recurring").default(false),
+  recurringType: text("recurring_type"), // daily, weekly, monthly, custom
+  recurringInterval: integer("recurring_interval"), // e.g., every X days, weeks, etc.
+  recurringEndDate: timestamp("recurring_end_date"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -78,11 +88,34 @@ export const insertNoteSchema = createInsertSchema(notes).pick({
 });
 
 export const insertGoalSchema = createInsertSchema(goals).pick({
+  title: true,
   description: true,
   completed: true,
   dueDate: true,
+  priority: true,
+  category: true,
+  tags: true,
+  reminderTime: true,
+  isRecurring: true,
+  recurringType: true,
+  recurringInterval: true,
+  recurringEndDate: true,
 }).extend({
+  title: z.string().min(1, "タイトルは必須です"),
+  description: z.string().optional(),
   dueDate: z.string().or(z.date()).nullable().optional().transform(val => 
+    val ? new Date(val) : null
+  ),
+  priority: z.enum(["low", "medium", "high"]).optional().default("medium"),
+  category: z.string().optional(),
+  tags: z.array(z.string()).optional().default([]),
+  reminderTime: z.string().or(z.date()).nullable().optional().transform(val => 
+    val ? new Date(val) : null
+  ),
+  isRecurring: z.boolean().optional().default(false),
+  recurringType: z.enum(["daily", "weekly", "monthly", "custom"]).optional(),
+  recurringInterval: z.number().positive().optional(),
+  recurringEndDate: z.string().or(z.date()).nullable().optional().transform(val => 
     val ? new Date(val) : null
   )
 });

@@ -63,38 +63,38 @@ interface PromptCategory {
 
 const promptCategories: PromptCategory[] = [
   {
-    name: "目標管理 🎯",
+    name: "タスク管理 🎯",
     icon: <Target className="h-4 w-4" />,
     prompts: [
       {
-        text: "目標達成プラン✨",
-        message: "私の目標を達成するための具体的なアクションプランを教えてください。ステップごとに分解して、期日も含めて詳しく説明してください。",
-        description: "目標達成のための具体的なステップ計画を提案",
+        text: "タスク達成プラン✨",
+        message: "私のタスクを達成するための具体的なアクションプランを教えてください。ステップごとに分解して、期日も含めて詳しく説明してください。",
+        description: "タスク達成のための具体的なステップ計画を提案",
       },
       {
-        text: "目標設定アドバイス📝",
-        message: "効果的な目標設定のポイントについて教えてください。SMART目標とは何ですか？",
-        description: "適切な目標設定方法についてのアドバイス",
+        text: "タスク設定アドバイス📝",
+        message: "効果的なタスク設定のポイントについて教えてください。SMARTタスクとは何ですか？",
+        description: "適切なタスク設定方法についてのアドバイス",
       },
       {
         text: "モチベーション維持法🚀",
-        message: "目標達成のためのモチベーションを維持する方法を教えてください。やる気が出ない時の対処法も含めて。",
+        message: "タスク達成のためのモチベーションを維持する方法を教えてください。やる気が出ない時の対処法も含めて。",
         description: "モチベーション維持の戦略を提案",
       },
       {
-        text: "目標進捗確認📊",
-        message: "目標の進捗状況を効果的に確認・管理する方法について教えてください。",
+        text: "タスク進捗確認📊",
+        message: "タスクの進捗状況を効果的に確認・管理する方法について教えてください。",
         description: "進捗管理のベストプラクティス",
       },
       {
         text: "困難克服法💪",
-        message: "目標達成の過程で直面する困難や障害を克服するための方法を教えてください。",
+        message: "タスク達成の過程で直面する困難や障害を克服するための方法を教えてください。",
         description: "障害を乗り越えるための戦略",
       },
       {
-        text: "目標見直し方法🔄",
-        message: "目標が現実的でないと感じた時、どのように見直すべきですか？目標を調整する際のポイントを教えてください。",
-        description: "目標の再評価と調整方法",
+        text: "タスク見直し方法🔄",
+        message: "タスクが現実的でないと感じた時、どのように見直すべきですか？タスクを調整する際のポイントを教えてください。",
+        description: "タスクの再評価と調整方法",
       },
     ]
   },
@@ -104,22 +104,22 @@ const promptCategories: PromptCategory[] = [
     prompts: [
       {
         text: "習慣化の秘訣🔑",
-        message: "目標達成につながる良い習慣を形成するための効果的な方法を教えてください。",
+        message: "タスク達成につながる良い習慣を形成するための効果的な方法を教えてください。",
         description: "持続可能な習慣を作るコツ",
       },
       {
         text: "朝のルーティン☀️",
-        message: "生産性を高める朝のルーティンについてアドバイスください。目標達成に役立つ朝の習慣は？",
-        description: "目標達成を促進する朝の習慣",
+        message: "生産性を高める朝のルーティンについてアドバイスください。タスク達成に役立つ朝の習慣は？",
+        description: "タスク達成を促進する朝の習慣",
       },
       {
         text: "小さな成功の積み重ね📈",
-        message: "小さな成功体験を積み重ねて大きな目標を達成する方法について教えてください。",
+        message: "小さな成功体験を積み重ねて大きなタスクを達成する方法について教えてください。",
         description: "小さな成功の活用法",
       },
       {
         text: "悪習慣の断ち切り方🚫",
-        message: "目標達成の妨げになる悪い習慣を断ち切るための効果的な方法を教えてください。",
+        message: "タスク達成の妨げになる悪い習慣を断ち切るための効果的な方法を教えてください。",
         description: "悪習慣を克服する戦略",
       },
     ]
@@ -129,23 +129,23 @@ const promptCategories: PromptCategory[] = [
     icon: <BrainCircuit className="h-4 w-4" />,
     prompts: [
       {
-        text: "目標進捗分析📊",
-        message: "私の目標達成状況を分析して、改善点を指摘してください。",
-        description: "目標進捗の分析と改善点提案",
+        text: "タスク進捗分析📊",
+        message: "私のタスク達成状況を分析して、改善点を指摘してください。",
+        description: "タスク進捗の分析と改善点提案",
       },
       {
         text: "週間振り返り🔄",
-        message: "週間目標の振り返りをサポートしてください。何を振り返るべきかも教えてください。",
+        message: "週間タスクの振り返りをサポートしてください。何を振り返るべきかも教えてください。",
         description: "効果的な週間振り返りのガイド",
       },
       {
         text: "次のステップ提案➡️",
-        message: "現在の目標達成状況を踏まえて、次に取るべきステップを提案してください。",
+        message: "現在のタスク達成状況を踏まえて、次に取るべきステップを提案してください。",
         description: "次のアクションの提案",
       },
       {
         text: "成功要因分析✨",
-        message: "これまでの成功パターンを分析して、今後の目標達成にどう活かせるか教えてください。",
+        message: "これまでの成功パターンを分析して、今後のタスク達成にどう活かせるか教えてください。",
         description: "成功パターンの分析と活用法",
       },
     ]
@@ -244,7 +244,7 @@ export function GoalChatInterface() {
     queryKey: ['/api/goal-messages'],
     enabled: !!user,
   });
-  
+
   // Clear chat history mutation
   const clearChatHistoryMutation = useMutation({
     mutationFn: async () => {
@@ -254,16 +254,16 @@ export function GoalChatInterface() {
     onSuccess: () => {
       // Clear optimistic messages
       setOptimisticMessages([]);
-      
+
       // Clear the query cache
       queryClient.setQueryData(['/api/goal-messages'], []);
-      
+
       // Invalidate the messages query to ensure it's updated
       queryClient.invalidateQueries({ queryKey: ['/api/goal-messages'] });
-      
+
       toast({
         title: "会話履歴をクリアしました",
-        description: "目標アシスタントのチャット履歴が削除されました。",
+        description: "タスクアシスタントのチャット履歴が削除されました。",
       });
     },
     onError: (error) => {
@@ -291,7 +291,7 @@ export function GoalChatInterface() {
         timestamp: new Date(),
         sessionId: "optimistic",
       };
-      
+
       setOptimisticMessages(prev => [...prev, optimisticUserMessage]);
       return { optimisticUserMessage };
     },
@@ -305,10 +305,10 @@ export function GoalChatInterface() {
         timestamp: new Date(new Date(newBotMessage.timestamp).getTime() - 1000), // 1 second before bot response
         sessionId: newBotMessage.sessionId,
       };
-      
+
       // Remove our optimistic responses
       setOptimisticMessages([]);
-      
+
       // Update the messages in the cache with both the user message and bot response
       queryClient.setQueryData<Message[]>(['/api/goal-messages'], (oldMessages = []) => {
         // Check if the user message already exists to avoid duplicates
@@ -317,7 +317,7 @@ export function GoalChatInterface() {
           // Check if timestamps are close (within 5 seconds)
           Math.abs(new Date(m.timestamp).getTime() - new Date().getTime()) < 5000
         );
-        
+
         if (userMessageExists) {
           return [...oldMessages, newBotMessage];
         } else {
@@ -369,7 +369,7 @@ export function GoalChatInterface() {
     setTimeout(() => {
       textarea.focus();
       textarea.selectionStart = textarea.selectionEnd = start + text.length;
-      
+
       // Automatically adjust the textarea height
       textarea.style.height = "auto";
       textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`;
@@ -383,10 +383,10 @@ export function GoalChatInterface() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!messageText.trim()) return;
-    
+
     sendMessage.mutate(messageText);
     setMessageText("");
-    
+
     // Focus back on the input field after sending
     setTimeout(() => inputRef.current?.focus(), 0);
   };
@@ -465,10 +465,10 @@ export function GoalChatInterface() {
               </AlertDialog>
             </div>
           </CardTitle>
-          
+
         </div>
       </CardHeader>
-      
+
       <CardContent className="flex-grow overflow-hidden p-0">
         <ScrollArea ref={scrollAreaRef} className="min-h-[200px] h-full max-h-[calc(100vh-22rem)] md:max-h-[calc(100vh-11rem)] px-4 pt-4 flex-grow">
           {isLoadingMessages ? (
@@ -493,31 +493,31 @@ export function GoalChatInterface() {
                   className="h-16 w-16 mb-6 relative z-10"
                 />
               </div>
-              
+
               <h3 className="text-xl font-medium mb-3 text-blue-500">ミライタスクアシスタントへようこそ</h3>
               <p className="max-w-md text-muted-foreground mb-6">
-                目標の設定から達成までをサポートします。何でもお気軽にご相談ください。
+                タスクの設定から達成までをサポートします。何でもお気軽にご相談ください。
               </p>
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-lg w-full mb-4">
                 <Button 
                   variant="outline" 
                   className="text-left h-auto py-2 sm:py-3 justify-start border-blue-500/20 hover:bg-blue-500/5"
-                  onClick={() => handleEmotionSelect("目標達成のためのベストなアクションプランを教えてください。")}
+                  onClick={() => handleEmotionSelect("タスク達成のためのベストなアクションプランを教えてください。")}
                 >
                   <div className="flex items-start gap-2">
                     <Rocket className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 mt-0.5" />
                     <div>
-                      <p className="font-medium text-sm sm:text-base">目標達成プラン</p>
+                      <p className="font-medium text-sm sm:text-base">タスク達成プラン</p>
                       <p className="text-xs text-muted-foreground hidden sm:block">ステップごとの実行計画を提案</p>
                     </div>
                   </div>
                 </Button>
-                
+
                 <Button 
                   variant="outline" 
                   className="text-left h-auto py-2 sm:py-3 justify-start border-blue-500/20 hover:bg-blue-500/5"
-                  onClick={() => handleEmotionSelect("目標達成のモチベーションを維持する方法を教えてください。")}
+                  onClick={() => handleEmotionSelect("タスク達成のモチベーションを維持する方法を教えてください。")}
                 >
                   <div className="flex items-start gap-2">
                     <Star className="h-4 w-4 sm:h-5 sm:w-5 text-amber-500 mt-0.5" />
@@ -527,25 +527,25 @@ export function GoalChatInterface() {
                     </div>
                   </div>
                 </Button>
-                
+
                 <Button 
                   variant="outline" 
                   className="text-left h-auto py-2 sm:py-3 justify-start border-blue-500/20 hover:bg-blue-500/5"
-                  onClick={() => handleEmotionSelect("SMART目標の設定方法について教えてください。")}
+                  onClick={() => handleEmotionSelect("SMARTタスクの設定方法について教えてください。")}
                 >
                   <div className="flex items-start gap-2">
                     <Target className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 mt-0.5" />
                     <div>
-                      <p className="font-medium text-sm sm:text-base">効果的な目標設定</p>
-                      <p className="text-xs text-muted-foreground hidden sm:block">達成しやすい目標の立て方</p>
+                      <p className="font-medium text-sm sm:text-base">効果的なタスク設定</p>
+                      <p className="text-xs text-muted-foreground hidden sm:block">達成しやすいタスクの立て方</p>
                     </div>
                   </div>
                 </Button>
-                
+
                 <Button 
                   variant="outline" 
                   className="text-left h-auto py-2 sm:py-3 justify-start border-blue-500/20 hover:bg-blue-500/5"
-                  onClick={() => handleEmotionSelect("目標達成を妨げる障害を克服する方法を教えてください。")}
+                  onClick={() => handleEmotionSelect("タスク達成を妨げる障害を克服する方法を教えてください。")}
                 >
                   <div className="flex items-start gap-2">
                     <BrainCircuit className="h-4 w-4 sm:h-5 sm:w-5 text-purple-500 mt-0.5" />
@@ -556,7 +556,7 @@ export function GoalChatInterface() {
                   </div>
                 </Button>
               </div>
-              
+
               <p className="text-xs text-muted-foreground">
                 または、上のメニューから「ガイド」をクリックして、その他の質問例を見ることもできます
               </p>
@@ -589,7 +589,7 @@ export function GoalChatInterface() {
           )}
         </ScrollArea>
       </CardContent>
-      
+
       <CardFooter className="p-2 sm:p-4 pt-2 flex-shrink-0 bg-slate-900/90 border-t border-blue-500/20 mt-auto">
         <form onSubmit={handleSubmit} className="flex w-full gap-1 sm:gap-2 relative">
           <AnimatePresence>
@@ -599,11 +599,11 @@ export function GoalChatInterface() {
               </div>
             )}
           </AnimatePresence>
-          
+
           <div className="relative w-full">
             <Textarea
               ref={inputRef}
-              placeholder="目標について質問する..."
+              placeholder="タスクについて質問する..."
               value={messageText}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setMessageText(e.target.value)}
               disabled={sendMessage.isPending}
@@ -639,7 +639,7 @@ export function GoalChatInterface() {
               </Tooltip>
             </TooltipProvider>
           </div>
-          
+
           <Button 
             type="submit" 
             size="icon" 

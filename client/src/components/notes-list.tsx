@@ -690,8 +690,8 @@ export function NotesList() {
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
               <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
                 <FileText className="h-5 w-5" />
-                ミライノート
-              </h2>
+                ノート
+              </h2>           
               <div className="flex flex-wrap gap-2">
           <Button
             size="sm"
@@ -702,6 +702,7 @@ export function NotesList() {
           >
             <Brain className="h-4 w-4" />
             <span>ノートとチャット</span>
+            <Badge variant="outline" className="ml-1 bg-blue-500/10 text-[10px] px-1 py-0.5 h-4 leading-none">AI</Badge>
             {selectedNotes.length > 0 && (
               <Badge variant="secondary" className="ml-1">
                 {selectedNotes.length}
@@ -882,13 +883,13 @@ export function NotesList() {
                 <p className="text-lg font-medium">No matching notes</p>
                 <p className="text-muted-foreground">
   「<span className="font-medium text-blue-400">{searchQuery}</span>」に一致するメモは見つかりませんでした。
-  <br />
-  <button 
-    className="text-blue-400 hover:underline mt-2"
-    onClick={() => setSearchQuery("")}
-  >
+                  <br />
+                  <button 
+                    className="text-blue-400 hover:underline mt-2"
+                    onClick={() => setSearchQuery("")}
+                  >
     検索をクリア
-  </button>
+                  </button>
                 </p>
               </>
             ) : (

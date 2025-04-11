@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ChatPDFExport } from "@/components/chat-pdf-export";
 import { Message } from "@shared/schema";
 import { NotesList } from "@/components/notes-list";
-import { GoalTracker } from "@/components/goal-tracker";
+import { EnhancedTaskTracker } from "@/components/enhanced-task-tracker";
 import { GoalChatInterface } from "@/components/goal-chat-interface";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -238,22 +238,22 @@ export default function HomePage() {
                   <TabsList className="bg-slate-800/50 border border-blue-500/20 w-full sticky top-0 z-10">
                     <TabsTrigger value="tracker" className="flex-1 gap-1.5">
                       <Target className="h-3.5 w-3.5" />
-                      <span>目標</span>
+                      <span>タスク</span>
                     </TabsTrigger>
                     <TabsTrigger value="chat" className="flex-1 gap-1.5">
                       <Zap className="h-3.5 w-3.5" />
                       <span>アシスタント</span>
                     </TabsTrigger>
                   </TabsList>
-                  
+
                   <TabsContent value="tracker" className="mt-2 h-[calc(100vh-14rem)] overflow-hidden">
                     <div className="h-full flex flex-col">
                       <div className="flex-grow flex">
-                        <GoalTracker />
+                        <EnhancedTaskTracker />
                       </div>
                     </div>
                   </TabsContent>
-                  
+
                   <TabsContent value="chat" className="mt-2 h-[calc(100vh-14rem)] overflow-hidden">
                     <div className="h-full flex flex-col">
                       <div className="flex-grow flex">
@@ -263,12 +263,12 @@ export default function HomePage() {
                   </TabsContent>
                 </Tabs>
               </div>
-              
+
               {/* Desktop layout with side-by-side view */}
               <div className="hidden md:flex md:flex-row w-full h-full gap-4">
                 <div className="md:w-1/3 h-full flex">
                   <div className="flex-grow flex">
-                    <GoalTracker />
+                    <EnhancedTaskTracker />
                   </div>
                 </div>
                 <div className="md:w-2/3 h-full border-l border-blue-500/20 pl-4">
