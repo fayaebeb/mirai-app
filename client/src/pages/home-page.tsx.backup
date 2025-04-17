@@ -188,7 +188,7 @@ export default function HomePage() {
                   transition={{ duration: 3, repeat: Infinity }}
                 >
                   <Cpu className="h-4 w-4 text-blue-300" />
-                  <span>ミライちゃん</span>
+                  <span>ミライ</span>
                 </motion.div>
                 
                 {/* Decorative rotating rings */}
@@ -501,7 +501,7 @@ export default function HomePage() {
             animate={{ opacity: [0.6, 1, 0.6] }}
             transition={{ duration: 3, repeat: Infinity }}
           >
-            <span className="text-blue-500">⦿</span> ミライちゃん – FSDのAIアシスタント <span className="text-blue-500">⦿</span>
+            <span className="text-blue-500">⦿</span> ミライ – FSDのAIアシスタント <span className="text-blue-500">⦿</span>
           </motion.p>
         </div>
       </footer>

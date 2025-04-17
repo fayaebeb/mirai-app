@@ -827,7 +827,7 @@ export const ChatInterface = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <ChatLoadingIndicator variant="character" message="ミライちゃんが処理中..." />
+                <ChatLoadingIndicator variant="character" message="ミライが処理中..." />
               </motion.div>
             )}
             
