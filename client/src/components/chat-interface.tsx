@@ -855,6 +855,7 @@ export const ChatInterface = () => {
           <div className="relative flex-1 min-w-0">
             <Textarea
               ref={inputRef}
+              autoFocus
               value={input}
               onChange={(e) => {
                 setInput(e.target.value);
