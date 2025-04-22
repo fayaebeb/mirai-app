@@ -91,10 +91,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           output_type: "chat",
           input_type: "chat",
           tweaks: {
-            "TextInput-HMGP4": {
+            "TextInput-AkkS1": {
               input_value: goalSessionId,
             },
-            "TextInput-kOFX3": {
+            "TextInput-jTnj8": {
               input_value: goalsText,
             },
           },
@@ -180,9 +180,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }
 
               await storage.createGoal(req.user!.id, {
+                title: goalDescription.slice(0, 50), 
                 description: goalDescription,
                 completed: false,
-                dueDate: dueDate || null
+                dueDate: dueDate || null,
+                priority: "medium",
+                tags: [],
+                reminderTime: null,
+                isRecurring: false,
+                recurringEndDate: null,
               });
               console.log(`Created new goal from goal-chat: ${goalDescription}${dueDate ? ', due: ' + dueDate.toISOString() : ''}`);
             }
@@ -294,10 +300,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             output_type: "chat",
             input_type: "chat",
             tweaks: {
-              "TextInput-19PWn": {
+              "TextInput-AkkS1": {
                 input_value: persistentSessionId,
               },
-              "TextInput-jk8CQ": {
+              "TextInput-jTnj8": {
                 input_value: goalsText,
               },
             },
@@ -318,7 +324,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             output_type: "chat",
             input_type: "chat",
             tweaks: {
-              "TextInput-xKG6l": {
+              "TextInput-nni38": {
                 input_value: persistentSessionId,
               },
             },
@@ -405,9 +411,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }
 
               await storage.createGoal(req.user!.id, {
+                title: goalDescription.slice(0, 50),
                 description: goalDescription,
                 completed: false,
-                dueDate: dueDate || null
+                dueDate: dueDate || null,
+                priority: "medium",
+                tags: [],
+                reminderTime: null,
+                isRecurring: false,
+                recurringEndDate: null,
+                // recurringInterval: optional
               });
               console.log(`Created new goal: ${goalDescription}${dueDate ? ', due: ' + dueDate.toISOString() : ''}`);
             }
@@ -445,7 +458,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Delete all messages for this session
       const deleted = await storage.deleteMessagesBySessionId(req.user!.id, persistentSessionId);
-      
+
       if (deleted) {
         console.log(`Deleted all messages for user ${req.user!.id} with sessionId ${persistentSessionId}`);
         res.json({ success: true, message: "All messages deleted successfully" });
@@ -517,7 +530,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
   // Add DELETE endpoint to clear goal chat history
   app.delete("/api/goal-messages", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
@@ -525,12 +538,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Use the same session ID pattern as other goal chat endpoints
       const goalSessionId = `goal_${req.user!.id}_${req.user!.username}`;
-      
+
       // Delete all messages with this session ID
       const result = await storage.deleteMessagesBySessionId(req.user!.id, goalSessionId);
-      
+
       console.log(`Deleted goal chat messages for user ${req.user!.id} with sessionId ${goalSessionId}, success: ${result}`);
-      
+
       res.json({ success: result });
     } catch (error) {
       console.error("Error deleting goal chat messages:", error);
@@ -582,7 +595,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           output_type: "chat",
           input_type: "chat",
           tweaks: {
-            "TextInput-xKG6l": {
+            "TextInput-nni38": {
               input_value: persistentSessionId,
             },
           },
@@ -738,7 +751,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
   // Add endpoint to clear notes chat history
   app.delete("/api/notes-chat-messages", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
@@ -746,12 +759,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Use the same session ID pattern as other notes chat endpoints
       const notesSessionId = `notes_${req.user!.id}_${req.user!.username}`;
-      
+
       // Delete all messages with this session ID
       const result = await storage.deleteMessagesBySessionId(req.user!.id, notesSessionId);
-      
+
       console.log(`Deleted notes chat messages for user ${req.user!.id} with sessionId ${notesSessionId}, success: ${result}`);
-      
+
       res.json({ success: result });
     } catch (error) {
       console.error("Error deleting notes chat messages:", error);
@@ -830,10 +843,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           output_type: "chat",
           input_type: "chat",
           tweaks: {
-            "TextInput-HMGP4": {
+            "TextInput-AkkS1": {
               input_value: notesSessionId,
             },
-            "TextInput-kOFX3": {
+            "TextInput-jTnj8": {
               input_value: formattedNotes,
             },
           },
@@ -994,7 +1007,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
   // Get goals by category
   app.get("/api/goals/category/:category", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
@@ -1011,7 +1024,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
   // Get goals by priority
   app.get("/api/goals/priority/:priority", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
@@ -1028,12 +1041,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
   // Search goals
   app.get("/api/goals/search", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const searchTerm = req.query.q as string;
-    
+
     if (!searchTerm) {
       return res.status(400).json({ error: "Search term is required" });
     }
@@ -1045,10 +1058,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const descriptionMatch = goal.description.toLowerCase().includes(searchTerm.toLowerCase());
         const categoryMatch = goal.category?.toLowerCase().includes(searchTerm.toLowerCase());
         const tagsMatch = goal.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-        
+
         return titleMatch || descriptionMatch || categoryMatch || tagsMatch;
       });
-      
+
       res.json(searchResults);
     } catch (error) {
       console.error("Error searching goals:", error);
