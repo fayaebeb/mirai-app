@@ -675,7 +675,7 @@ export const ChatInterface = () => {
       </AlertDialog>
 
         {/* Chat Header - Enhanced with network status and more visual cues */}
-              <div className="chat-header flex-shrink-0 border-b border-blue-900/30 p-2 sm:p-3 flex justify-between items-center bg-slate-900/80 backdrop-blur-md sticky top-0 left-0 right-0 z-20 shadow-sm">
+              <div className="chat-header flex-shrink-0 border-b border-blue-900/30 p-2 sm:p-3 flex justify-between items-center bg-slate-900/80 backdrop-blur-md fixed top-0 left-0 right-0 z-30 shadow-sm w-full">
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1.5">
                     <motion.div
@@ -732,7 +732,7 @@ export const ChatInterface = () => {
 
       {/* Main message area - using unified scrolling */}
       <div 
-        className="flex-1 overflow-y-auto px-1 sm:px-4 py-3 w-full -webkit-overflow-scrolling-touch bg-gradient-to-b from-slate-900 to-slate-950" 
+        className="flex-1 overflow-y-auto px-1 sm:px-4 py-3 pt-14 w-full -webkit-overflow-scrolling-touch bg-gradient-to-b from-slate-900 to-slate-950" 
         ref={scrollAreaRef}
       >
         <div className="space-y-2 w-full max-w-full md:max-w-[60%] md:mx-auto">
