@@ -120,18 +120,16 @@ export default function HomePage() {
     if (activeTab === "chat") {
       return (
         <motion.div 
-          className="bg-slate-900/90 backdrop-blur-md rounded-none sm:rounded-xl shadow-xl p-0 w-full max-w-full border-0 sm:border border-blue-500/20 overflow-hidden relative h-[calc(100vh-5.4rem)]
-"
+          className="bg-slate-900/90 backdrop-blur-md rounded-none sm:rounded-xl shadow-xl py-4 sm:py-0 px-0 w-full max-w-full border-0 sm:border border-blue-500/20 overflow-hidden relative h-[calc(100vh-6rem)]"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
         >
-          
-
           <div className="relative z-10 h-full flex">
             <ChatInterface />
           </div>
         </motion.div>
+
       );
     } else if (activeTab === "notes") {
       return (
@@ -270,7 +268,7 @@ export default function HomePage() {
       <TechParticlesAnimation />
 
       {/* Redesigned elegant header */}
-      <header className="border-b border-blue-900/50 bg-slate-950/80 backdrop-blur-md shadow-md sticky top-0 z-40">
+      <header className="border-b border-blue-900/50 bg-slate-950/80 backdrop-blur-md shadow-md sticky top-0 z-20">
         <div className="w-full max-w-full px-2 sm:px-4 py-1 sm:py-1.5">
           <div className="flex justify-between items-center">
             {/* Left: Company Logo + AI Brand */}
