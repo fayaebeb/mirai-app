@@ -179,7 +179,7 @@ export default function HomePage() {
     if (activeTab === "chat") {
       return (
             <motion.div 
-              className="bg-slate-900/90 backdrop-blur-md rounded-none sm:rounded-xl shadow-xl py-4 sm:py-0 px-0 w-full max-w-full border-0 sm:border border-blue-500/20 overflow-hidden relative h-[calc(100vh-3.5rem)]"
+              className="bg-slate-900/90 backdrop-blur-md rounded-none sm:rounded-xl shadow-xl py-4 sm:py-0 px-0 w-full max-w-full border-0 sm:border border-blue-500/20 overflow-hidden relative h-[calc(100vh-5rem)]"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.5 }}
@@ -578,7 +578,7 @@ export default function HomePage() {
 
 
       {/* Main content section */}
-      <main className="flex-1 w-full max-w-full px-0 pt-14 sm:pt-16">
+      <main className="flex-1 w-full max-w-full px-0 pt-16 sm:pt-18">
         {renderMainContent()}
       </main>
 

@@ -771,7 +771,8 @@ export const ChatInterface = () => {
       {/* Message Input Form - Enhanced with visual feedback and better usability */}
       <form 
         onSubmit={handleSubmit} 
-        className="flex-shrink-0 p-2 sm:p-3 border-t border-blue-900/30 flex flex-col gap-1.5 bg-slate-900/90 backdrop-blur-md fixed bottom-0 left-0 right-0 z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.2)] w-full"
+        className="flex-shrink-0 p-2 sm:p-3 border-t border-blue-900/30 flex flex-col gap-1.5 bg-slate-900/90 backdrop-blur-md fixed bottom-0 left-0 right-0 z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.2)] w-full"
+        style={{ position: "fixed", WebkitOverflowScrolling: "touch" }}
       >
         <AnimatePresence>
           {showEmotions && (
