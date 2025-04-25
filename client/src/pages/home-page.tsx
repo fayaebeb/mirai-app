@@ -473,7 +473,7 @@ export default function HomePage() {
                       </DropdownMenuTrigger>
 
                       <DropdownMenuContent align="end" className="bg-slate-900 border border-blue-500/30">
-                        <DropdownMenuLabel className="text-blue-300">チャットオプション</DropdownMenuLabel>
+                        
                         <DropdownMenuSeparator className="bg-blue-900/30" />
 
                         {messages.length > 0 && (

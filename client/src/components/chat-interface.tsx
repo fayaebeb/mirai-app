@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Send, Check, Sparkles, Heart, Lightbulb, Wand2, MessageSquare, FileText, Trash2 } from "lucide-react";
+import { Send, Check, Sparkles, Heart, Lightbulb, Wand2, MessageSquare, FileText } from "lucide-react";
 import { Message } from "@shared/schema";
 import { nanoid } from "nanoid";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -387,11 +387,7 @@ export const ChatInterface = () => {
     }
   });
 
-  // Handle clear chat button click
-  const handleClearChat = () => {
-    setShowClearConfirm(true);
-  };
-
+  
   // Effect to handle initial display and make header always visible on mobile
   useEffect(() => {
     // Force scroll to top on component mount
@@ -595,29 +591,7 @@ export const ChatInterface = () => {
     inputRef.current?.focus();
   };
 
-  // Get random status message
-  const getStatusMessage = () => {
-    const messages = [
-      "接続完了", 
-      "データリンク確立", 
-      "ライブ接続", 
-      "メモリ最適化完了"
-    ];
-    return messages[Math.floor(Math.random() * messages.length)];
-  };
-
-  // Network status with emoji
-  const networkStatus = isOnline ? (
-    <span className="flex items-center gap-1 text-[10px] text-blue-400">
-      <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
-      {getRandomEmoji(onlineEmojis)} {getStatusMessage()}
-    </span>
-  ) : (
-    <span className="flex items-center gap-1 text-[10px] text-red-400">
-      <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-400"></span>
-      {getRandomEmoji(offlineEmojis)} オフライン
-    </span>
-  );
+  
 
   return (
     <Card className="w-full h-full md:max-w-[90%] mx-auto flex flex-col overflow-hidden relative border-blue-600/20 shadow-lg shadow-blue-900/10 bg-gradient-to-b from-slate-950 to-slate-900">
