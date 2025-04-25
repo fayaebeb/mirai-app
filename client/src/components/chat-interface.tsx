@@ -644,51 +644,7 @@ export const ChatInterface = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Chat Header - Enhanced with network status and more visual cues */}
-      <div className="chat-header flex-shrink-0 border-b border-blue-900/30 p-2 sm:p-3 flex justify-between items-center bg-slate-900/80 backdrop-blur-md sticky top-0 left-0 right-0 z-20 shadow-sm">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5">
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.3 }}
-              className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-900 shadow-inner shadow-blue-500/20"
-            >
-              <Sparkles className="h-3.5 w-3.5 text-blue-100" />
-            </motion.div>
-            <div className="flex flex-col">
-              <span className="text-xs font-semibold text-blue-100">ミライ<Badge variant="outline" className="ml-1 bg-blue-500/10 text-[10px] px-1 py-0.5 h-4 leading-none">AI</Badge>
-</span>
-
-              {networkStatus}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {messages.length > 0 && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 text-blue-400 hover:text-red-400 hover:bg-red-900/10 rounded-full"
-                    onClick={handleClearChat}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-slate-800 border border-blue-500/30">
-                  <p>チャット履歴をクリア</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-
-          <ChatPDFExport messages={messages} />
-        </div>
-      </div>
+      
 
       {/* Scrollable Chat Area - Enhanced with better visual hierarchy and feedback */}
         <div className="flex-1 overflow-y-auto overscroll-none">

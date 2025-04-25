@@ -2,27 +2,86 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import ChatInterface from "@/components/chat-interface";
 import { motion, AnimatePresence } from "framer-motion";
-import { Zap, Network, Cpu, Server, Database, Globe, LogOut, FileText, Book, Target } from "lucide-react";
+import { Zap, Network, Cpu, Server, Database, Globe, LogOut, FileText, Book, Target, Trash2, FileOutput, MoreVertical } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { ChatPDFExport } from "@/components/chat-pdf-export";
 import { Message } from "@shared/schema";
 import { NotesList } from "@/components/notes-list";
 import { EnhancedTaskTracker } from "@/components/enhanced-task-tracker";
 import { GoalChatInterface } from "@/components/goal-chat-interface";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function HomePage() {
   const { user, logoutMutation } = useAuth();
   const [showParticles, setShowParticles] = useState(false);
   const [currentGreeting, setCurrentGreeting] = useState("");
   const [activeTab, setActiveTab] = useState<string>("chat");
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const { toast } = useToast();
 
   // Get messages for PDF export
   const { data: messages = [] } = useQuery<Message[]>({
     queryKey: ['/api/messages'],
     enabled: !!user,
   });
+  
+  // Clear chat history mutation
+  const clearChatHistory = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest(
+        'DELETE',
+        '/api/messages'
+      );
+      return response.json();
+    },
+    onSuccess: () => {
+      // Clear the messages in the query cache
+      queryClient.setQueryData<Message[]>(['/api/messages'], []);
+
+      // Close the confirmation dialog
+      setShowClearConfirm(false);
+
+      // Show success toast
+      toast({
+        title: "チャット履歴をクリアしました",
+        description: "すべてのメッセージが削除されました。",
+      });
+    },
+    onError: (error) => {
+      console.error("Error clearing chat history:", error);
+      toast({
+        title: "エラーが発生しました",
+        description: "チャット履歴のクリアに失敗しました。",
+        variant: "destructive"
+      });
+    }
+  });
+  
+  // Handle clear chat button click
+  const handleClearChat = () => {
+    setShowClearConfirm(true);
+  };
 
   // Extract username before '@' from email
   const displayName = user?.username?.split("@")[0];
@@ -119,12 +178,12 @@ export default function HomePage() {
   const renderMainContent = () => {
     if (activeTab === "chat") {
       return (
-          <motion.div 
-            className="bg-slate-900/90 backdrop-blur-md rounded-none sm:rounded-xl shadow-xl pt-4 sm:pt-0 pb-0 px-0 w-full max-w-full border-0 sm:border border-blue-500/20 overflow-hidden relative h-[calc(100vh-3.5rem)]"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-          >
+            <motion.div 
+              className="bg-slate-900/90 backdrop-blur-md rounded-none sm:rounded-xl shadow-xl py-4 sm:py-0 px-0 w-full max-w-full border-0 sm:border border-blue-500/20 overflow-hidden relative h-[calc(100vh-3.5rem)]"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+            >
 
           <div className="relative z-10 h-full flex">
             <ChatInterface />
@@ -383,45 +442,113 @@ export default function HomePage() {
                   )}
                 </Button>
               </div>
-
+              
+             
 
 
               {/* Username badge - consistent on all devices */}
               <AnimatePresence>
                 {displayName && (
-                  <motion.div 
-                    className="flex items-center gap-1 bg-slate-800/70 px-2 py-1 rounded-md border border-blue-500/20 backdrop-blur-sm"
-                    initial={{ opacity: 0, x: 10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <motion.span 
-                      className="text-xs sm:text-sm font-medium text-blue-300 font-mono"
-                      animate={{ scale: [1, 1.02, 1] }}
-                      transition={{ duration: 2, repeat: Infinity }}
+                  activeTab === "chat" ? (
+                    // Show dropdown only in "chat" tab
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <motion.div 
+                          className="flex items-center gap-1 bg-slate-800/70 px-2 py-1 rounded-md border border-blue-500/20 backdrop-blur-sm cursor-pointer"
+                          initial={{ opacity: 0, x: 10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 10 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <motion.span 
+                            className="text-xs sm:text-sm font-medium text-blue-300 font-mono"
+                            animate={{ scale: [1, 1.02, 1] }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                          >
+                            <span className="sm:hidden">{displayName.charAt(0).toUpperCase()}</span>
+                            <span className="hidden sm:inline">{displayName}</span>
+                          </motion.span>
+                          <Zap className="h-3 w-3 text-blue-400" />
+                        </motion.div>
+                      </DropdownMenuTrigger>
+
+                      <DropdownMenuContent align="end" className="bg-slate-900 border border-blue-500/30">
+                        <DropdownMenuLabel className="text-blue-300">チャットオプション</DropdownMenuLabel>
+                        <DropdownMenuSeparator className="bg-blue-900/30" />
+
+                        {messages.length > 0 && (
+                          <DropdownMenuItem 
+                            className="text-blue-300 hover:bg-blue-800/30 cursor-pointer flex items-center gap-2"
+                            onClick={handleClearChat}
+                          >
+                            <Trash2 className="h-4 w-4 text-blue-400" />
+                            <span>チャット履歴をクリア</span>
+                          </DropdownMenuItem>
+                        )}
+
+                        {messages.length > 0 && (
+                          <DropdownMenuItem 
+                            onSelect={(e) => e.preventDefault()}
+                            className="p-0 focus:bg-transparent hover:bg-transparent"
+                          >
+                            <div className="w-full h-full px-2 py-1.5 flex items-center gap-2">
+                              <div onClick={(e) => e.stopPropagation()} className="ml-auto">
+                                <ChatPDFExport messages={messages} />
+                              </div>
+                            </div>
+                          </DropdownMenuItem>
+                        )}
+
+                        <DropdownMenuSeparator className="bg-blue-900/30" />
+                        <DropdownMenuItem 
+                          className="text-blue-300 hover:bg-blue-800/30 cursor-pointer flex items-center gap-2"
+                          onClick={() => logoutMutation.mutate()}
+                          disabled={logoutMutation.isPending}
+                        >
+                          <LogOut className="h-4 w-4 text-blue-400" />
+                          <span>ログアウト</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : (
+                    // Show static badge in all other tabs
+                    <motion.div 
+                      className="flex items-center gap-1 bg-slate-800/70 px-2 py-1 rounded-md border border-blue-500/20 backdrop-blur-sm"
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 10 }}
+                      transition={{ duration: 0.3 }}
                     >
-                      {/* Show initial on small screens, full name on larger */}
-                      <span className="sm:hidden">{displayName.charAt(0).toUpperCase()}</span>
-                      <span className="hidden sm:inline">{displayName}</span>
-                    </motion.span>
-                    <Zap className="h-3 w-3 text-blue-400" />
-                  </motion.div>
+                      <motion.span 
+                        className="text-xs sm:text-sm font-medium text-blue-300 font-mono"
+                        animate={{ scale: [1, 1.02, 1] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      >
+                        <span className="sm:hidden">{displayName.charAt(0).toUpperCase()}</span>
+                        <span className="hidden sm:inline">{displayName}</span>
+                      </motion.span>
+                      <Zap className="h-3 w-3 text-blue-400" />
+                    </motion.div>
+                  )
                 )}
               </AnimatePresence>
 
+
               {/* Logout button */}
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => logoutMutation.mutate()}
-                  disabled={logoutMutation.isPending}
-                  className="text-blue-300 hover:bg-blue-900/20 h-8 w-8 sm:h-9 sm:w-9"
-                >
-                  <LogOut className="h-4 w-4" />
-                </Button>
-              </motion.div>
+              {(activeTab !== "chat" || window.innerWidth >= 768) && (
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => logoutMutation.mutate()}
+                    disabled={logoutMutation.isPending}
+                    className="text-blue-300 hover:bg-blue-900/20 h-8 w-8 sm:h-9 sm:w-9"
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </Button>
+                </motion.div>
+              )}
+
             </div>
           </div>
         </div>
@@ -454,6 +581,29 @@ export default function HomePage() {
       <main className="flex-1 w-full max-w-full px-0 py-0">
         {renderMainContent()}
       </main>
+
+      {/* Confirmation Dialog for clearing chat history */}
+      <AlertDialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
+        <AlertDialogContent className="bg-slate-900 border border-blue-500/30">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-blue-100">チャット履歴をクリアしますか？</AlertDialogTitle>
+            <AlertDialogDescription className="text-blue-300/70">
+              この操作は取り消せません。すべてのチャット履歴が削除されます。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-slate-800 text-blue-200 border-slate-700 hover:bg-slate-700">
+              キャンセル
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => clearChatHistory.mutate()}
+              className="bg-red-900/50 hover:bg-red-900 text-red-50 border border-red-800"
+            >
+              削除する
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {activeTab !== "chat" && (
         <footer className="border-t border-blue-900/30 py-2 bg-slate-950/60 backdrop-blur-md">

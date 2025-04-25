@@ -118,7 +118,8 @@ export function ChatPDFExport({ messages }: ChatPDFExportProps) {
           className="gap-1 text-xs sm:text-sm flex items-center hover:bg-blue-50 hover:text-blue-600 transition-colors"
         >
           <FileText className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">PDF化</span>
+          <span className="inline">PDFエクスポート</span>
+
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px] h-auto max-h-[90vh] overflow-y-auto">
