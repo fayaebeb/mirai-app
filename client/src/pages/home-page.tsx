@@ -270,7 +270,7 @@ export default function HomePage() {
       <TechParticlesAnimation />
 
       {/* Redesigned elegant header */}
-      <header className="border-b border-blue-900/50 bg-slate-950/80 backdrop-blur-md shadow-md sticky top-0 z-20">
+      <header className="border-b border-blue-900/50 bg-slate-950/80 backdrop-blur-md shadow-md sticky top-0 z-40">
         <div className="w-full max-w-full px-2 sm:px-4 py-1 sm:py-1.5">
           <div className="flex justify-between items-center">
             {/* Left: Company Logo + AI Brand */}

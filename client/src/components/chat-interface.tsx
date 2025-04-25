@@ -537,7 +537,7 @@ export const ChatInterface = () => {
 
       // Force a refresh of the messages query
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
-      
+
       // Scroll to bottom when the new message appears
       setTimeout(() => {
         if (messageEndRef.current) {
@@ -760,12 +760,12 @@ export const ChatInterface = () => {
                   />
                   <Sparkles className="h-10 w-10 text-blue-400" />
                 </div>
-                
+
                 <h3 className="text-lg font-medium mb-2 text-blue-100">対話を始めましょう</h3>
                 <p className="text-blue-300/80 max-w-xs mx-auto text-sm">
                   下のテキストボックスにメッセージを入力して、ミライと対話を開始してください
                 </p>
-                
+
                 {/* New: Quick start suggestions */}
                 <div className="mt-5 space-y-2">
                   <p className="text-xs text-blue-400 font-semibold">試してみる:</p>
@@ -806,7 +806,7 @@ export const ChatInterface = () => {
 
                     // First message in a group shows the avatar
                     const isFirstInGroup = i === 0;
-                    
+
                     return (
                       <div 
                         className={`w-full max-w-full ${i > 0 ? 'mt-1' : 'mt-0'}`} 
@@ -823,13 +823,13 @@ export const ChatInterface = () => {
                       </div>
                     );
                   })}
-                  
+
                   {/* Timestamp shown once per group at the end */}
                   <div className={`text-[9px] text-blue-400/50 font-mono mt-1 ${group.sender === 'user' ? 'mr-2' : 'ml-2'}`}>
                     {group.lastTimestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                   </div>
                 </div>
-                
+
                 {/* Quick replies after bot messages */}
                 {group.sender === 'bot' && groupIndex === groupedMessages.length - 1 && (
                   <motion.div 
@@ -867,7 +867,7 @@ export const ChatInterface = () => {
               <ChatLoadingIndicator variant="character" message="ミライが処理中..." />
             </motion.div>
           )}
-          
+
           <div ref={messageEndRef} />
           {/* Extra padding on bottom to prevent cut-off */}
           <div className="h-6" /> 
@@ -914,7 +914,7 @@ export const ChatInterface = () => {
                 }
               }}
             />
-            
+
             {/* Prompt suggestions button - enhanced with animation */}
             <TooltipProvider key="prompt-tooltip">
               <Tooltip>
