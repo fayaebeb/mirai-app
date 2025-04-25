@@ -401,7 +401,9 @@ export function GoalChatInterface() {
   });
 
   return (
-    <Card className="flex flex-col h-full w-full overflow-hidden flex-grow">
+        <Card className="flex flex-col h-[calc(100vh-10rem)] md:h-full">
+
+
       <CardHeader className="py-2 px-4 flex-shrink-0">
         <div className="flex flex-col space-y-1.5">
           <CardTitle className="flex items-center justify-between gap-1">
@@ -469,8 +471,9 @@ export function GoalChatInterface() {
         </div>
       </CardHeader>
 
-      <CardContent className="flex-grow overflow-hidden p-0">
-        <ScrollArea ref={scrollAreaRef} className="min-h-[200px] h-full max-h-[calc(100vh-22rem)] md:max-h-[calc(100vh-11rem)] px-4 pt-4 flex-grow">
+        <CardContent className="flex flex-col flex-grow min-h-0">
+
+          <ScrollArea className="flex-grow min-h-0 overflow-y-auto">
           {isLoadingMessages ? (
             <div className="flex h-full min-h-[200px] items-center justify-center">
               <ChatLoadingIndicator message="チャット履歴を読み込んでいます..." />

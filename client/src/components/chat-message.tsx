@@ -211,7 +211,8 @@ export default function ChatMessage({
         "mt-3": isFirstInGroup,
         "mt-0.5": !isFirstInGroup,
         "mb-0.5": !isLastInGroup,
-        "mb-1": isLastInGroup
+        "mb-1": isLastInGroup,
+        "md:px-2": true
       })}
     >
       {showEmoji && message.isBot && (
@@ -256,7 +257,7 @@ export default function ChatMessage({
 
       {/* Only show avatar for bot messages at the start of a group */}
       {message.isBot && isFirstInGroup ? (
-        <Avatar className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 border border-blue-500/30 shadow-md bg-slate-950 mr-0.5">
+        <Avatar className="hidden sm:flex flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 border border-blue-500/30 shadow-md bg-slate-950 mr-0.5">
           <motion.div
             whileHover={{ scale: 1.05, rotate: [0, -5, 5, 0] }}
             transition={{ rotate: { duration: 0.5 } }}
@@ -274,17 +275,22 @@ export default function ChatMessage({
         <div className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 mr-0.5"></div>
       ) : null}
 
-      <motion.div
-        initial={message.isBot ? { x: -10, opacity: 0 } : { x: 10, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        transition={{ duration: 0.3 }}
-        whileHover={message.isBot && !isTyping ? { scale: 1.01 } : { scale: 1 }}
-        onHoverStart={handleBotMessageHover}
-        className={cn("", {
-          "w-auto max-w-[85%] ml-auto flex justify-end": !message.isBot,
-          "w-auto max-w-[85%] flex flex-initial justify-start": message.isBot,
-        })}
-      >
+
+        <motion.div
+          initial={message.isBot ? { x: -10, opacity: 0 } : { x: 10, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          whileHover={message.isBot && !isTyping ? { scale: 1.01 } : { scale: 1 }}
+          onHoverStart={handleBotMessageHover}
+          className={cn({
+            // Bot message bubble takes full width on mobile, max 85% on sm+
+            "w-full sm:max-w-[85%] flex justify-start md:pl-4": message.isBot,
+
+            // User message stays constrained at all sizes
+            "w-auto max-w-[85%] ml-auto flex justify-end md:pr-4": !message.isBot,
+          })}
+        >
+
         <Card
           className={cn(
             "px-3 py-1.5 sm:px-3.5 sm:py-2 text-[11px] sm:text-xs overflow-hidden",

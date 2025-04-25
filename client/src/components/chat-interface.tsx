@@ -8,11 +8,10 @@ import { Message } from "@shared/schema";
 import { nanoid } from "nanoid";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import ChatMessage from "./chat-message";
-import { ScrollArea } from "./ui/scroll-area";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import ChatLoadingIndicator, { SakuraPetalLoading } from "./chat-loading-indicator";
+import ChatLoadingIndicator from "./chat-loading-indicator";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Tooltip,
@@ -230,26 +229,54 @@ const promptCategories: PromptCategory[] = [
 interface EmotionButtonsProps {
   onSelect: (message: string) => void;
   onClose: () => void;
+  triggerRef: React.RefObject<HTMLElement>; // add this
 }
 
-const EmotionButtons = ({ onSelect, onClose }: EmotionButtonsProps) => {
+
+  const EmotionButtons = ({ onSelect, onClose, triggerRef }: EmotionButtonsProps) => {
   const [selectedCategory, setSelectedCategory] = useState<string>(promptCategories[0].name);
 
   // Handle clicks outside the emotion buttons to close it
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleClickOutside = (event: MouseEvent) => {
-    if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-      onClose();
-    }
-  };
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
 
-  useEffect(() => {
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(target) &&
+        !(triggerRef.current && triggerRef.current.contains(target)) // prevent toggle conflict
+      ) {
+        onClose();
+      }
     };
-  }, []);
+
+
+
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        const target = event.target as Node;
+
+        // Skip handling this click if it just came from the lightbulb
+        if (triggerRef.current?.contains(target)) {
+          return;
+        }
+
+        if (
+          containerRef.current &&
+          !containerRef.current.contains(target)
+        ) {
+          onClose();
+        }
+      };
+
+      document.addEventListener("mousedown", handleClickOutside);
+
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }, [onClose, triggerRef]);
+
 
   const selectedCategoryData = promptCategories.find(cat => cat.name === selectedCategory) || promptCategories[0];
 
@@ -314,6 +341,9 @@ export const ChatInterface = () => {
   const messageEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const isMobile = useIsMobile();
+  const lightbulbRef = useRef<HTMLButtonElement>(null);
+  const lightbulbClickedRef = useRef(false);
+
 
   // Check if online periodically
   useEffect(() => {
@@ -519,11 +549,59 @@ export const ChatInterface = () => {
       console.error("Error sending message:", error);
       toast({
         title: "エラーが発生しました",
-        description: error.message,
+        description: "メッセージの送信に失敗しました。もう一度お試しください。",
         variant: "destructive"
       });
     }
   });
+
+
+  // Handle submit
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!input.trim() || sendMessage.isPending) return;
+
+    sendMessage.mutate(input);
+  };
+
+  // Define type for grouped messages
+  type MessageGroup = {
+    sender: 'user' | 'bot';
+    messages: Message[];
+    lastTimestamp: Date;
+  };
+
+  // Group messages by sender to enable better visualization and collapsing
+  const groupedMessages = useMemo(() => {
+    if (!messages.length) return [];
+
+    return messages.reduce((groups: MessageGroup[], message) => {
+      const lastGroup = groups[groups.length - 1];
+
+      if (lastGroup && (lastGroup.sender === 'bot') === message.isBot) {
+        // Same sender as previous message group - add to existing group
+        lastGroup.messages.push(message);
+        lastGroup.lastTimestamp = new Date(message.timestamp);
+      } else {
+        // Different sender - create a new group
+        groups.push({
+          sender: message.isBot ? 'bot' : 'user',
+          messages: [message],
+          lastTimestamp: new Date(message.timestamp)
+        });
+      }
+
+      return groups;
+    }, []);
+  }, [messages]);
+
+  // Quick replies
+  const quickReplies = [
+    { text: "もっと詳しく教えて", icon: <MessageSquare className="h-3 w-3" /> },
+    { text: "実例を出して", icon: <Check className="h-3 w-3" /> },
+    { text: "まとめてみて", icon: <FileText className="h-3 w-3" /> },
+  ];
 
   // Updated function to insert prompt text at the current cursor position
   const handleEmotionSelect = (text: string) => {
@@ -543,56 +621,8 @@ export const ChatInterface = () => {
     }, 0);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!input.trim() || sendMessage.isPending) return;
-
-    sendMessage.mutate(input);
-  };
-
-  // Define type for grouped messages
-  type MessageGroup = {
-    sender: 'user' | 'bot';
-    messages: Message[];
-    lastTimestamp: Date;
-  };
-
-  // Group messages by sender to enable better visualization and collapsing
-  const groupedMessages = useMemo(() => {
-    if (!messages.length) return [];
-    
-    return messages.reduce((groups: MessageGroup[], message) => {
-      const lastGroup = groups[groups.length - 1];
-      
-      if (lastGroup && (lastGroup.sender === 'bot') === message.isBot) {
-        // Same sender as previous message group - add to existing group
-        lastGroup.messages.push(message);
-        lastGroup.lastTimestamp = new Date(message.timestamp);
-      } else {
-        // Different sender - create a new group
-        groups.push({
-          sender: message.isBot ? 'bot' : 'user',
-          messages: [message],
-          lastTimestamp: new Date(message.timestamp)
-        });
-      }
-      
-      return groups;
-    }, []);
-  }, [messages]);
-
-  // Common quick replies/suggestions based on conversation context
-  const quickReplies = [
-    { text: "詳細を教えて", icon: <Sparkles className="h-3 w-3" /> },
-    { text: "例を示して", icon: <Lightbulb className="h-3 w-3" /> },
-    { text: "まとめて", icon: <FileText className="h-3 w-3" /> },
-  ];
-
-  // Handle quick reply selection
-  const handleQuickReplySelect = (text: string) => {
-    setInput(text);
-    inputRef.current?.focus();
+  const handleQuickReplySelect = (message: string) => {
+    sendMessage.mutate(message);
   };
 
   // Get random status message
@@ -618,9 +648,9 @@ export const ChatInterface = () => {
       {getRandomEmoji(offlineEmojis)} オフライン
     </span>
   );
-  
+
   return (
-    <Card className="w-full h-full md:max-w-[90%] mx-auto flex flex-col overflow-hidden relative border-blue-600/20 shadow-lg shadow-blue-900/10 bg-gradient-to-b from-slate-950 to-slate-900">
+    <Card className="w-full h-full flex-grow flex flex-col overflow-hidden relative border-blue-600/20 shadow-lg shadow-blue-900/10 bg-gradient-to-b from-slate-950 to-slate-900 rounded-none sm:rounded-xl">
       {showTutorial && <Tutorial onClose={() => setShowTutorial(false)} />}
 
       {/* Confirmation Dialog for clearing chat history */}
@@ -644,211 +674,223 @@ export const ChatInterface = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Chat Header - Enhanced with network status and more visual cues */}
-      <div className="chat-header flex-shrink-0 border-b border-blue-900/30 p-2 sm:p-3 flex justify-between items-center bg-slate-900/80 backdrop-blur-md sticky top-0 left-0 right-0 z-20 shadow-sm">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5">
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.3 }}
-              className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-900 shadow-inner shadow-blue-500/20"
-            >
-              <Sparkles className="h-3.5 w-3.5 text-blue-100" />
-            </motion.div>
-            <div className="flex flex-col">
-              <span className="text-xs font-semibold text-blue-100">ミライ<Badge variant="outline" className="ml-1 bg-blue-500/10 text-[10px] px-1 py-0.5 h-4 leading-none">AI</Badge>
-</span>
-              
-              {networkStatus}
-            </div>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          {messages.length > 0 && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 text-blue-400 hover:text-red-400 hover:bg-red-900/10 rounded-full"
-                    onClick={handleClearChat}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-slate-800 border border-blue-500/30">
-                  <p>チャット履歴をクリア</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-          
-          <ChatPDFExport messages={messages} />
+        {/* Chat Header - Enhanced with network status and more visual cues */}
+              <div className="chat-header flex-shrink-0 border-b border-blue-900/30 p-2 sm:p-3 flex justify-between items-center bg-slate-900/80 backdrop-blur-md sticky top-0 left-0 right-0 z-20 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <motion.div
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.3 }}
+                      className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-900 shadow-inner shadow-blue-500/20"
+                    >
+                      <Sparkles className="h-3.5 w-3.5 text-blue-100" />
+                    </motion.div>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-semibold text-blue-100">ミライ<Badge variant="outline" className="ml-1 bg-blue-500/10 text-[10px] px-1 py-0.5 h-4 leading-none">AI</Badge>
+        </span>
+
+                      {networkStatus}
+                    </div>
+                  </div>
+                </div>
+
+
+        <div className="flex items-center gap-1 sm:gap-2">
+          {/* PDF Export Button */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <ChatPDFExport messages={messages} />
+              </TooltipTrigger>
+              <TooltipContent className="bg-slate-800 border border-blue-500/30">
+                <p>チャットをエクスポート</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          {/* Clear Chat Button */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 text-blue-400 hover:text-red-400 hover:bg-red-900/10 rounded-full"
+                  onClick={handleClearChat}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="bg-slate-800 border border-blue-500/30">
+                <p>チャット履歴をクリア</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
 
-      {/* Scrollable Chat Area - Enhanced with better visual hierarchy and feedback */}
-        <div className="flex-1 overflow-y-auto overscroll-none">
-
-        <ScrollArea 
-          className="h-full px-1 sm:px-4 py-3 w-full -webkit-overflow-scrolling-touch bg-gradient-to-b from-slate-900 to-slate-950" 
-          ref={scrollAreaRef}
-        >
-          <div className="space-y-2 w-full max-w-full">
-            {messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center min-h-[300px] sm:min-h-[400px] text-center py-10">
-
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                  className="p-6 rounded-2xl bg-blue-900/10 border border-blue-500/10 max-w-sm"
-                >
-                  <div className="relative mb-4 mx-auto w-14 h-14 flex items-center justify-center">
-                    <motion.div
-                      className="absolute inset-0 rounded-full border border-blue-400/30"
-                      animate={{ 
-                        scale: [1, 1.1, 1],
-                        opacity: [0.3, 0.5, 0.3],
-                        rotate: 360
-                      }}
-                      transition={{ 
-                        duration: 4, 
-                        repeat: Infinity, 
-                        ease: "linear" 
-                      }}
-                    />
-                    <Sparkles className="h-10 w-10 text-blue-400" />
-                  </div>
-                  
-                  <h3 className="text-lg font-medium mb-2 text-blue-100">対話を始めましょう</h3>
-                  <p className="text-blue-300/80 max-w-xs mx-auto text-sm">
-                    下のテキストボックスにメッセージを入力して、ミライと対話を開始してください
-                  </p>
-                  
-                  {/* New: Quick start suggestions */}
-                  <div className="mt-5 space-y-2">
-                    <p className="text-xs text-blue-400 font-semibold">試してみる:</p>
-                    <div className="flex flex-wrap gap-2 justify-center">
-                      {promptCategories[0].prompts.slice(0, 3).map((prompt, i) => (
-                        <motion.button
-                          key={i}
-                          onClick={() => handleEmotionSelect(prompt.message || prompt.text)}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="text-xs px-3 py-1.5 rounded-full bg-blue-900/30 text-blue-300 border border-blue-500/20 hover:bg-blue-800/40 transition-colors"
-                        >
-                          {prompt.text}
-                        </motion.button>
-                      ))}
-                    </div>
-                  </div>
-                </motion.div>
-              </div>
-            ) : (
-              // Enhanced with message grouping
-              groupedMessages.map((group: MessageGroup, groupIndex: number) => (
-                <div key={`group-${groupIndex}`} className="mb-3">
-                  {/* Messages from the same sender grouped together */}
-                  <div className={`flex flex-col ${group.sender === 'user' ? 'items-end' : 'items-start'}`}>
-                    {group.messages.map((message: Message, i: number) => {
-                      // Find the corresponding user message for bot messages to enable regeneration
-                      const lastUserMessageIndex = message.isBot
-                        ? messages.findIndex((m) => m.id === message.id) - 1
-                        : -1;
-                      const lastUserMessage = lastUserMessageIndex >= 0 ? messages[lastUserMessageIndex] : null;
-
-                      const handleRegenerateAnswer = () => {
-                        if (lastUserMessage?.content) {
-                          sendMessage.mutate(lastUserMessage.content);
-                        }
-                      };
-
-                      // First message in a group shows the avatar
-                      const isFirstInGroup = i === 0;
-                      
-                      return (
-                        <div 
-                          className={`w-full max-w-full ${i > 0 ? 'mt-1' : 'mt-0'}`} 
-                          key={typeof message.id === 'string' ? message.id : `msg-${message.id}`}
-                        >
-                          <ChatMessage
-                            message={{
-                              ...message,
-                              onRegenerateAnswer: message.isBot ? handleRegenerateAnswer : undefined,
-                            }}
-                            isFirstInGroup={isFirstInGroup}
-                            isLastInGroup={i === group.messages.length - 1}
-                          />
-                        </div>
-                      );
-                    })}
-                    
-                    {/* Timestamp shown once per group at the end */}
-                    <div className={`text-[9px] text-blue-400/50 font-mono mt-1 ${group.sender === 'user' ? 'mr-2' : 'ml-2'}`}>
-                      {group.lastTimestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    </div>
-                  </div>
-                  
-                  {/* Quick replies after bot messages */}
-                  {group.sender === 'bot' && groupIndex === groupedMessages.length - 1 && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: 5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3, duration: 0.3 }}
-                      className="ml-10 mt-2 flex flex-wrap gap-2"
-                    >
-                      {quickReplies.map((reply, i) => (
-                        <motion.button
-                          key={i}
-                          onClick={() => handleQuickReplySelect(reply.text)}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="text-xs px-2 py-1 rounded-full bg-blue-900/20 text-blue-400 border border-blue-500/20 hover:bg-blue-900/40 transition-colors flex items-center gap-1.5"
-                        >
-                          {reply.icon}
-                          <span>{reply.text}</span>
-                        </motion.button>
-                      ))}
-                    </motion.div>
-                  )}
-                </div>
-              ))
-            )}
-
-            {/* Enhanced loading state */}
-            {sendMessage.isPending && (
-              <motion.div 
-                className="flex justify-start pt-2 pb-4 pl-2"
-                initial={{ opacity: 0, y: 10 }}
+      {/* Main message area - using unified scrolling */}
+      <div 
+        className="flex-1 overflow-y-auto px-1 sm:px-4 py-3 w-full -webkit-overflow-scrolling-touch bg-gradient-to-b from-slate-900 to-slate-950" 
+        ref={scrollAreaRef}
+      >
+        <div className="space-y-2 w-full max-w-full md:max-w-[60%] md:mx-auto">
+          {messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center min-h-[300px] sm:min-h-[400px] text-center py-10">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2 }}
+                transition={{ duration: 0.5 }}
+                className="p-6 rounded-2xl bg-blue-900/10 border border-blue-500/10 max-w-sm"
               >
-                <ChatLoadingIndicator variant="character" message="ミライが処理中..." />
+                <div className="relative mb-4 mx-auto w-14 h-14 flex items-center justify-center">
+                  <motion.div
+                    className="absolute inset-0 rounded-full border border-blue-400/30"
+                    animate={{ 
+                      scale: [1, 1.1, 1],
+                      opacity: [0.3, 0.5, 0.3],
+                      rotate: 360
+                    }}
+                    transition={{ 
+                      duration: 4, 
+                      repeat: Infinity, 
+                      ease: "linear" 
+                    }}
+                  />
+                  <Sparkles className="h-10 w-10 text-blue-400" />
+                </div>
+                
+                <h3 className="text-lg font-medium mb-2 text-blue-100">対話を始めましょう</h3>
+                <p className="text-blue-300/80 max-w-xs mx-auto text-sm">
+                  下のテキストボックスにメッセージを入力して、ミライと対話を開始してください
+                </p>
+                
+                {/* New: Quick start suggestions */}
+                <div className="mt-5 space-y-2">
+                  <p className="text-xs text-blue-400 font-semibold">試してみる:</p>
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    {promptCategories[0].prompts.slice(0, 3).map((prompt, i) => (
+                      <motion.button
+                        key={i}
+                        onClick={() => handleEmotionSelect(prompt.message || prompt.text)}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="text-xs px-3 py-1.5 rounded-full bg-blue-900/30 text-blue-300 border border-blue-500/20 hover:bg-blue-800/40 transition-colors"
+                      >
+                        {prompt.text}
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
               </motion.div>
-            )}
-            
-            <div ref={messageEndRef} />
-            {/* Extra padding on bottom to prevent cut-off */}
-            <div className="h-6" /> 
-          </div>
-        </ScrollArea>
+            </div>
+          ) : (
+            // Enhanced with message grouping
+            groupedMessages.map((group: MessageGroup, groupIndex: number) => (
+              <div key={`group-${groupIndex}`} className="mb-3">
+                {/* Messages from the same sender grouped together */}
+                <div className={`flex flex-col ${group.sender === 'user' ? 'items-end' : 'items-start'}`}>
+                  {group.messages.map((message: Message, i: number) => {
+                    // Find the corresponding user message for bot messages to enable regeneration
+                    const lastUserMessageIndex = message.isBot
+                      ? messages.findIndex((m) => m.id === message.id) - 1
+                      : -1;
+                    const lastUserMessage = lastUserMessageIndex >= 0 ? messages[lastUserMessageIndex] : null;
+
+                    const handleRegenerateAnswer = () => {
+                      if (lastUserMessage?.content) {
+                        sendMessage.mutate(lastUserMessage.content);
+                      }
+                    };
+
+                    // First message in a group shows the avatar
+                    const isFirstInGroup = i === 0;
+                    
+                    return (
+                      <div 
+                        className={`w-full max-w-full ${i > 0 ? 'mt-1' : 'mt-0'}`} 
+                        key={typeof message.id === 'string' ? message.id : `msg-${message.id}`}
+                      >
+                        <ChatMessage
+                          message={{
+                            ...message,
+                            onRegenerateAnswer: message.isBot ? handleRegenerateAnswer : undefined,
+                          }}
+                          isFirstInGroup={isFirstInGroup}
+                          isLastInGroup={i === group.messages.length - 1}
+                        />
+                      </div>
+                    );
+                  })}
+                  
+                  {/* Timestamp shown once per group at the end */}
+                  <div className={`text-[9px] text-blue-400/50 font-mono mt-1 ${group.sender === 'user' ? 'mr-2' : 'ml-2'}`}>
+                    {group.lastTimestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </div>
+                </div>
+                
+                {/* Quick replies after bot messages */}
+                {group.sender === 'bot' && groupIndex === groupedMessages.length - 1 && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3, duration: 0.3 }}
+                    className="ml-10 mt-2 flex flex-wrap gap-2"
+                  >
+                    {quickReplies.map((reply, i) => (
+                      <motion.button
+                        key={i}
+                        onClick={() => handleQuickReplySelect(reply.text)}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="text-xs px-2 py-1 rounded-full bg-blue-900/20 text-blue-400 border border-blue-500/20 hover:bg-blue-900/40 transition-colors flex items-center gap-1.5"
+                      >
+                        {reply.icon}
+                        <span>{reply.text}</span>
+                      </motion.button>
+                    ))}
+                  </motion.div>
+                )}
+              </div>
+            ))
+          )}
+
+          {/* Enhanced loading state */}
+          {sendMessage.isPending && (
+            <motion.div 
+              className="flex justify-start pt-2 pb-4 pl-2"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <ChatLoadingIndicator variant="character" message="ミライが処理中..." />
+            </motion.div>
+          )}
+          
+          <div ref={messageEndRef} />
+          {/* Extra padding on bottom to prevent cut-off */}
+          <div className="h-6" /> 
+        </div>
       </div>
 
       {/* Message Input Form - Enhanced with visual feedback and better usability */}
       <form 
         onSubmit={handleSubmit} 
-        className="flex-shrink-0 p-2 sm:p-3 border-t border-blue-900/30 flex flex-col gap-1.5 bg-slate-900/90 backdrop-blur-md sticky bottom-0 left-0 right-0 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.2)]"
+        className="w-full max-w-4xl mx-auto flex-shrink-0 py-2 sm:py-3 px-4 sm:px-6 lg:px-8 border-t border-blue-900/30 flex flex-col gap-1.5 bg-slate-900/90 backdrop-blur-md sticky bottom-0 left-0 right-0 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.2)]"
       >
         <AnimatePresence>
           {showEmotions && (
             <div className="absolute bottom-full left-0 w-full flex justify-center">
-              <EmotionButtons onSelect={handleEmotionSelect} onClose={() => setShowEmotions(false)} />
+              <EmotionButtons 
+                onSelect={handleEmotionSelect} 
+                onClose={() => setShowEmotions(false)} 
+                triggerRef={lightbulbRef} // pass the new ref
+              />
+
             </div>
           )}
+
         </AnimatePresence>
 
         <div className="flex gap-2 items-end">
@@ -879,10 +921,15 @@ export const ChatInterface = () => {
                 <TooltipTrigger asChild>
                   <motion.button
                     type="button"
-                    className="absolute right-3 top-2 text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1 px-1.5 py-1 rounded-md hover:bg-blue-900/40"
+                    ref={lightbulbRef}
+                    className="absolute right-3 bottom-2 text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1 px-1.5 py-1 rounded-md hover:bg-blue-900/40"
                     whileHover={{ scale: 1.1, rotate: [0, -5, 5, 0] }}
                     whileTap={{ scale: 0.9 }}
-                    onClick={() => setShowEmotions((prev) => !prev)}
+                    onClick={() => {
+                      lightbulbClickedRef.current = true;
+                      setShowEmotions(prev => !prev);
+                    }}
+
                   >
                     <Lightbulb className="h-4 w-4" />
                   </motion.button>

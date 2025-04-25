@@ -46,12 +46,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+
 import { Label } from "@/components/ui/label";
 import { 
   Accordion,
@@ -61,7 +56,6 @@ import {
 } from "@/components/ui/accordion";
 import { Switch } from "@/components/ui/switch";
 import { useIsMobile } from "@/hooks/use-mobile";
-import TimePicker from 'react-time-picker';
 
 // Define type for task categories
 type TaskCategory = {
@@ -1039,45 +1033,45 @@ export function EnhancedTaskTracker() {
         )}
       </CardHeader>
       
-      {/* Task filters section */}
-      <div className="px-4 pt-2 pb-1 flex flex-col sm:flex-row gap-2 items-start sm:items-center border-b border-border/40">
-        <div className="relative w-full sm:w-auto flex-1 sm:max-w-xs">
-          <SearchIcon className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="タスクを検索..."
-            className="pl-8 pr-8 h-9"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            ref={searchInputRef}
-          />
-          {searchQuery && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="absolute right-0 top-0 h-9 w-9 p-0"
-              onClick={() => setSearchQuery("")}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-        
-      <div className="flex gap-2 w-full overflow-x-auto pb-1 sm:w-auto sm:pb-0 scrollbar-hide">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-9 flex-shrink-0">
-              <Filter className="h-4 w-4 mr-1" />
-              フィルタ
-              <ChevronDown className="h-3.5 w-3.5 ml-1" />
-            </Button>
-          </DropdownMenuTrigger>
+                {/* Task filters section */}
+                  <div className="px-4 flex flex-row gap-2 items-center border-b border-border/40 overflow-x-auto min-h-[64px]">
+                  <div className="relative flex-1 max-w-full sm:max-w-xs min-w-0">
+                    <SearchIcon className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="タスクを検索..."
+                      className="pl-8 pr-8 h-9 w-full"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      ref={searchInputRef}
+                    />
+                    {searchQuery && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-9 w-9 p-0"
+                        onClick={() => setSearchQuery("")}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
 
-              <DropdownMenuContent
-                align="end"
-                className="w-56 max-w-[90vw] max-h-[40vh] overflow-y-auto px-2"
-              >
-            <DropdownMenuLabel>フィルタを選択</DropdownMenuLabel>
-            <DropdownMenuSeparator />
+                  <div className="flex-shrink-0">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-9 flex-shrink-0">
+                          <Filter className="h-4 w-4 mr-1" />
+                          フィルタ
+                          <ChevronDown className="h-3.5 w-3.5 ml-1" />
+                        </Button>
+                      </DropdownMenuTrigger>
+
+                      <DropdownMenuContent
+                        align="end"
+                        className="w-56 max-w-[90vw] max-h-[40vh] overflow-y-auto px-2"
+                      >
+                        <DropdownMenuLabel>フィルタを選択</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
 
             {/* Priority filter */}
             <DropdownMenuLabel className="text-xs pt-2 font-normal text-muted-foreground">
@@ -1243,7 +1237,7 @@ export function EnhancedTaskTracker() {
             )}
           </div>
         ) : (
-            <ScrollArea className="flex-1 overflow-y-auto max-h-[calc(100dvh-30rem)]">
+            <ScrollArea className="flex-1 min-h-0 overflow-y-auto">
             <div className="space-y-4">
               {/* Overdue tasks */}
               {overdueTasks.length > 0 && (
