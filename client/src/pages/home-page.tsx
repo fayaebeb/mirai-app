@@ -119,12 +119,13 @@ export default function HomePage() {
   const renderMainContent = () => {
     if (activeTab === "chat") {
       return (
-        <motion.div 
-          className="bg-slate-900/90 backdrop-blur-md rounded-none sm:rounded-xl shadow-xl py-4 sm:py-0 px-0 w-full max-w-full border-0 sm:border border-blue-500/20 overflow-hidden relative h-[calc(100vh-6rem)]"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-        >
+          <motion.div 
+            className="bg-slate-900/90 backdrop-blur-md rounded-none sm:rounded-xl shadow-xl pt-4 sm:pt-0 pb-0 px-0 w-full max-w-full border-0 sm:border border-blue-500/20 overflow-hidden relative h-[calc(100vh-3.5rem)]"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+          >
+
           <div className="relative z-10 h-full flex">
             <ChatInterface />
           </div>
@@ -454,17 +455,19 @@ export default function HomePage() {
         {renderMainContent()}
       </main>
 
-      <footer className="border-t border-blue-900/30 py-1 md:py-2 bg-slate-950/60 backdrop-blur-md">
-        <div className="container mx-auto px-2 md:px-4 text-center">
-          <motion.p 
-            className="text-[10px] md:text-xs text-blue-400/80 font-mono"
-            animate={{ opacity: [0.6, 1, 0.6] }}
-            transition={{ duration: 3, repeat: Infinity }}
-          >
-            <span className="text-blue-500">⦿</span> ミライ – FSDのAIアシスタント <span className="text-blue-500">⦿</span>
-          </motion.p>
-        </div>
-      </footer>
+      {activeTab !== "chat" && (
+        <footer className="border-t border-blue-900/30 py-2 bg-slate-950/60 backdrop-blur-md">
+          <div className="container mx-auto px-4 text-center">
+            <motion.p 
+              className="text-xs text-blue-400/80 font-mono"
+              animate={{ opacity: [0.6, 1, 0.6] }}
+              transition={{ duration: 3, repeat: Infinity }}
+            >
+              <span className="text-blue-500">⦿</span> ミライ – FSDのAIアシスタント <span className="text-blue-500">⦿</span>
+            </motion.p>
+          </div>
+        </footer>
+      )}
 
 
     </div>
