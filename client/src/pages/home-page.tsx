@@ -328,7 +328,7 @@ export default function HomePage() {
       <TechParticlesAnimation />
 
       {/* Redesigned elegant header */}
-      <header className="border-b border-blue-900/50 bg-slate-950/80 backdrop-blur-md shadow-md sticky top-0 z-20">
+      <header className="border-b border-blue-900/50 bg-slate-950/80 backdrop-blur-md shadow-md fixed top-0 left-0 right-0 z-50 w-full">
         <div className="w-full max-w-full px-2 sm:px-4 py-1 sm:py-1.5">
           <div className="flex justify-between items-center">
             {/* Left: Company Logo + AI Brand */}
@@ -578,7 +578,7 @@ export default function HomePage() {
 
 
       {/* Main content section */}
-      <main className="flex-1 w-full max-w-full px-0 py-0">
+      <main className="flex-1 w-full max-w-full px-0 pt-14 sm:pt-16">
         {renderMainContent()}
       </main>
 

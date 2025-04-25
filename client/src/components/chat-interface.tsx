@@ -621,7 +621,7 @@ export const ChatInterface = () => {
       
 
       {/* Scrollable Chat Area - Enhanced with better visual hierarchy and feedback */}
-        <div className="flex-1 overflow-y-auto overscroll-none">
+        <div className="flex-1 overflow-y-auto overscroll-none pb-[70px] sm:pb-[80px]">
 
         <ScrollArea 
           className="h-full px-1 sm:px-4 py-3 w-full -webkit-overflow-scrolling-touch bg-gradient-to-b from-slate-900 to-slate-950" 
@@ -771,7 +771,7 @@ export const ChatInterface = () => {
       {/* Message Input Form - Enhanced with visual feedback and better usability */}
       <form 
         onSubmit={handleSubmit} 
-        className="flex-shrink-0 p-2 sm:p-3 border-t border-blue-900/30 flex flex-col gap-1.5 bg-slate-900/90 backdrop-blur-md sticky bottom-0 left-0 right-0 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.2)]"
+        className="flex-shrink-0 p-2 sm:p-3 border-t border-blue-900/30 flex flex-col gap-1.5 bg-slate-900/90 backdrop-blur-md fixed bottom-0 left-0 right-0 z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.2)] w-full"
       >
         <AnimatePresence>
           {showEmotions && (
