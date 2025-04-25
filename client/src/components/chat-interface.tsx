@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Send, Check, Sparkles, Heart, Lightbulb, Wand2, MessageSquare, FileText } from "lucide-react";
+import { Send, Check, Sparkles, Heart, Lightbulb, Wand2, MessageSquare, FileText, Trash2 } from "lucide-react";
 import { Message } from "@shared/schema";
 import { nanoid } from "nanoid";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -387,7 +387,11 @@ export const ChatInterface = () => {
     }
   });
 
-  
+  // Handle clear chat button click
+  const handleClearChat = () => {
+    setShowClearConfirm(true);
+  };
+
   // Effect to handle initial display and make header always visible on mobile
   useEffect(() => {
     // Force scroll to top on component mount
@@ -591,7 +595,29 @@ export const ChatInterface = () => {
     inputRef.current?.focus();
   };
 
-  
+  // Get random status message
+  const getStatusMessage = () => {
+    const messages = [
+      "接続完了", 
+      "データリンク確立", 
+      "ライブ接続", 
+      "メモリ最適化完了"
+    ];
+    return messages[Math.floor(Math.random() * messages.length)];
+  };
+
+  // Network status with emoji
+  const networkStatus = isOnline ? (
+    <span className="flex items-center gap-1 text-[10px] text-blue-400">
+      <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+      {getRandomEmoji(onlineEmojis)} {getStatusMessage()}
+    </span>
+  ) : (
+    <span className="flex items-center gap-1 text-[10px] text-red-400">
+      <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-400"></span>
+      {getRandomEmoji(offlineEmojis)} オフライン
+    </span>
+  );
 
   return (
     <Card className="w-full h-full md:max-w-[90%] mx-auto flex flex-col overflow-hidden relative border-blue-600/20 shadow-lg shadow-blue-900/10 bg-gradient-to-b from-slate-950 to-slate-900">
@@ -618,13 +644,10 @@ export const ChatInterface = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      
-
-      {/* Scrollable Chat Area - Enhanced with better visual hierarchy and feedback */}
-        <div className="flex-1 overflow-y-auto overscroll-none pb-[70px] sm:pb-[80px]">
-
+      {/* Main chat container with auto-scroll */}
+      <div className="flex-1 overflow-y-auto overscroll-none">
         <ScrollArea 
-          className="h-full px-1 sm:px-4 py-3 w-full -webkit-overflow-scrolling-touch bg-gradient-to-b from-slate-900 to-slate-950" 
+          className="h-full px-1 sm:px-4 py-3 w-full -webkit-overflow-scrolling-touch bg-gradient-to-b from-slate-900 to-slate-950 overflow-auto" 
           ref={scrollAreaRef}
         >
           <div className="space-y-2 w-full max-w-full">
@@ -762,17 +785,16 @@ export const ChatInterface = () => {
             )}
 
             <div ref={messageEndRef} />
-            {/* Extra padding on bottom to prevent cut-off */}
-            <div className="h-6" /> 
+            {/* Extra padding on bottom to account for floating input bar */}
+            <div className="h-24 sm:h-28" /> 
           </div>
         </ScrollArea>
       </div>
 
-      {/* Message Input Form - Enhanced with visual feedback and better usability */}
+      {/* Message Input Form - Enhanced with visual feedback and better usability - Made floating */}
       <form 
         onSubmit={handleSubmit} 
-        className="flex-shrink-0 p-2 sm:p-3 border-t border-blue-900/30 flex flex-col gap-1.5 bg-slate-900/90 backdrop-blur-md fixed bottom-0 left-0 right-0 z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.2)] w-full"
-        style={{ position: "fixed", WebkitOverflowScrolling: "touch" }}
+        className="flex-shrink-0 p-2 sm:p-3 border border-blue-900/30 flex flex-col gap-1.5 bg-slate-900/90 backdrop-blur-md fixed bottom-4 left-0 right-0 mx-auto max-w-[92%] sm:max-w-[85%] md:max-w-[75%] rounded-xl z-20 shadow-lg shadow-black/20"
       >
         <AnimatePresence>
           {showEmotions && (
