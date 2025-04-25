@@ -120,47 +120,16 @@ export default function HomePage() {
     if (activeTab === "chat") {
       return (
         <motion.div 
-          className="bg-slate-900/90 backdrop-blur-md rounded-none sm:rounded-xl shadow-xl p-0 w-full max-w-full border-0 sm:border border-blue-500/20 overflow-hidden relative h-[calc(100vh-3rem)]
-"
+          className="bg-slate-900/90 backdrop-blur-md rounded-none sm:rounded-xl shadow-xl p-0 w-full max-w-full border-0 sm:border border-blue-500/20 overflow-hidden relative h-[calc(100vh-5rem)] sm:h-[calc(100vh-3rem)]"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
         >
-          {/* Circuit-like pattern background */}
-          <div className="absolute inset-0 z-0 opacity-5 pointer-events-none">
-            <div className="absolute top-1/4 left-1/4 w-1/2 h-px bg-blue-400" />
-            <div className="absolute top-1/2 left-1/6 w-2/3 h-px bg-blue-400" />
-            <div className="absolute top-3/4 left-1/3 w-1/3 h-px bg-blue-400" />
-            <div className="absolute top-1/6 left-1/2 w-px h-2/3 bg-blue-400" />
-            <div className="absolute top-1/4 left-2/3 w-px h-1/2 bg-blue-400" />
-            <div className="absolute top-1/3 left-1/3 w-px h-1/3 bg-blue-400" />
-
-            <div className="absolute top-1/4 left-1/4 w-2 h-2 rounded-full bg-blue-400" />
-            <div className="absolute top-1/2 left-1/6 w-2 h-2 rounded-full bg-blue-400" />
-            <div className="absolute top-3/4 left-1/3 w-2 h-2 rounded-full bg-blue-400" />
-            <div className="absolute top-1/6 left-1/2 w-2 h-2 rounded-full bg-blue-400" />
-            <div className="absolute top-1/4 left-2/3 w-2 h-2 rounded-full bg-blue-400" />
-            <div className="absolute top-1/3 left-1/3 w-2 h-2 rounded-full bg-blue-400" />
-          </div>
-
-          {/* Tech corner elements */}
-          <div className="absolute top-2 left-2 text-blue-400 opacity-30">
-            <Network size={14} />
-          </div>
-          <div className="absolute top-2 right-2 text-blue-500 opacity-30">
-            <Server size={14} />
-          </div>
-          <div className="absolute bottom-2 left-2 text-blue-400 opacity-30">
-            <Cpu size={14} />
-          </div>
-          <div className="absolute bottom-2 right-2 text-blue-500 opacity-30">
-            <Database size={14} />
-          </div>
-
           <div className="relative z-10 h-full flex">
             <ChatInterface />
           </div>
         </motion.div>
+
       );
     } else if (activeTab === "notes") {
       return (
