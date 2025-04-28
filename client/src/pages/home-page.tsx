@@ -4,7 +4,7 @@ import ChatInterface from "@/components/chat-interface";
 import { ChatInput } from "@/components/chat-input";
 import { motion, AnimatePresence } from "framer-motion";
 import { Zap, Network, Cpu, Server, Database, Globe, LogOut, FileText, Book, Target, Trash2, FileOutput, MoreVertical, MessageSquare, Wand2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { ChatPDFExport } from "@/components/chat-pdf-export";
 import { Message } from "@shared/schema";
@@ -33,105 +33,18 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-// Define EmotionButtons component
-interface EmotionButtonsProps {
-  onSelect: (message: string) => void;
-  onClose: () => void;
-}
-
-const EmotionButtons = ({ onSelect, onClose }: EmotionButtonsProps) => {
-  const emotions = [
-    { label: "😊 嬉しい", text: "今とても嬉しいです！" },
-    { label: "😢 悲しい", text: "少し落ち込んでいます。" },
-    { label: "😠 怒り", text: "イライラしています。" },
-    { label: "😌 安心", text: "ほっとしました。" },
-    { label: "🤔 考え中", text: "考えていることがあります。" },
-    { label: "😕 混乱", text: "少し混乱しています。" },
-    { label: "🙂 普通", text: "特に変わったことはありません。" },
-    { label: "🥳 祝福", text: "おめでとうございます！" },
-  ];
-
-  return (
-    <div className="bg-slate-800 border border-blue-500/30 rounded-lg p-4 shadow-lg w-full max-w-md">
-      <div className="grid grid-cols-2 gap-2">
-        {emotions.map((emotion) => (
-          <Button
-            key={emotion.label}
-            variant="ghost"
-            onClick={() => {
-              onSelect(emotion.text);
-              onClose();
-            }}
-            className="text-left justify-start hover:bg-blue-600/20 hover:text-blue-300"
-          >
-            {emotion.label}
-          </Button>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-// Define prompt categories
-interface Prompt {
-  text: string;
-  message?: string;
-  description: string;
-}
-
-interface PromptCategory {
-  name: string;
-  icon: JSX.Element;
-  prompts: Prompt[];
-}
-
-const promptCategories: PromptCategory[] = [
-  {
-    name: "一般会話",
-    icon: <MessageSquare className="h-4 w-4" />,
-    prompts: [
-      {
-        text: "おすすめの本を教えて",
-        description: "読書のアドバイスを求めます"
-      },
-      {
-        text: "今日の天気はどうですか？",
-        description: "カジュアルな会話を始めます"
-      },
-      {
-        text: "好きな食べ物は何ですか？",
-        description: "個人的な好みについて話します"
-      }
-    ]
-  },
-  {
-    name: "アイデア生成",
-    icon: <Wand2 className="h-4 w-4" />,
-    prompts: [
-      {
-        text: "週末の計画を考えてください",
-        description: "週末のアクティビティのアイデアを求めます"
-      },
-      {
-        text: "面白いプロジェクトのアイデアを考えて",
-        description: "創造的なプロジェクトのアイデアを求めます"
-      },
-      {
-        text: "効率的な作業方法を教えて",
-        description: "生産性向上のためのヒントを求めます"
-      }
-    ]
-  }
-];
-
 export default function HomePage() {
   const { user, logoutMutation } = useAuth();
   const [showParticles, setShowParticles] = useState(false);
-  const [currentGreeting, setCurrentGreeting] = useState("");
+  
   const [activeTab, setActiveTab] = useState<string>("chat");
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [input, setInput] = useState("");
   const { toast } = useToast();
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  
+
 
   // Get messages for PDF export
   const { data: messages = [] } = useQuery<Message[]>({
@@ -177,7 +90,20 @@ export default function HomePage() {
   
   // Handle emotion selection from dropdown
   const handleEmotionSelect = (text: string) => {
-    setInput(input + text);
+    const textarea = inputRef.current;
+    if (!textarea) {
+      setInput(prev => prev + text);
+      return;
+    }
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const newValue = input.slice(0, start) + text + input.slice(end);
+    setInput(newValue);
+    // reposition the cursor after the inserted text
+    setTimeout(() => {
+      textarea.focus();
+      textarea.selectionStart = textarea.selectionEnd = start + text.length;
+    }, 0);
   };
   
   // Clear chat history mutation
@@ -220,37 +146,7 @@ export default function HomePage() {
   // Extract username before '@' from email
   const displayName = user?.username?.split("@")[0];
 
-  // Futuristic Japanese greetings
-  const greetings = [
-    "システム接続完了",
-    "インターフェース起動",
-    "プロトコル確認",
-    "データリンク確立",
-    "セッション開始",
-    "ようこそオペレーター"
-  ];
-
-  // Set greeting based on time of day
-  useEffect(() => {
-    const hour = new Date().getHours();
-    let greeting = "";
-
-    if (hour >= 5 && hour < 12) {
-      greeting = greetings[0]; // Morning protocol
-    } else if (hour >= 12 && hour < 17) {
-      greeting = greetings[1]; // Afternoon interface
-    } else {
-      greeting = greetings[2]; // Evening session
-    }
-
-    // Add a random additional greeting sometimes
-    if (Math.random() > 0.7) {
-      const randomIndex = Math.floor(Math.random() * (greetings.length - 3)) + 3;
-      greeting += " // " + greetings[randomIndex];
-    }
-
-    setCurrentGreeting(greeting);
-  }, []);
+  
 
   // Floating tech particles animation trigger
   useEffect(() => {
@@ -441,10 +337,8 @@ export default function HomePage() {
               setInput={setInput}
               handleSubmit={handleSubmit}
               sendMessage={sendMessage}
-              promptCategories={promptCategories}
-              EmotionButtons={EmotionButtons}
-              handleEmotionSelect={handleEmotionSelect}
             />
+
           </div>
         </div>
       )}
@@ -487,14 +381,15 @@ export default function HomePage() {
         <div className="w-full max-w-full px-2 sm:px-4 py-1 sm:py-1.5">
           <div className="flex justify-between items-center">
             {/* Left: Company Logo + AI Brand */}
-            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex items-center">
+
               {/* Company Logo */}
               <motion.div
-                className="h-8 w-8 sm:h-9 sm:w-9 rounded-lg flex items-center justify-center bg-gradient-to-br from-blue-700 to-slate-800 border border-blue-500/20 shadow-lg"
+                onClick={() => setActiveTab("chat")}
+                className="cursor-pointer h-12 w-12 sm:h-14 sm:w-14 flex items-center justify-center"
                 whileHover={{ 
-                  scale: 1.05,
-                  boxShadow: "0 0 15px rgba(59, 130, 246, 0.5)",
-                  borderColor: "rgba(59, 130, 246, 0.4)"
+                  scale: 1.2,
+                  
                 }}
               >
                 <img
@@ -504,6 +399,9 @@ export default function HomePage() {
                 />
               </motion.div>
 
+
+
+
               {/* AI Brand Logo integrated */}
               <motion.div
                 className="relative flex items-center"
@@ -512,25 +410,29 @@ export default function HomePage() {
                 transition={{ duration: 0.5 }}
               >
                 <motion.div
-                  className="font-mono text-lg sm:text-xl text-blue-400 font-bold flex items-center gap-1"
-                  animate={{ 
+                  onClick={() => setActiveTab("chat")}
+                  className="cursor-pointer font-mono text-xl sm:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-400 font-extrabold flex items-center gap-2"
+                  animate={{
                     textShadow: [
-                      "0 0 3px rgba(59, 130, 246, 0.5)",
-                      "0 0 7px rgba(59, 130, 246, 0.8)",
-                      "0 0 3px rgba(59, 130, 246, 0.5)"
-                    ]
+                      "0 0 5px rgba(59, 130, 246, 0.7)",
+                      "0 0 10px rgba(59, 130, 246, 1)",
+                      "0 0 5px rgba(59, 130, 246, 0.7)"
+                    ],
+                    scale: [1, 1.02, 1],
                   }}
-                  transition={{ duration: 3, repeat: Infinity }}
+                  transition={{ duration: 4, repeat: Infinity }}
                 >
-
                   <span>ミライ</span>
                 </motion.div>
 
+
+
                 {/* Decorative rotating rings */}
-                <motion.div
-                  className="absolute inset-0 -z-10 rounded-full border border-blue-500/30 border-t-blue-500/80"
+                {/* First rotating ring */}
+              <motion.div
+                  className="absolute inset-0 -z-10 rounded-full border border-cyan-400/20"
                   animate={{ rotate: 360 }}
-                  transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
                 />
               </motion.div>
             </div>
@@ -657,12 +559,13 @@ export default function HomePage() {
                         <DropdownMenuSeparator className="bg-blue-900/30" />
                         <DropdownMenuItem 
                           className="text-blue-300 hover:bg-blue-800/30 cursor-pointer flex items-center gap-2"
-                          onClick={() => logoutMutation.mutate()}
+                          onClick={() => setShowLogoutConfirm(true)}
                           disabled={logoutMutation.isPending}
                         >
                           <LogOut className="h-4 w-4 text-blue-400" />
                           <span>ログアウト</span>
                         </DropdownMenuItem>
+
                       </DropdownMenuContent>
                     </DropdownMenu>
                   ) : (
@@ -695,7 +598,7 @@ export default function HomePage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => logoutMutation.mutate()}
+                    onClick={() => setShowLogoutConfirm(true)}
                     disabled={logoutMutation.isPending}
                     className="text-blue-300 hover:bg-blue-900/20 h-8 w-8 sm:h-9 sm:w-9"
                   >
@@ -709,27 +612,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* Greeting message */}
-        {activeTab !== "chat" && activeTab !== "goals" &&  (
-        <motion.div 
-          className="container mx-auto px-4 py-2 text-center"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-        >
-          <motion.h2 
-            className="text-lg text-blue-400 font-mono tracking-wider"
-            animate={{ y: [0, -2, 0] }}
-            transition={{ duration: 3, repeat: Infinity, repeatType: "reverse" }}
-          >
-            <span className="text-blue-300">[</span>
-            {displayName && `${displayName}`}
-            <span className="text-blue-300">]</span>
-            <span className="mx-2 animate-pulse">»</span>
-            {currentGreeting}
-          </motion.h2>
-        </motion.div>
-      )}
+     
 
 
       {/* Main content section */}
@@ -739,7 +622,8 @@ export default function HomePage() {
 
       {/* Confirmation Dialog for clearing chat history */}
       <AlertDialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
-        <AlertDialogContent className="bg-slate-900 border border-blue-500/30">
+          <AlertDialogContent className="mx-auto max-w-[90%] sm:max-w-md md:max-w-lg lg:max-w-xl rounded-xl p-6">
+
           <AlertDialogHeader>
             <AlertDialogTitle className="text-blue-100">チャット履歴をクリアしますか？</AlertDialogTitle>
             <AlertDialogDescription className="text-blue-300/70">
@@ -759,6 +643,29 @@ export default function HomePage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
+        <AlertDialogContent className="mx-auto max-w-[90%] sm:max-w-md md:max-w-lg lg:max-w-xl rounded-xl p-6">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-blue-100">ログアウトしますか？</AlertDialogTitle>
+            <AlertDialogDescription className="text-blue-300/70">
+              ログアウトすると、セッションが終了します。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-slate-800 text-blue-200 border-slate-700 hover:bg-slate-700">
+              キャンセル
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => logoutMutation.mutate()}
+              className="bg-red-900/50 hover:bg-red-900 text-red-50 border border-red-800"
+            >
+              ログアウト
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       {activeTab !== "chat" && (
         <footer className="border-t border-blue-900/30 py-2 bg-slate-950/60 backdrop-blur-md">
