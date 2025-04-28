@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
+import { useQuery, useMutation, UseMutationResult } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
-import { Send, Check, Sparkles, Heart, Lightbulb, Wand2, MessageSquare, FileText, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sparkles, Heart, Lightbulb, Wand2, MessageSquare, FileText, Trash2 } from "lucide-react";
 import { Message } from "@shared/schema";
 import { nanoid } from "nanoid";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -15,12 +14,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import ChatLoadingIndicator, { SakuraPetalLoading } from "./chat-loading-indicator";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -30,7 +23,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ChatPDFExport } from "./chat-pdf-export";
 import { Badge } from "@/components/ui/badge";
 
 // Define a type for optimistic messages that uses string IDs instead of numbers
@@ -302,8 +294,22 @@ const EmotionButtons = ({ onSelect, onClose }: EmotionButtonsProps) => {
   );
 };
 
-export const ChatInterface = () => {
-  const [input, setInput] = useState("");
+interface ChatInterfaceProps {
+  input?: string;
+  setInput?: (input: string) => void;
+  handleSubmit?: (e: React.FormEvent) => void;
+  sendMessageMutation?: UseMutationResult<Message, Error, string>;
+  handleEmotionSelect?: (text: string) => void;
+}
+
+export const ChatInterface = ({ 
+  input: externalInput, 
+  setInput: externalSetInput,
+  handleSubmit: externalHandleSubmit,
+  sendMessageMutation: externalSendMessageMutation,
+  handleEmotionSelect: externalHandleEmotionSelect 
+}: ChatInterfaceProps = {}) => {
+  const [input, setInputInternal] = useState("");
   const [isOnline, setIsOnline] = useState(true);
   const [showTutorial, setShowTutorial] = useState(false);
   const [showEmotions, setShowEmotions] = useState(false);
@@ -312,8 +318,11 @@ export const ChatInterface = () => {
   const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
   const isMobile = useIsMobile();
+  
+  // Use either the external or internal state and functions
+  const setInput = externalSetInput || setInputInternal;
+  const currentInput = externalInput !== undefined ? externalInput : input;
 
   // Check if online periodically
   useEffect(() => {
@@ -525,23 +534,11 @@ export const ChatInterface = () => {
     }
   });
 
-  // Updated function to insert prompt text at the current cursor position
-  const handleEmotionSelect = (text: string) => {
-    const textarea = inputRef.current;
-    if (!textarea) {
-      setInput(prev => prev + text);
-      return;
-    }
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const newValue = input.slice(0, start) + text + input.slice(end);
-    setInput(newValue);
-    // reposition the cursor after the inserted text
-    setTimeout(() => {
-      textarea.focus();
-      textarea.selectionStart = textarea.selectionEnd = start + text.length;
-    }, 0);
-  };
+  // Updated function to insert prompt text at the current position
+  const handleEmotionSelect = externalHandleEmotionSelect || ((text: string) => {
+    // Simply append the text to the current input when there's no proper cursor positioning
+    setInput(currentInput + text);
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -592,7 +589,7 @@ export const ChatInterface = () => {
   // Handle quick reply selection
   const handleQuickReplySelect = (text: string) => {
     setInput(text);
-    inputRef.current?.focus();
+    // No need to focus on input as it's handled in the separated component
   };
 
   // Get random status message
@@ -647,12 +644,13 @@ export const ChatInterface = () => {
       {/* Main chat container with auto-scroll */}
       <div className="flex-1 overflow-y-auto overscroll-none">
         <ScrollArea 
-          className="h-full px-1 sm:px-4 py-3 w-full -webkit-overflow-scrolling-touch bg-gradient-to-b from-slate-900 to-slate-950 overflow-auto" 
+          className="h-full px-1 sm:px-4 py-1 w-full -webkit-overflow-scrolling-touch bg-gradient-to-b from-slate-900 to-slate-950 overflow-auto" 
           ref={scrollAreaRef}
         >
           <div className="space-y-2 w-full max-w-full">
             {messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center min-h-[300px] sm:min-h-[400px] text-center py-10">
+                    <div className="flex flex-col items-center justify-center sm:min-h-[300px] text-center py-4">
+
 
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -785,104 +783,12 @@ export const ChatInterface = () => {
             )}
 
             <div ref={messageEndRef} />
-            {/* Extra padding on bottom to account for floating input bar */}
-            <div className="h-24 sm:h-28" /> 
+            
           </div>
         </ScrollArea>
       </div>
 
-      {/* Message Input Form - Enhanced with visual feedback and better usability - Made floating */}
-      <form 
-        onSubmit={handleSubmit} 
-        className="flex-shrink-0 p-2 sm:p-3 border border-blue-900/30 flex flex-col gap-1.5 bg-slate-900/90 backdrop-blur-md fixed bottom-4 left-0 right-0 mx-auto max-w-[92%] sm:max-w-[85%] md:max-w-[75%] rounded-xl z-20 shadow-lg shadow-black/20"
-      >
-        <AnimatePresence>
-          {showEmotions && (
-            <div className="absolute bottom-full left-0 w-full flex justify-center">
-              <EmotionButtons onSelect={handleEmotionSelect} onClose={() => setShowEmotions(false)} />
-            </div>
-          )}
-        </AnimatePresence>
-
-        <div className="flex gap-2 items-end">
-          <div className="relative flex-1 min-w-0">
-            <Textarea
-              ref={inputRef}
-              autoFocus
-              value={input}
-              onChange={(e) => {
-                setInput(e.target.value);
-                e.target.style.height = "auto";
-                e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
-              }}
-              placeholder="ミライに何かお手伝いできますか？..."
-              className="pr-10 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-xs sm:text-sm min-h-[40px] max-h-[180px] resize-none py-2 px-3 bg-slate-800/50 border-blue-900/30 placeholder:text-blue-400/50 rounded-xl"
-              rows={1}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey && !isMobile) {
-                  e.preventDefault();
-                  handleSubmit(e);
-                }
-              }}
-            />
-
-            {/* Prompt suggestions button - enhanced with animation */}
-            <TooltipProvider key="prompt-tooltip">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <motion.button
-                    type="button"
-                    className="absolute right-3 top-2 text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1 px-1.5 py-1 rounded-md hover:bg-blue-900/40"
-                    whileHover={{ scale: 1.1, rotate: [0, -5, 5, 0] }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => setShowEmotions((prev) => !prev)}
-                  >
-                    <Lightbulb className="h-4 w-4" />
-                  </motion.button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-slate-800 border border-blue-500/30">
-                  <p>プロンプト一覧</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-
-          {/* Enhanced send button with loading animation */}
-          <motion.button
-            type="submit"
-            disabled={sendMessage.isPending || !input.trim()}
-            className={`px-3 sm:px-4 py-2 h-10 rounded-xl text-white flex items-center gap-1.5 flex-shrink-0 transition-all ${
-              input.trim() 
-                ? "bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 shadow-lg shadow-blue-900/30 hover:shadow-blue-900/50" 
-                : "bg-slate-700/50 text-slate-400"
-            }`}
-            whileHover={input.trim() ? { scale: 1.03 } : {}}
-            whileTap={input.trim() ? { scale: 0.97 } : {}}
-          >
-            {sendMessage.isPending ? (
-              <div className="flex items-center gap-1.5">
-                <div className="w-1 h-1 rounded-full bg-white animate-bounce" style={{ animationDelay: "0ms" }} />
-                <div className="w-1 h-1 rounded-full bg-white animate-bounce" style={{ animationDelay: "150ms" }} />
-                <div className="w-1 h-1 rounded-full bg-white animate-bounce" style={{ animationDelay: "300ms" }} />
-              </div>
-            ) : (
-              <>
-                <Send className="h-4 w-4" />
-                <span className="text-xs hidden sm:inline font-medium">送信する</span>
-                {input.trim() && (
-                  <motion.span
-                    className="absolute -top-1 -right-1 text-xs"
-                    animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-                    transition={{ duration: 3, repeat: Infinity }}
-                  >
-                    ⚡
-                  </motion.span>
-                )}
-              </>
-            )}
-          </motion.button>
-        </div>
-      </form>
+      {/* Input form removed and moved to a separate component */}
     </Card>
   );
 };

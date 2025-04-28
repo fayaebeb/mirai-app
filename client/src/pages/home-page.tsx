@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import ChatInterface from "@/components/chat-interface";
+import { ChatInput } from "@/components/chat-input";
 import { motion, AnimatePresence } from "framer-motion";
-import { Zap, Network, Cpu, Server, Database, Globe, LogOut, FileText, Book, Target, Trash2, FileOutput, MoreVertical } from "lucide-react";
+import { Zap, Network, Cpu, Server, Database, Globe, LogOut, FileText, Book, Target, Trash2, FileOutput, MoreVertical, MessageSquare, Wand2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { ChatPDFExport } from "@/components/chat-pdf-export";
@@ -32,12 +33,104 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+// Define EmotionButtons component
+interface EmotionButtonsProps {
+  onSelect: (message: string) => void;
+  onClose: () => void;
+}
+
+const EmotionButtons = ({ onSelect, onClose }: EmotionButtonsProps) => {
+  const emotions = [
+    { label: "😊 嬉しい", text: "今とても嬉しいです！" },
+    { label: "😢 悲しい", text: "少し落ち込んでいます。" },
+    { label: "😠 怒り", text: "イライラしています。" },
+    { label: "😌 安心", text: "ほっとしました。" },
+    { label: "🤔 考え中", text: "考えていることがあります。" },
+    { label: "😕 混乱", text: "少し混乱しています。" },
+    { label: "🙂 普通", text: "特に変わったことはありません。" },
+    { label: "🥳 祝福", text: "おめでとうございます！" },
+  ];
+
+  return (
+    <div className="bg-slate-800 border border-blue-500/30 rounded-lg p-4 shadow-lg w-full max-w-md">
+      <div className="grid grid-cols-2 gap-2">
+        {emotions.map((emotion) => (
+          <Button
+            key={emotion.label}
+            variant="ghost"
+            onClick={() => {
+              onSelect(emotion.text);
+              onClose();
+            }}
+            className="text-left justify-start hover:bg-blue-600/20 hover:text-blue-300"
+          >
+            {emotion.label}
+          </Button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Define prompt categories
+interface Prompt {
+  text: string;
+  message?: string;
+  description: string;
+}
+
+interface PromptCategory {
+  name: string;
+  icon: JSX.Element;
+  prompts: Prompt[];
+}
+
+const promptCategories: PromptCategory[] = [
+  {
+    name: "一般会話",
+    icon: <MessageSquare className="h-4 w-4" />,
+    prompts: [
+      {
+        text: "おすすめの本を教えて",
+        description: "読書のアドバイスを求めます"
+      },
+      {
+        text: "今日の天気はどうですか？",
+        description: "カジュアルな会話を始めます"
+      },
+      {
+        text: "好きな食べ物は何ですか？",
+        description: "個人的な好みについて話します"
+      }
+    ]
+  },
+  {
+    name: "アイデア生成",
+    icon: <Wand2 className="h-4 w-4" />,
+    prompts: [
+      {
+        text: "週末の計画を考えてください",
+        description: "週末のアクティビティのアイデアを求めます"
+      },
+      {
+        text: "面白いプロジェクトのアイデアを考えて",
+        description: "創造的なプロジェクトのアイデアを求めます"
+      },
+      {
+        text: "効率的な作業方法を教えて",
+        description: "生産性向上のためのヒントを求めます"
+      }
+    ]
+  }
+];
+
 export default function HomePage() {
   const { user, logoutMutation } = useAuth();
   const [showParticles, setShowParticles] = useState(false);
   const [currentGreeting, setCurrentGreeting] = useState("");
   const [activeTab, setActiveTab] = useState<string>("chat");
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [input, setInput] = useState("");
   const { toast } = useToast();
 
   // Get messages for PDF export
@@ -45,6 +138,47 @@ export default function HomePage() {
     queryKey: ['/api/messages'],
     enabled: !!user,
   });
+  
+  // Send message mutation
+  const sendMessage = useMutation<Message, Error, string>({
+    mutationFn: async (content: string) => {
+      const response = await apiRequest(
+        'POST',
+        '/api/messages',
+        { content }
+      );
+      return response.json();
+    },
+    onSuccess: () => {
+      // Clear input field
+      setInput('');
+      
+      // Force a refresh of the messages query
+      queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+    },
+    onError: (error) => {
+      console.error("Error sending message:", error);
+      toast({
+        title: "エラーが発生しました",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Handle form submission
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!input.trim() || sendMessage.isPending) return;
+    
+    sendMessage.mutate(input);
+  };
+  
+  // Handle emotion selection from dropdown
+  const handleEmotionSelect = (text: string) => {
+    setInput(input + text);
+  };
   
   // Clear chat history mutation
   const clearChatHistory = useMutation({
@@ -179,16 +313,21 @@ export default function HomePage() {
     if (activeTab === "chat") {
       return (
         <motion.div 
-          className="bg-slate-900/90 backdrop-blur-md rounded-none sm:rounded-xl shadow-xl pt-0 pb-4 sm:pt-0 sm:pb-0 px-0 w-full max-w-full border-0 sm:border border-blue-500/20 overflow-hidden relative h-[calc(100vh-5rem)]"
+          className="bg-slate-900/90 backdrop-blur-md rounded-none sm:rounded-xl shadow-xl py-4 sm:py-0 px-0 w-full max-w-full border-0 sm:border border-blue-500/20 min-h-screen relative mb-0"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
         >
-          <div className="relative z-10 h-full flex">
-            <ChatInterface />
+          <div className="relative z-10 pb-16 sm:pb-24">
+            <ChatInterface 
+              input={input}
+              setInput={setInput}
+              handleSubmit={handleSubmit}
+              sendMessageMutation={sendMessage}
+              handleEmotionSelect={handleEmotionSelect}
+            />
           </div>
         </motion.div>
-
 
       );
     } else if (activeTab === "notes") {
@@ -293,6 +432,22 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-900 to-slate-800 relative overflow-hidden">
+      {/* Fixed position chat input for chat tab only */}
+      {activeTab === "chat" && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 px-2 sm:px-4 pb-3 pt-2 bg-gradient-to-t from-slate-900 via-slate-900/95 to-slate-900/0">
+          <div className="max-w-3xl mx-auto">
+            <ChatInput
+              input={input}
+              setInput={setInput}
+              handleSubmit={handleSubmit}
+              sendMessage={sendMessage}
+              promptCategories={promptCategories}
+              EmotionButtons={EmotionButtons}
+              handleEmotionSelect={handleEmotionSelect}
+            />
+          </div>
+        </div>
+      )}
       {/* Floating decorative elements */}
       <div className="absolute top-20 right-10 opacity-20 hidden md:block">
         <motion.div
@@ -474,7 +629,7 @@ export default function HomePage() {
 
                       <DropdownMenuContent align="end" className="bg-slate-900 border border-blue-500/30">
                         
-                        <DropdownMenuSeparator className="bg-blue-900/30" />
+
 
                         {messages.length > 0 && (
                           <DropdownMenuItem 
