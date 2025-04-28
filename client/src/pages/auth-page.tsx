@@ -116,73 +116,91 @@ export default function AuthPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <motion.div 
-            className="w-24 h-24 mb-4 cursor-pointer flex items-center justify-center bg-blue-900/50 backdrop-blur-md rounded-2xl border border-blue-400/30 shadow-lg shadow-blue-500/20"
-            whileHover={{ scale: 1.1, rotate: [0, -5, 5, 0] }}
-            whileTap={{ scale: 0.9 }}
-            transition={{ rotate: { duration: 0.5, repeat: 1 } }}
-            onClick={addTechParticles}
-          >
-            <img
-              src="/images/mirai.png"  
-              alt="Bot Logo"
-              className="w-full h-full object-contain rounded-full"
+          <img
+            src="/images/mirai.png"
+            alt="Bot Logo"
+            className="w-28 h-28 object-cover rounded-full"
+          />
+          <div className="relative flex items-center justify-center">
+            {/* Your main text with shimmer */}
+            <motion.span
+              className="text-3xl font-bold text-blue-300 font-mono relative z-10"
+              animate={{
+                textShadow: [
+                  "0 0 3px rgba(59, 130, 246, 0.5)",
+                  "0 0 7px rgba(59, 130, 246, 0.8)",
+                  "0 0 3px rgba(59, 130, 246, 0.5)"
+                ]
+              }}
+              transition={{ duration: 3, repeat: Infinity }}
+            >
+              ミライ
+            </motion.span>
+
+            {/* Decorative rotating ring */}
+            <motion.div
+              className="absolute inset-0 rounded-full border-2 border-blue-500/30 border-t-blue-500/80 shadow-lg shadow-blue-500/20"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
             />
-          </motion.div>
-          <motion.div
-            className="text-xl text-blue-300 font-mono"
-            animate={{ y: [0, -5, 0] }}
-            transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
-          >
-            {currentSymbol}
-          </motion.div>
+          </div>
+
+
+          
         </motion.div>
 
 
-        {/* Authentication Card */}
-        <motion.div 
-          className="flex flex-col items-center justify-center p-8 bg-gradient-to-b from-slate-900 to-blue-900"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-        >
-          <motion.div
-            className="w-32 h-32 mb-6 flex items-center justify-center"
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.5 }}
-          >
-            <motion.div 
-              className="relative w-full h-full"
-              animate={{ rotate: [0, 360] }}
-              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            >
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="absolute w-full h-full rounded-full border-2 border-blue-400/30 border-t-blue-400" />
-              </div>
-              <div className="absolute inset-2 flex items-center justify-center">
-                <div className="absolute w-full h-full rounded-full border-2 border-blue-500/30 border-l-blue-500" />
-              </div>
-              <div className="absolute inset-4 flex items-center justify-center">
-                <div className="absolute w-full h-full rounded-full border-2 border-blue-600/30 border-r-blue-600" />
-              </div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Server size={30} className="text-blue-400" />
 
+
+
+            {/* Authentication Card */}
+            <motion.div 
+              className="flex flex-col items-center justify-center p-8 bg-gradient-to-b from-slate-900 to-blue-900"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+            >
+              {/* Hide the rotating Server icon on mobile */}
+              <div className="hidden md:flex flex-col items-center">
+                <motion.div
+                  className="w-32 h-32 mb-6 flex items-center justify-center"
+                  initial={{ scale: 0.9 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <motion.div 
+                    className="relative w-full h-full"
+                    animate={{ rotate: [0, 360] }}
+                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                  >
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="absolute w-full h-full rounded-full border-2 border-blue-400/30 border-t-blue-400" />
+                    </div>
+                    <div className="absolute inset-2 flex items-center justify-center">
+                      <div className="absolute w-full h-full rounded-full border-2 border-blue-500/30 border-l-blue-500" />
+                    </div>
+                    <div className="absolute inset-4 flex items-center justify-center">
+                      <div className="absolute w-full h-full rounded-full border-2 border-blue-600/30 border-r-blue-600" />
+                    </div>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Server size={30} className="text-blue-400" />
+                    </div>
+                  </motion.div>
+                </motion.div>
               </div>
-            </motion.div>
-          </motion.div>
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ 
-              type: "spring", 
-              stiffness: 300, 
-              damping: 20,
-              delay: 0.3
-            }}
-            className="w-full max-w-md"
-          >
+
+              {/* Rest of the form content (always shown) */}
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ 
+                  type: "spring", 
+                  stiffness: 300, 
+                  damping: 20,
+                  delay: 0.3
+                }}
+                className="w-full max-w-md"
+              >
             <Card className="p-8 bg-slate-800/90 backdrop-blur-sm border border-blue-500/20 shadow-lg rounded-xl">
               <div className="flex items-center justify-between mb-6">
                 <motion.h1 
@@ -303,10 +321,11 @@ export default function AuthPage() {
                 <Button
                   variant="link"
                   onClick={() => setIsLogin(!isLogin)}
-                  className="text-sm text-blue-400 hover:text-blue-300"
+                  className="w-full text-sm text-blue-400 hover:text-blue-300"
                 >
                   {isLogin ? "アカウントが必要ですか？ サインアップ" : "すでにアカウントをお持ちですか？ ログイン"}
                 </Button>
+
               </motion.div>
             </Card>
           </motion.div>

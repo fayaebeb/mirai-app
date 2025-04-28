@@ -1,657 +1,538 @@
-import { useRef, useState, useEffect } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Goal } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Message, Goal } from "@shared/schema";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useAuth } from "@/hooks/use-auth";
+import { Check, Plus, Target, Trash2, Calendar, Rocket, Award, Clock, TrendingUp, Zap, ArrowUpCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Send, Target, Eraser, AlertTriangle, Lightbulb, MessageSquare, Wand2, Sparkles, Award, Star, Rocket, BrainCircuit } from "lucide-react";
-import ChatMessage from "@/components/chat-message";
-import { ChatLoadingIndicator } from "@/components/chat-loading-indicator";
-import { v4 as uuidv4 } from 'uuid';
 import { motion, AnimatePresence } from "framer-motion";
+import { format, differenceInDays, isBefore } from "date-fns";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { ja } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 
-// Import the Message interface from chat-message.tsx which includes onRegenerateAnswer
-interface MessageWithRegenerate extends Message {
-  onRegenerateAnswer?: () => void;
-}
 
-// Using Message type as a base but with string id for optimistic updates
-type OptimisticMessage = {
-  id: string; // UUID for optimistic updates
-  userId: number;
-  content: string;
-  isBot: boolean;
-  timestamp: Date;
-  sessionId: string;
-}
-
-// Array of prompts that users can quickly select
-interface Prompt {
-  text: string;
-  message?: string;
-  description: string;
-}
-
-// Prompt categories to organize the prompts
-interface PromptCategory {
-  name: string;
-  icon: JSX.Element;
-  prompts: Prompt[];
-}
-
-const promptCategories: PromptCategory[] = [
-  {
-    name: "タスク管理 🎯",
-    icon: <Target className="h-4 w-4" />,
-    prompts: [
-      {
-        text: "タスク達成プラン✨",
-        message: "私のタスクを達成するための具体的なアクションプランを教えてください。ステップごとに分解して、期日も含めて詳しく説明してください。",
-        description: "タスク達成のための具体的なステップ計画を提案",
-      },
-      {
-        text: "タスク設定アドバイス📝",
-        message: "効果的なタスク設定のポイントについて教えてください。SMARTタスクとは何ですか？",
-        description: "適切なタスク設定方法についてのアドバイス",
-      },
-      {
-        text: "モチベーション維持法🚀",
-        message: "タスク達成のためのモチベーションを維持する方法を教えてください。やる気が出ない時の対処法も含めて。",
-        description: "モチベーション維持の戦略を提案",
-      },
-      {
-        text: "タスク進捗確認📊",
-        message: "タスクの進捗状況を効果的に確認・管理する方法について教えてください。",
-        description: "進捗管理のベストプラクティス",
-      },
-      {
-        text: "困難克服法💪",
-        message: "タスク達成の過程で直面する困難や障害を克服するための方法を教えてください。",
-        description: "障害を乗り越えるための戦略",
-      },
-      {
-        text: "タスク見直し方法🔄",
-        message: "タスクが現実的でないと感じた時、どのように見直すべきですか？タスクを調整する際のポイントを教えてください。",
-        description: "タスクの再評価と調整方法",
-      },
-    ]
-  },
-  {
-    name: "習慣形成 ⏱️",
-    icon: <Rocket className="h-4 w-4" />,
-    prompts: [
-      {
-        text: "習慣化の秘訣🔑",
-        message: "タスク達成につながる良い習慣を形成するための効果的な方法を教えてください。",
-        description: "持続可能な習慣を作るコツ",
-      },
-      {
-        text: "朝のルーティン☀️",
-        message: "生産性を高める朝のルーティンについてアドバイスください。タスク達成に役立つ朝の習慣は？",
-        description: "タスク達成を促進する朝の習慣",
-      },
-      {
-        text: "小さな成功の積み重ね📈",
-        message: "小さな成功体験を積み重ねて大きなタスクを達成する方法について教えてください。",
-        description: "小さな成功の活用法",
-      },
-      {
-        text: "悪習慣の断ち切り方🚫",
-        message: "タスク達成の妨げになる悪い習慣を断ち切るための効果的な方法を教えてください。",
-        description: "悪習慣を克服する戦略",
-      },
-    ]
-  },
-  {
-    name: "分析・振り返り 🔍",
-    icon: <BrainCircuit className="h-4 w-4" />,
-    prompts: [
-      {
-        text: "タスク進捗分析📊",
-        message: "私のタスク達成状況を分析して、改善点を指摘してください。",
-        description: "タスク進捗の分析と改善点提案",
-      },
-      {
-        text: "週間振り返り🔄",
-        message: "週間タスクの振り返りをサポートしてください。何を振り返るべきかも教えてください。",
-        description: "効果的な週間振り返りのガイド",
-      },
-      {
-        text: "次のステップ提案➡️",
-        message: "現在のタスク達成状況を踏まえて、次に取るべきステップを提案してください。",
-        description: "次のアクションの提案",
-      },
-      {
-        text: "成功要因分析✨",
-        message: "これまでの成功パターンを分析して、今後のタスク達成にどう活かせるか教えてください。",
-        description: "成功パターンの分析と活用法",
-      },
-    ]
-  },
-];
-
-// Component for selecting emotion/prompt buttons
-interface EmotionButtonsProps {
-  onSelect: (message: string) => void;
-  onClose: () => void;
-}
-
-const EmotionButtons = ({ onSelect, onClose }: EmotionButtonsProps) => {
-  const [selectedCategory, setSelectedCategory] = useState<string>(promptCategories[0].name);
-
-  // Handle clicks outside the emotion buttons to close it
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const handleClickOutside = (event: MouseEvent) => {
-    if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-      onClose();
-    }
-  };
-
-  useEffect(() => {
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  const selectedCategoryData = promptCategories.find(cat => cat.name === selectedCategory) || promptCategories[0];
-
-  return (
-    <motion.div
-      ref={containerRef}
-      className="bg-card shadow-lg rounded-xl border overflow-hidden w-full max-w-md"
-      initial={{ y: 20, opacity: 0, scale: 0.95 }}
-      animate={{ y: 0, opacity: 1, scale: 1 }}
-      exit={{ y: 20, opacity: 0, scale: 0.9 }}
-      transition={{ duration: 0.2 }}
-    >
-      {/* Category selector */}
-      <div className="flex gap-1 p-2 bg-muted/40 overflow-x-auto scrollbar-hide">
-        {promptCategories.map((category) => (
-          <Button
-            key={category.name}
-            type="button"
-            variant={selectedCategory === category.name ? "default" : "ghost"}
-            size="sm"
-            className="whitespace-nowrap text-xs flex items-center gap-1.5"
-            onClick={() => setSelectedCategory(category.name)}
-          >
-            {category.icon}
-            <span>{category.name}</span>
-          </Button>
-        ))}
-      </div>
-
-      {/* Prompt buttons */}
-      <div className="grid grid-cols-1 gap-1 p-2 max-h-60 overflow-y-auto">
-        {selectedCategoryData.prompts.map((prompt, index) => (
-          <motion.button
-            type="button" // Prevents default submit behavior
-            key={index}
-            className="flex flex-col items-start rounded-lg px-3 py-2 text-left hover:bg-accent transition-colors"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              onSelect(prompt.message || prompt.text);
-              onClose();
-            }}
-          >
-            <span className="font-medium text-sm">{prompt.text}</span>
-            <span className="text-xs text-muted-foreground mt-0.5">{prompt.description}</span>
-          </motion.button>
-        ))}
-      </div>
-    </motion.div>
-  );
-};
-
-export function GoalChatInterface() {
-  const [messageText, setMessageText] = useState("");
-  const { user } = useAuth();
+export function GoalTracker() {
+  const [newGoalDescription, setNewGoalDescription] = useState("");
+  const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const { toast } = useToast();
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-  const [optimisticMessages, setOptimisticMessages] = useState<OptimisticMessage[]>([]);
-  const [showEmotions, setShowEmotions] = useState(false);
-  const isMobile = window.innerWidth < 640;
-  const [chatInput, setChatInput] = useState("");
 
-  // Fetch goal-specific messages
-  const { data: messages = [], isLoading: isLoadingMessages } = useQuery<Message[]>({
-    queryKey: ['/api/goal-messages'],
-    enabled: !!user,
+  // Fetch goals
+  const { data: goals = [], isLoading, error } = useQuery<Goal[]>({
+    queryKey: ['/api/goals'],
+    refetchOnWindowFocus: true,
   });
 
-  // Clear chat history mutation
-  const clearChatHistoryMutation = useMutation({
+  // Create goal mutation
+  const createGoal = useMutation({
     mutationFn: async () => {
-      // Make DELETE request to the API endpoint
-      await apiRequest('DELETE', '/api/goal-messages');
+      const response = await apiRequest(
+        'POST',
+        '/api/goals',
+        { 
+          description: newGoalDescription.trim(), 
+          completed: false,
+          dueDate: dueDate
+        }
+      );
+      return await response.json();
     },
     onSuccess: () => {
-      // Clear optimistic messages
-      setOptimisticMessages([]);
-
-      // Clear the query cache
-      queryClient.setQueryData(['/api/goal-messages'], []);
-
-      // Invalidate the messages query to ensure it's updated
-      queryClient.invalidateQueries({ queryKey: ['/api/goal-messages'] });
-
+      queryClient.invalidateQueries({ queryKey: ['/api/goals'] });
+      setNewGoalDescription("");
+      setDueDate(undefined);
+      setIsAddDialogOpen(false);
       toast({
-        title: "会話履歴をクリアしました",
-        description: "タスクアシスタントのチャット履歴が削除されました。",
+        title: "タスクを追加しました",
+        description: "新しいタスクが追加されました。",
       });
     },
     onError: (error) => {
+      console.error("Error creating goal:", error);
       toast({
-        title: "履歴クリアエラー",
-        description: "チャット履歴を削除できませんでした。もう一度お試しください。",
-        variant: "destructive",
+        title: "エラーが発生しました",
+        description: "タスクの追加に失敗しました。もう一度お試しください。",
+        variant: "destructive"
       });
-    },
+    }
   });
 
-  // Send a message mutation
-  const sendMessage = useMutation({
-    mutationFn: async (content: string) => {
-      const response = await apiRequest('POST', '/api/goal-chat', { content });
-      return await response.json() as Message;
-    },
-    onMutate: async (content) => {
-      // Add an optimistic message from the user
-      const optimisticUserMessage: OptimisticMessage = {
-        id: uuidv4(),
-        userId: user?.id || 0,
-        content,
-        isBot: false,
-        timestamp: new Date(),
-        sessionId: "optimistic",
-      };
+  // Update goal mutation
+  const updateGoal = useMutation({
+    mutationFn: async ({ id, completed }: { id: number, completed: boolean }) => {
+      const goal = goals.find(g => g.id === id);
+      if (!goal) throw new Error("Goal not found");
 
-      setOptimisticMessages(prev => [...prev, optimisticUserMessage]);
-      return { optimisticUserMessage };
-    },
-    onSuccess: (newBotMessage: Message, content) => {
-      // Create a user message based on our input
-      const userMessage: Message = {
-        id: newBotMessage.id - 1, // Assume user message is 1 ID before bot response
-        userId: user?.id || 0,
-        content: content,
-        isBot: false,
-        timestamp: new Date(new Date(newBotMessage.timestamp).getTime() - 1000), // 1 second before bot response
-        sessionId: newBotMessage.sessionId,
-      };
-
-      // Remove our optimistic responses
-      setOptimisticMessages([]);
-
-      // Update the messages in the cache with both the user message and bot response
-      queryClient.setQueryData<Message[]>(['/api/goal-messages'], (oldMessages = []) => {
-        // Check if the user message already exists to avoid duplicates
-        const userMessageExists = oldMessages.some(m => 
-          !m.isBot && m.content === content && 
-          // Check if timestamps are close (within 5 seconds)
-          Math.abs(new Date(m.timestamp).getTime() - new Date().getTime()) < 5000
-        );
-
-        if (userMessageExists) {
-          return [...oldMessages, newBotMessage];
-        } else {
-          return [...oldMessages, userMessage, newBotMessage];
+      const response = await apiRequest(
+        'PUT',
+        `/api/goals/${id}`,
+        { 
+          description: goal.description, 
+          completed,
+          dueDate: goal.dueDate
         }
+      );
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/goals'] });
+    },
+    onError: (error) => {
+      console.error("Error updating goal:", error);
+      toast({
+        title: "エラーが発生しました",
+        description: "タスクの更新に失敗しました。もう一度お試しください。",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Delete goal mutation
+  const deleteGoal = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest('DELETE', `/api/goals/${id}`);
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/goals'] });
+      toast({
+        title: "タスクを削除しました",
+        description: "タスクが削除されました。",
       });
     },
     onError: (error) => {
-      console.error("Failed to send message:", error);
-      setOptimisticMessages([]);
+      console.error("Error deleting goal:", error);
       toast({
-        title: "メッセージ送信エラー",
-        description: "メッセージを送信できませんでした。もう一度お試しください。",
-        variant: "destructive",
+        title: "エラーが発生しました",
+        description: "タスクの削除に失敗しました。もう一度お試しください。",
+        variant: "destructive"
       });
-    },
+    }
   });
 
-  // Auto-scroll to the bottom when new messages arrive
-  useEffect(() => {
-    if (scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (scrollContainer) {
-        scrollContainer.scrollTo({
-          top: scrollContainer.scrollHeight,
-          behavior: 'smooth',
-        });
-
-      }
-    }
-  }, [messages, optimisticMessages, sendMessage.isPending]);
-
-  // Handle the insertion of prompt text
-  const handleEmotionSelect = (text: string) => {
-    const textarea = inputRef.current;
-    if (!textarea) {
-      setMessageText(prev => prev + text);
-      return;
-    }
-
-    textarea.focus();
-
-    const start = textarea.selectionStart ?? messageText.length;
-    const end = textarea.selectionEnd ?? messageText.length;
-
-    const newValue = messageText.slice(0, start) + text + messageText.slice(end);
-    setMessageText(newValue);
-
-    setTimeout(() => {
-      textarea.focus();
-      textarea.selectionStart = textarea.selectionEnd = start + text.length;
-
-      // Automatically adjust the textarea height
-      textarea.style.height = "auto";
-      textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`;
-    }, 0);
-  };
-
-
-
-
-  // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmitGoal = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!messageText.trim()) return;
-
-    sendMessage.mutate(messageText);
-    setMessageText("");
-
-    // Focus back on the input field after sending
-    setTimeout(() => inputRef.current?.focus(), 0);
+    if (!newGoalDescription.trim()) return;
+    createGoal.mutate();
   };
 
-  // All messages including optimistic ones
-  const allMessages = [
-    ...(messages || []), 
-    ...optimisticMessages
-  ].sort((a, b) => {
-    // Sort by timestamp
-    return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+  const handleToggleGoal = (id: number, currentStatus: boolean) => {
+    updateGoal.mutate({ id, completed: !currentStatus });
+  };
+
+  const handleDeleteGoal = (id: number) => {
+    deleteGoal.mutate(id);
+  };
+
+  const activeGoals = goals.filter(goal => !goal.completed);
+  const completedGoals = goals.filter(goal => goal.completed);
+
+  if (error) {
+    return (
+      <div className="p-4 bg-red-100 text-red-800 rounded-md">
+        タスクの読み込み中にエラーが発生しました。
+      </div>
+    );
+  }
+
+  // Calculate goal stats
+  const totalGoals = goals.length;
+  const completionRate = totalGoals > 0 ? Math.round((completedGoals.length / totalGoals) * 100) : 0;
+  
+  // Get due soon goals (within next 3 days)
+  const today = new Date();
+  const dueSoonGoals = activeGoals.filter(goal => {
+    if (!goal.dueDate) return false;
+    const dueDate = new Date(goal.dueDate);
+    const daysUntilDue = differenceInDays(dueDate, today);
+    return daysUntilDue >= 0 && daysUntilDue <= 3;
   });
+
+  // Get overdue goals
+  const overdueGoals = activeGoals.filter(goal => {
+    if (!goal.dueDate) return false;
+    const dueDate = new Date(goal.dueDate);
+    return isBefore(dueDate, today) && !goal.completed;
+  });
+  
+  // Get whether a goal is due soon or overdue
+  const getGoalStatus = (goal: Goal) => {
+    if (!goal.dueDate) return null;
+    const dueDate = new Date(goal.dueDate);
+    const today = new Date();
+    
+    if (isBefore(dueDate, today)) {
+      return "overdue";
+    }
+    
+    const daysUntilDue = differenceInDays(dueDate, today);
+    if (daysUntilDue >= 0 && daysUntilDue <= 3) {
+      return "soon";
+    }
+    
+    return null;
+  };
 
   return (
-        <Card className="flex flex-col h-[calc(100vh-10rem)] md:h-full">
-
-
-      <CardHeader className="py-2 px-4 flex-shrink-0">
-        <div className="flex flex-col space-y-1.5">
-          <CardTitle className="flex items-center justify-between gap-1">
-            <div className="flex items-center gap-2">
-              <div className="relative hidden sm:block">
-                <Target className="h-5 w-5 text-blue-500" />
-                <motion.div
-                  className="absolute inset-0 rounded-full border border-blue-500/20"
-                  animate={{ scale: [1, 1.15, 1], opacity: [0.7, 0.2, 0] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                />
-              </div>
-              <span className="text-sm sm:text-base font-semibold">タスクアシスタント</span>
-              <Badge variant="outline" className="ml-1 bg-blue-500/10 text-xs py-0">ミライAI</Badge>
+    <Card className="w-full h-full flex flex-col overflow-hidden flex-grow">
+      <CardHeader className="pb-2 relative flex-shrink-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Target className="h-5 w-5 text-blue-500" />
+              <motion.div
+                className="absolute inset-0 rounded-full border border-blue-500/20"
+                animate={{ scale: [1, 1.25, 1], opacity: [0.7, 0.2, 0] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
             </div>
-
-            <div className="flex items-center gap-1">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-xs h-6 w-6 sm:h-7 sm:w-auto px-0 sm:px-2 rounded-full sm:rounded-md"
-                onClick={() => setShowEmotions(true)}
-              >
-                <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-                <span className="hidden sm:inline ml-1">ガイド</span>
-              </Button>
-
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="text-xs h-6 w-6 sm:h-7 sm:w-auto px-0 sm:px-2 rounded-full sm:rounded-md"
-                    disabled={!allMessages.length}
-                  >
-                    <Eraser className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline ml-1">履歴削除</span>
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle className="flex items-center gap-2">
-                      <AlertTriangle className="h-5 w-5 text-amber-500" />
-                      チャット履歴を削除しますか？
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                      この操作は元に戻せません。すべての会話履歴がデータベースから完全に削除されます。
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                    <AlertDialogAction 
-                      onClick={() => clearChatHistoryMutation.mutate()}
-                      className="bg-destructive hover:bg-destructive/90"
-                      disabled={clearChatHistoryMutation.isPending}
-                    >
-                      {clearChatHistoryMutation.isPending ? "削除中..." : "削除する"}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          </CardTitle>
-
+            <CardTitle className="text-base sm:text-lg">タスク</CardTitle>
+          </div>
+          
+          <div className="flex items-center gap-2 mt-1 sm:mt-0">
+            {!isLoading && goals.length > 0 && (
+              <Badge variant="outline" className="flex items-center gap-1 bg-blue-500/10 h-6">
+                <Award className="h-3 w-3 text-blue-400" />
+                <span className="text-xs">{completionRate}% 達成</span>
+              </Badge>
+            )}
+            
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline" 
+                  className="h-6 px-2 text-xs gap-1 sm:hidden"
+                >
+                  <Plus className="h-3 w-3" />
+                  <span>新規</span>
+                </Button>
+              </DialogTrigger>
+            </Dialog>
+          </div>
         </div>
+        
+        {!isLoading && goals.length > 0 && (
+          <CardDescription className="mt-2">
+            <div className="w-full bg-muted rounded-full h-2 mb-2 overflow-hidden">
+              <Progress value={completionRate} className="h-full" />
+            </div>
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>{completedGoals.length} 完了</span>
+              <span>{totalGoals} 合計</span>
+            </div>
+          </CardDescription>
+        )}
       </CardHeader>
+      
+        <CardContent className="flex-grow overflow-hidden pb-1 flex flex-col min-h-0">
 
-        <CardContent className="flex flex-col flex-grow min-h-0">
-
-          <ScrollArea className="flex-grow min-h-0 overflow-y-auto">
-          {isLoadingMessages ? (
-            <div className="flex h-full min-h-[200px] items-center justify-center">
-              <ChatLoadingIndicator message="チャット履歴を読み込んでいます..." />
-            </div>
-          ) : allMessages.length === 0 ? (
-            <div className="flex flex-col h-full min-h-[200px] items-center justify-center text-center p-2 sm:p-4">
-              <div className="relative">
-                <motion.div
-                  className="absolute inset-0 rounded-full border-2 border-blue-500/30"
-                  animate={{ 
-                    scale: [1, 1.2, 1],
-                    opacity: [0.7, 0.2, 0.7],
-                    borderColor: ["rgba(59, 130, 246, 0.3)", "rgba(59, 130, 246, 0.1)", "rgba(59, 130, 246, 0.3)"]
-                  }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                />
-                <img
-                  src="/images/mirai.png"
-                  alt="Chat Icon"
-                  className="h-16 w-16 mb-6 relative z-10"
-                />
-              </div>
-
-              <h3 className="text-xl font-medium mb-3 text-blue-500">ミライタスクアシスタントへようこそ</h3>
-              <p className="max-w-md text-muted-foreground mb-6">
-                タスクの設定から達成までをサポートします。何でもお気軽にご相談ください。
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-lg w-full mb-4">
-                <Button 
-                  variant="outline" 
-                  className="text-left h-auto py-2 sm:py-3 justify-start border-blue-500/20 hover:bg-blue-500/5"
-                  onClick={() => handleEmotionSelect("タスク達成のためのベストなアクションプランを教えてください。")}
-                >
-                  <div className="flex items-start gap-2">
-                    <Rocket className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-sm sm:text-base">タスク達成プラン</p>
-                      <p className="text-xs text-muted-foreground hidden sm:block">ステップごとの実行計画を提案</p>
-                    </div>
+        {isLoading ? (
+          <div className="flex justify-center items-center h-24">
+            <div className="loading-spinner"></div>
+          </div>
+        ) : goals.length === 0 ? (
+          <div className="text-center py-6 text-muted-foreground">
+            <Target className="mx-auto h-12 w-12 text-muted-foreground/30 mb-2" />
+            <p>まだタスクが設定されていません。</p>
+            <p className="text-sm">新しいタスクを追加して、進捗を追跡しましょう。</p>
+          </div>
+        ) : (
+          <ScrollArea className="h-full pr-4 min-h-[calc(100%-20px)] flex-grow flex-1">
+            <div className="space-y-4">
+              {/* Due soon goals highlighted section */}
+              {dueSoonGoals.length > 0 && (
+                <div className="mb-4">
+                  <h3 className="flex items-center gap-1.5 font-medium mb-2 text-amber-500">
+                    <Clock className="h-4 w-4" />
+                    <span>期限間近のタスク</span>
+                  </h3>
+                  <div className="space-y-2">
+                    <AnimatePresence>
+                      {dueSoonGoals.map((goal) => (
+                        <motion.div
+                          key={`soon-${goal.id}`}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="flex items-center gap-2 p-2 border-2 border-amber-500/30 rounded-md group hover:bg-amber-500/10 transition-colors bg-amber-500/5"
+                        >
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-6 w-6 rounded-full border border-amber-500/50 hover:bg-amber-500 hover:text-white"
+                            onClick={() => handleToggleGoal(goal.id, goal.completed)}
+                          >
+                            <Check className="h-3 w-3" />
+                          </Button>
+                          <div className="flex-1 flex flex-col">
+                            <span className="text-sm font-medium">{goal.description}</span>
+                            {goal.dueDate && (
+                              <span className="text-xs text-amber-500 mt-1 flex items-center">
+                                <Clock className="h-3 w-3 inline mr-1" />
+                                {format(new Date(goal.dueDate), "yyyy年MM月dd日", { locale: ja })}
+                              </span>
+                            )}
+                          </div>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => handleDeleteGoal(goal.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
                   </div>
-                </Button>
-
-                <Button 
-                  variant="outline" 
-                  className="text-left h-auto py-2 sm:py-3 justify-start border-blue-500/20 hover:bg-blue-500/5"
-                  onClick={() => handleEmotionSelect("タスク達成のモチベーションを維持する方法を教えてください。")}
-                >
-                  <div className="flex items-start gap-2">
-                    <Star className="h-4 w-4 sm:h-5 sm:w-5 text-amber-500 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-sm sm:text-base">モチベーション維持</p>
-                      <p className="text-xs text-muted-foreground hidden sm:block">継続するためのコツを紹介</p>
-                    </div>
+                </div>
+              )}
+              
+              {/* Overdue goals highlighted section */}
+              {overdueGoals.length > 0 && (
+                <div className="mb-4">
+                  <h3 className="flex items-center gap-1.5 font-medium mb-2 text-red-500">
+                    <ArrowUpCircle className="h-4 w-4" />
+                    <span>期限超過のタスク</span>
+                  </h3>
+                  <div className="space-y-2">
+                    <AnimatePresence>
+                      {overdueGoals.map((goal) => (
+                        <motion.div
+                          key={`overdue-${goal.id}`}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="flex items-center gap-2 p-2 border-2 border-red-500/30 rounded-md group hover:bg-red-500/10 transition-colors bg-red-500/5"
+                        >
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-6 w-6 rounded-full border border-red-500/50 hover:bg-red-500 hover:text-white"
+                            onClick={() => handleToggleGoal(goal.id, goal.completed)}
+                          >
+                            <Check className="h-3 w-3" />
+                          </Button>
+                          <div className="flex-1 flex flex-col">
+                            <span className="text-sm font-medium">{goal.description}</span>
+                            {goal.dueDate && (
+                              <span className="text-xs text-red-500 mt-1 flex items-center">
+                                <ArrowUpCircle className="h-3 w-3 inline mr-1" />
+                                {format(new Date(goal.dueDate), "yyyy年MM月dd日", { locale: ja })} (期限超過)
+                              </span>
+                            )}
+                          </div>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => handleDeleteGoal(goal.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
                   </div>
-                </Button>
-
-                <Button 
-                  variant="outline" 
-                  className="text-left h-auto py-2 sm:py-3 justify-start border-blue-500/20 hover:bg-blue-500/5"
-                  onClick={() => handleEmotionSelect("SMARTタスクの設定方法について教えてください。")}
-                >
-                  <div className="flex items-start gap-2">
-                    <Target className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-sm sm:text-base">効果的なタスク設定</p>
-                      <p className="text-xs text-muted-foreground hidden sm:block">達成しやすいタスクの立て方</p>
-                    </div>
+                </div>
+              )}
+              
+              {/* Regular active goals */}
+              {activeGoals.filter(goal => 
+                getGoalStatus(goal) !== "soon" && getGoalStatus(goal) !== "overdue"
+              ).length > 0 && (
+                <div>
+                  <h3 className="flex items-center gap-1.5 font-medium mb-2">
+                    <Rocket className="h-4 w-4 text-blue-500" />
+                    <span>進行中のタスク</span>
+                  </h3>
+                  <div className="space-y-2">
+                    <AnimatePresence>
+                      {activeGoals
+                        .filter(goal => getGoalStatus(goal) !== "soon" && getGoalStatus(goal) !== "overdue")
+                        .map((goal) => (
+                        <motion.div
+                          key={goal.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="flex items-center gap-2 p-2 border border-blue-500/20 rounded-md group hover:bg-accent/50 transition-colors"
+                        >
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-6 w-6 rounded-full border border-input hover:bg-primary hover:text-primary-foreground"
+                            onClick={() => handleToggleGoal(goal.id, goal.completed)}
+                          >
+                            <Check className="h-3 w-3" />
+                          </Button>
+                          <div className="flex-1 flex flex-col">
+                            <span className="text-sm">{goal.description}</span>
+                            {goal.dueDate && (
+                              <span className="text-xs text-muted-foreground mt-1 flex items-center">
+                                <Calendar className="h-3 w-3 inline mr-1" />
+                                {format(new Date(goal.dueDate), "yyyy年MM月dd日", { locale: ja })}
+                              </span>
+                            )}
+                          </div>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => handleDeleteGoal(goal.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
                   </div>
-                </Button>
-
-                <Button 
-                  variant="outline" 
-                  className="text-left h-auto py-2 sm:py-3 justify-start border-blue-500/20 hover:bg-blue-500/5"
-                  onClick={() => handleEmotionSelect("タスク達成を妨げる障害を克服する方法を教えてください。")}
-                >
-                  <div className="flex items-start gap-2">
-                    <BrainCircuit className="h-4 w-4 sm:h-5 sm:w-5 text-purple-500 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-sm sm:text-base">障害の克服</p>
-                      <p className="text-xs text-muted-foreground hidden sm:block">問題解決のためのアドバイス</p>
-                    </div>
+                </div>
+              )}
+              
+              {/* Completed goals */}
+              {completedGoals.length > 0 && (
+                <div>
+                  <h3 className="flex items-center gap-1.5 font-medium mb-2 text-muted-foreground">
+                    <TrendingUp className="h-4 w-4 text-green-500" />
+                    <span>達成済みのタスク</span>
+                  </h3>
+                  <div className="space-y-2">
+                    <AnimatePresence>
+                      {completedGoals.map((goal) => (
+                        <motion.div
+                          key={goal.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="flex items-center gap-2 p-2 border rounded-md group hover:bg-accent/50 transition-colors bg-muted/30"
+                        >
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            className="h-6 w-6 rounded-full bg-green-500 text-white hover:bg-green-600"
+                            onClick={() => handleToggleGoal(goal.id, goal.completed)}
+                          >
+                            <Check className="h-3 w-3" />
+                          </Button>
+                          <div className="flex-1 flex flex-col">
+                            <span className="text-sm line-through text-muted-foreground">{goal.description}</span>
+                            {goal.dueDate && (
+                              <span className="text-xs text-muted-foreground/60 mt-1 flex items-center line-through">
+                                <Calendar className="h-3 w-3 inline mr-1" />
+                                {format(new Date(goal.dueDate), "yyyy年MM月dd日", { locale: ja })}
+                              </span>
+                            )}
+                          </div>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => handleDeleteGoal(goal.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
                   </div>
-                </Button>
-              </div>
-
-              <p className="text-xs text-muted-foreground">
-                または、上のメニューから「ガイド」をクリックして、その他の質問例を見ることもできます
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3 sm:space-y-4 pb-4 min-h-[200px]">
-              {allMessages.map((message) => {
-                // Ensure id is treated as a number for the ChatMessage component
-                const messageForChat = {
-                  ...message,
-                  // Convert string id to number for optimistic messages
-                  id: typeof message.id === 'string' ? parseInt(message.id.replace(/\D/g, '')) || -1 : message.id,
-                  onRegenerateAnswer: message.isBot 
-                    ? () => { /* Implement regenerate functionality if needed */ }
-                    : undefined
-                };
-                return (
-                  <ChatMessage
-                    key={message.id}
-                    message={messageForChat}
-                  />
-                );
-              })}
-              {sendMessage.isPending && (
-                <div className="py-2">
-                  <ChatLoadingIndicator variant="minimal" />
                 </div>
               )}
             </div>
-          )}
-        </ScrollArea>
+          </ScrollArea>
+        )}
       </CardContent>
-
-      <CardFooter className="p-2 sm:p-4 pt-2 flex-shrink-0 bg-slate-900/90 border-t border-blue-500/20 mt-auto">
-        <form onSubmit={handleSubmit} className="flex w-full gap-1 sm:gap-2 relative">
-          <AnimatePresence>
-            {showEmotions && (
-              <div className="absolute bottom-full left-0 w-full flex justify-center">
-                <EmotionButtons onSelect={handleEmotionSelect} onClose={() => setShowEmotions(false)} />
+      
+      <CardFooter className="pt-2">
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="w-full hidden sm:flex" variant="outline">
+              <Plus className="h-4 w-4 mr-2" />
+              新しいタスクを追加
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>新しいタスクを追加</DialogTitle>
+              <DialogDescription>
+                達成したいタスクを入力してください。
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleSubmitGoal}>
+              <div className="py-4 space-y-4">
+                <Input
+                  placeholder="タスクを入力..."
+                  value={newGoalDescription}
+                  onChange={(e) => setNewGoalDescription(e.target.value)}
+                  className="w-full"
+                />
+                
+                <div className="flex flex-col space-y-1.5">
+                  <label htmlFor="due-date" className="text-sm font-medium">
+                    期限日 (オプション)
+                  </label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !dueDate && "text-muted-foreground"
+                        )}
+                      >
+                        <Calendar className="mr-2 h-4 w-4" />
+                        {dueDate ? format(dueDate, "yyyy年MM月dd日", { locale: ja }) : "期限日を選択"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <CalendarComponent
+                        mode="single"
+                        selected={dueDate}
+                        onSelect={setDueDate}
+                        initialFocus
+                        locale={ja}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
-            )}
-          </AnimatePresence>
-
-          <div className="relative w-full">
-            <Textarea
-              ref={inputRef}
-              placeholder="タスクについて質問する..."
-              value={messageText}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setMessageText(e.target.value)}
-              disabled={sendMessage.isPending}
-              className="w-full pr-8 min-h-[36px] sm:min-h-[40px] max-h-[100px] sm:max-h-[200px] resize-none text-sm sm:text-base"
-              rows={1}
-              onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-                if (e.key === "Enter" && !e.shiftKey && !isMobile) {
-                  e.preventDefault();
-                  handleSubmit(e);
-                }
-                // Automatically adjust the textarea height
-                const target = e.target as HTMLTextAreaElement;
-                target.style.height = "auto";
-                target.style.height = `${Math.min(target.scrollHeight, 200)}px`;
-              }}
-            />
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <motion.button
-                    type="button"
-                    className="absolute right-2 top-2 text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 px-1.5 py-1 rounded-md hover:bg-accent/50"
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => setShowEmotions((prev) => !prev)}
-                  >
-                    <Lightbulb className="h-4 w-4" />
-                  </motion.button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>プロンプト一覧</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-
-          <Button 
-            type="submit" 
-            size="icon" 
-            disabled={!messageText.trim() || sendMessage.isPending}
-          >
-            <Send className="h-4 w-4" />
-            <span className="sr-only">送信</span>
-          </Button>
-        </form>
+              <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setIsAddDialogOpen(false)}
+                  className="w-full sm:w-auto"
+                >
+                  キャンセル
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={!newGoalDescription.trim() || createGoal.isPending}
+                  className="w-full sm:w-auto"
+                >
+                  {createGoal.isPending ? "追加中..." : "追加"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </CardFooter>
     </Card>
   );

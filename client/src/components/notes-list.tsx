@@ -258,14 +258,14 @@ export function NotesList() {
   const [newNoteContent, setNewNoteContent] = useState("");
   const { toast } = useToast();
   const isMobile = useIsMobile();
-  
+
   // Search and filter states
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"updated" | "created" | "title">("updated");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [pinnedNotes, setPinnedNotes] = useState<number[]>([]);
-  
+
   // Note selection state for the chat
   const [selectedNotes, setSelectedNotes] = useState<Note[]>([]);
   const [isNoteChatOpen, setIsNoteChatOpen] = useState(false);
@@ -500,12 +500,12 @@ export function NotesList() {
 
   // State for managing delete confirmation modal
   const [noteToDelete, setNoteToDelete] = useState<number | null>(null);
-  
+
   // Handle initiating the delete process - opens the confirmation modal 
   const handleInitiateDelete = (id: number) => {
     setNoteToDelete(id);
   };
-  
+
   // Handle confirming the deletion
   const handleConfirmDelete = () => {
     if (noteToDelete !== null) {
@@ -513,7 +513,7 @@ export function NotesList() {
       setNoteToDelete(null); // Reset after confirming
     }
   };
-  
+
   // Handle canceling the deletion
   const handleCancelDelete = () => {
     setNoteToDelete(null);
@@ -576,6 +576,7 @@ export function NotesList() {
     const textarea = inputRef.current;
     if (!textarea) {
       setChatInput(prev => prev + text);
+      setShowEmotions(false); 
       return;
     }
 
@@ -636,14 +637,14 @@ export function NotesList() {
     // First filter by search query
     let result = notes.filter(note => {
       if (!searchQuery) return true;
-      
+
       const query = searchQuery.toLowerCase();
       return (
         note.title.toLowerCase().includes(query) ||
         note.content.toLowerCase().includes(query)
       );
     });
-    
+
     // Then sort
     result = [...result].sort((a, b) => {
       if (sortBy === "title") {
@@ -663,7 +664,7 @@ export function NotesList() {
           : new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
       }
     });
-    
+
     // Move pinned notes to the top
     if (pinnedNotes.length > 0) {
       result = [
@@ -671,10 +672,10 @@ export function NotesList() {
         ...result.filter(note => !pinnedNotes.includes(note.id))
       ];
     }
-    
+
     return result;
   }, [notes, searchQuery, sortBy, sortDirection, pinnedNotes]);
-  
+
   // Toggle note pinning
   const toggleNotePinned = useCallback((noteId: number, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -780,7 +781,7 @@ export function NotesList() {
             </svg>
           </div>
         </div>
-        
+
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <div className="flex items-center gap-1 border rounded-md overflow-hidden p-1 bg-background">
             <Button 
@@ -814,7 +815,7 @@ export function NotesList() {
               グリッド
             </Button>
           </div>
-          
+
           <div className="flex items-center gap-1 border rounded-md p-1 bg-background">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -1022,7 +1023,7 @@ export function NotesList() {
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
-                        
+
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -1042,7 +1043,7 @@ export function NotesList() {
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
-                        
+
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -1094,7 +1095,7 @@ export function NotesList() {
                         <span>固定</span>
                       </div>
                     )}
-                    
+
                     {/* Actions */}
                     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-slate-800/80 rounded-lg backdrop-blur-sm p-1">
                       <Button
@@ -1151,20 +1152,20 @@ export function NotesList() {
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
-                    
+
                     <div className="p-4">
                       <div className="flex items-center gap-2 mb-2">
                         <FileText className="h-4 w-4 text-blue-500 flex-shrink-0" />
                         <h3 className="font-medium truncate">{note.title}</h3>
                       </div>
-                      
+
                       <div className="text-sm text-muted-foreground line-clamp-3 mb-3">
                         {note.content}
                       </div>
-                      
+
                       <div className="flex justify-between text-xs text-muted-foreground mt-2">
                         <span>{format(new Date(note.updatedAt), 'yyyy年MM月dd日')}</span>
-                        
+
                         {selectedNotes.some(n => n.id === note.id) && (
                           <Badge variant="outline" className="text-xs font-normal ml-1">選択中</Badge>
                         )}
@@ -1239,7 +1240,7 @@ export function NotesList() {
 
       {/* Delete Note Confirmation Dialog */}
       <AlertDialog open={noteToDelete !== null} onOpenChange={(open) => !open && setNoteToDelete(null)}>
-        <AlertDialogContent>
+          <AlertDialogContent className="mx-auto max-w-[90%] sm:max-w-md md:max-w-lg lg:max-w-xl rounded-xl p-6">
           <AlertDialogHeader>
             <AlertDialogTitle>ノートを削除しますか？</AlertDialogTitle>
             <AlertDialogDescription>
@@ -1343,15 +1344,30 @@ export function NotesList() {
                   <DialogTitle className="flex items-center">
                     <div className="flex items-center gap-2">
                       <Brain className="h-5 w-5 text-blue-500" />
-                      <span className="text-lg">ノートアシスタント</span>
-                      <Badge variant="outline" className="ml-1 bg-blue-500/10 text-xs py-0">ミライAI</Badge>
-                      {selectedNotes.length > 0 && (
-                        <Badge variant="outline" className="ml-1">
-                          {selectedNotes.length}件のノートを選択中
+                      <span className="text-lg whitespace-nowrap">ノートアシスタント</span>
+
+                      {/* Responsive flex container for badges */}
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1 ml-1">
+                        <Badge variant="outline" className="bg-blue-500/10 text-xs py-0 whitespace-nowrap">
+                          ミライAI
                         </Badge>
-                      )}
+
+                        {selectedNotes && selectedNotes.length > 0 && (
+                          <Badge
+                            variant="outline"
+                            className="ml-1 whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px] px-3 py-1 rounded-full text-xs flex items-center justify-center"
+                          >
+                            {selectedNotes.length}件のノートを選択中
+                          </Badge>
+                        )}
+
+
+                      </div>
+
                     </div>
                   </DialogTitle>
+
+
 
 
                   {/* Right Section */}
@@ -1379,8 +1395,30 @@ export function NotesList() {
                           履歴削除
                         </Button>
                       </AlertDialogTrigger>
-                      {/* AlertDialogContent stays same */}
+
+                        <AlertDialogContent className="mx-auto max-w-[90%] sm:max-w-md md:max-w-lg lg:max-w-xl rounded-xl p-6">
+
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>チャット履歴を削除しますか？</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            この操作は取り消せません。本当に削除しますか？
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => {
+                              clearChatHistoryMutation.mutate();
+                            }}
+                            className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                          >
+                            削除する
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+
                     </AlertDialog>
+
                   </div>
                 </div>
               </DialogHeader>
@@ -1523,10 +1561,12 @@ export function NotesList() {
                             className="absolute right-2 top-2 text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 px-1.5 py-1 rounded-md hover:bg-accent/50"
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
-                            onClick={() => setShowEmotions((prev) => !prev)}
+                            onMouseDown={(e) => e.stopPropagation()}   
+                            onClick={() => setShowEmotions(prev => !prev)}
                           >
                             <Lightbulb className="h-4 w-4" />
                           </motion.button>
+
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>プロンプト一覧</p>
