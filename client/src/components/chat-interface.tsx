@@ -677,7 +677,7 @@ export const ChatInterface = ({
 
                   <h3 className="text-lg font-medium mb-2 text-blue-100">対話を始めましょう</h3>
                   <p className="text-blue-300/80 max-w-xs mx-auto text-sm">
-                    下のテキストボックスにメッセージを入力して、ミライと対話を開始してください
+                    下のテキストボックスにメッセージを入力して、<br />ミライと対話を開始してください
                   </p>
 
                   {/* New: Quick start suggestions */}

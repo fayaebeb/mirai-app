@@ -111,7 +111,7 @@ export default function AuthPage() {
 
         {/* Bot Logo in Mobile View */}
         <motion.div 
-          className="flex flex-col items-center justify-center p-8 md:hidden bg-gradient-to-b from-slate-900 to-blue-900"
+          className="flex-1 md:flex-none flex flex-col items-center justify-center p-8 bg-gradient-to-b from-slate-900 to-blue-900 md:hidden"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
@@ -119,7 +119,7 @@ export default function AuthPage() {
           <img
             src="/images/mirai.png"
             alt="Bot Logo"
-            className="w-28 h-28 object-cover rounded-full"
+            className="w-32 h-32 object-cover rounded-full"
           />
           <div className="relative flex items-center justify-center">
             {/* Your main text with shimmer */}
@@ -155,7 +155,7 @@ export default function AuthPage() {
 
             {/* Authentication Card */}
             <motion.div 
-              className="flex flex-col items-center justify-center p-8 bg-gradient-to-b from-slate-900 to-blue-900"
+              className="flex-1 md:flex-none flex flex-col items-center justify-center p-8 bg-gradient-to-b from-slate-900 to-blue-900"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.2 }}
