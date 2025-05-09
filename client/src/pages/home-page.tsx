@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import ChatInterface from "@/components/chat-interface";
 import { ChatInput } from "@/components/chat-input";
 import { motion, AnimatePresence } from "framer-motion";
-import { Zap, Network, Cpu, Server, Database, Globe, LogOut, FileText, Book, Target, Trash2, FileOutput, MoreVertical, MessageSquare, Wand2, BrainCircuit } from "lucide-react";
+import { Zap, Network, Cpu, Server, Database, Globe, LogOut, FileText, Book, Target, Trash2, FileOutput, MoreVertical, MessageSquare, Wand2, BrainCircuit, Menu, Home, X, Download } from "lucide-react";
 import { MindMapGenerator } from "@/components/mind-map-generator";
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -15,6 +15,7 @@ import { GoalChatInterface } from "@/components/goal-chat-interface";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,6 +46,7 @@ export default function HomePage() {
   const { toast } = useToast();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const isMobile = useIsMobile();
   
 
 
@@ -415,68 +417,110 @@ export default function HomePage() {
       {/* Tech particles animation */}
       <TechParticlesAnimation />
 
-      {/* Redesigned elegant header */}
-      <header className="border-b border-blue-900/50 bg-slate-950/80 backdrop-blur-md shadow-md fixed top-0 left-0 right-0 z-50 w-full">
-        <div className="w-full max-w-full px-2 sm:px-4 py-1 sm:py-1.5">
-          <div className="flex justify-between items-center">
-            {/* Left: Company Logo + AI Brand */}
-              <div className="flex items-center">
+      {/* Improved header for mobile */}
+              <header className="fixed top-0 left-0 right-0 z-50 w-full border-b border-blue-900/50 bg-slate-950/90 backdrop-blur-lg shadow-md">
+                <div className="max-w-full px-2.5 sm:px-4 py-1.5">
+                  <div className="flex justify-between items-center">
+                     {/* LEFT GROUP: mobile menu + logo */}
+                     <div className="flex items-center space-x-2">
+                       {/* Mobile Menu */}
+                       <div className="md:hidden">
+                         <DropdownMenu>
+                           <DropdownMenuTrigger asChild>
+                             <Button
+                               variant="ghost" 
+                               size="sm"
+                               className="text-blue-300 hover:bg-blue-900/20 h-8 w-8 p-0 flex items-center justify-center"
+                             >
+                               <Menu className="h-4 w-4" />
+                               <span className="sr-only">Navigation Menu</span>
+                             </Button>
+                           </DropdownMenuTrigger>
 
-              {/* Company Logo */}
-              <motion.div
-                onClick={() => setActiveTab("chat")}
-                className="cursor-pointer h-12 w-12 sm:h-14 sm:w-14 flex items-center justify-center"
-                whileHover={{ 
-                  scale: 1.2,
-                  
-                }}
-              >
-                <img
-                  src="/images/mirai.png"
-                  alt="Company Logo"
-                  className="h-full w-full object-contain"
-                />
-              </motion.div>
+                           <DropdownMenuContent align="end" className="bg-slate-900 border border-blue-500/30 w-40">
+                             <DropdownMenuLabel className="text-xs text-blue-300/70">
+                               メニュー
+                             </DropdownMenuLabel>
+                             <DropdownMenuSeparator className="bg-blue-900/30" />
 
+                             <DropdownMenuItem 
+                               className={`text-blue-300 hover:bg-blue-800/30 cursor-pointer flex items-center gap-2 ${activeTab === "chat" ? "bg-blue-800/40" : ""}`}
+                               onClick={() => setActiveTab("chat")}
+                             >
+                               <Home className="h-3.5 w-3.5 text-blue-400" />
+                               <span className="text-sm">ホーム</span>
+                             </DropdownMenuItem>
 
+                             <DropdownMenuItem 
+                               className={`text-blue-300 hover:bg-blue-800/30 cursor-pointer flex items-center gap-2 ${activeTab === "notes" ? "bg-blue-800/40" : ""}`}
+                               onClick={() => setActiveTab("notes")}
+                             >
+                               <Book className="h-3.5 w-3.5 text-blue-400" />
+                               <span className="text-sm">ノート</span>
+                             </DropdownMenuItem>
 
+                             <DropdownMenuItem 
+                               className={`text-blue-300 hover:bg-blue-800/30 cursor-pointer flex items-center gap-2 ${activeTab === "goals" ? "bg-blue-800/40" : ""}`}
+                               onClick={() => setActiveTab("goals")}
+                             >
+                               <Target className="h-3.5 w-3.5 text-blue-400" />
+                               <span className="text-sm">タスク</span>
+                             </DropdownMenuItem>
 
-              {/* AI Brand Logo integrated */}
-              <motion.div
-                className="relative flex items-center"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5 }}
-              >
-                <motion.div
-                  onClick={() => setActiveTab("chat")}
-                  className="cursor-pointer font-mono text-xl sm:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-400 font-extrabold flex items-center gap-2"
-                  animate={{
-                    textShadow: [
-                      "0 0 5px rgba(59, 130, 246, 0.7)",
-                      "0 0 10px rgba(59, 130, 246, 1)",
-                      "0 0 5px rgba(59, 130, 246, 0.7)"
-                    ],
-                    scale: [1, 1.02, 1],
-                  }}
-                  transition={{ duration: 4, repeat: Infinity }}
-                >
-                  <span>ミライ</span>
-                </motion.div>
+                             <DropdownMenuItem 
+                                className={`text-blue-300 hover:bg-blue-800/30 cursor-pointer flex items-center gap-2 ${activeTab === "mindmap" ? "bg-blue-800/40" : ""}`}
+                                onClick={() => setActiveTab("mindmap")}
+                              >
+                                <BrainCircuit className="h-3.5 w-3.5 text-blue-400" />
+                                <span className="text-sm">マインドマップ</span>
+                              </DropdownMenuItem>
+                             
+                             {/* separator before logout */}
+                             <DropdownMenuSeparator className="bg-blue-900/30" />
 
+                             {/* logout item */}
+                             <DropdownMenuItem
+                               className="text-blue-300 hover:bg-blue-800/30 cursor-pointer flex items-center gap-2"
+                               onClick={() => setShowLogoutConfirm(true)}
+                               disabled={logoutMutation.isPending}
+                             >
+                               <LogOut className="h-3.5 w-3.5 text-blue-400" />
+                               <span className="text-sm">ログアウト</span>
+                             </DropdownMenuItem>
+                           </DropdownMenuContent>
+                         </DropdownMenu>
+                       </div>
+                                 
 
+                       {/* Logo + Brand */}
+                       <div
+                         onClick={() => setActiveTab("chat")}
+                         className="flex items-center space-x-1.5 sm:space-x-3 cursor-pointer"
+                       >
+                         <motion.div
+                           className="h-9 w-9 sm:h-12 sm:w-12"
+                           whileHover={{ scale: 1.1 }}
+                           whileTap={{ scale: 0.95 }}
+                         >
+                           <img
+                             src="/images/mirai.png"
+                             alt="Company Logo"
+                             className="h-full w-full object-contain"
+                           />
+                         </motion.div>
+                         <div className="relative font-mono text-lg sm:text-xl lg:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-400 font-extrabold">
+                           ミライ
+                           <motion.div
+                             className="absolute inset-0 -z-10 rounded-full border border-cyan-400/20"
+                             animate={{ rotate: 360 }}
+                             transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                           />
+                         </div>
+                       </div>
+                     </div>
+                        
 
-                {/* Decorative rotating rings */}
-                {/* First rotating ring */}
-              <motion.div
-                  className="absolute inset-0 -z-10 rounded-full border border-cyan-400/20"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                />
-              </motion.div>
-            </div>
-
-            {/* Center: View Tabs */}
+            {/* Center: View Tabs - desktop only */}
             <div className="hidden md:flex justify-center items-center">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="bg-slate-800/50 border border-blue-500/20">
@@ -484,15 +528,8 @@ export default function HomePage() {
                     value="chat" 
                     className="data-[state=active]:bg-blue-600/20 data-[state=active]:text-blue-300 gap-1.5"
                   >
-                    <Server className="h-3.5 w-3.5" />
+                    <Home className="h-3.5 w-3.5" />
                     <span>ホーム</span>
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="mindmap" 
-                    className="data-[state=active]:bg-blue-600/20 data-[state=active]:text-blue-300 gap-1.5"
-                  >
-                    <BrainCircuit className="h-3.5 w-3.5" />
-                    <span>マインドマップ</span>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="notes" 
@@ -508,157 +545,95 @@ export default function HomePage() {
                     <Target className="h-3.5 w-3.5" />
                     <span>タスク</span>
                   </TabsTrigger>
+                  <TabsTrigger 
+                    value="mindmap" 
+                    className="data-[state=active]:bg-blue-600/20 data-[state=active]:text-blue-300 gap-1.5"
+                  >
+                    <BrainCircuit className="h-3.5 w-3.5" />
+                    <span>マインドマップ</span>
+                  </TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
 
             {/* Right: User Info & Actions */}
-            <div className="flex items-center gap-2">
-              {/* Mobile Tabs */}
-              <div className="md:hidden">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    // Cycle through tabs: chat -> mindmap -> notes -> goals -> chat
-                    if (activeTab === "chat") setActiveTab("mindmap");
-                    else if (activeTab === "mindmap") setActiveTab("notes");
-                    else if (activeTab === "notes") setActiveTab("goals");
-                    else setActiveTab("chat");
-                  }}
-                  className="text-blue-300 hover:bg-blue-900/20 flex items-center gap-1.5"
-                >
-                  {activeTab === "chat" ? (
-                    <>
-                      <BrainCircuit className="h-4 w-4" />
-                      <span className="sr-only sm:not-sr-only sm:text-xs">マインドマップ</span>
-                    </>
-                  ) : activeTab === "mindmap" ? (
-                    <>
-                      <Book className="h-4 w-4" />
-                      <span className="sr-only sm:not-sr-only sm:text-xs">ノート</span>
-                    </>
-                  ) : activeTab === "notes" ? (
-                    <>
-                      <Target className="h-4 w-4" />
-                      <span className="sr-only sm:not-sr-only sm:text-xs">タスク</span>
-                    </>
-                  ) : (
-                    <>
-                      <Server className="h-4 w-4" />
-                      <span className="sr-only sm:not-sr-only sm:text-xs">ホーム</span>
-                    </>
-                  )}
-                </Button>
-              </div>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              {activeTab === "chat" && messages.length > 0 && (
+                <>
+                  <Button
+                    variant="ghost"
+                    onClick={handleClearChat}
+                    className="text-blue-300 hover:bg-blue-800/30 flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-2"
+                  >
+                    <Trash2 className="h-4 w-4 text-blue-400" />
+                    <span className="hidden sm:inline">チャット履歴をクリア</span>
+                  </Button>
+
+                  <ChatPDFExport
+                    messages={messages}
+                    triggerContent={
+                      <>
+                        <Download className="h-2 w-2 sm:h-3 sm:w-3" />
+                        <span className="hidden sm:inline">エクスポート</span>
+                      </>
+                    }
+                    triggerClassName="
+                      gap-0.5 
+                      px-2 py-1 text-xs
+                      sm:gap-1 sm:px-2 sm:py-1.5 sm:text-sm
+                    "
+                  />
+                </>
+              )}
+
+
               
-             
 
-
-              {/* Username badge - consistent on all devices */}
+              {/* Username badge */}
               <AnimatePresence>
                 {displayName && (
-                  activeTab === "chat" ? (
-                    // Show dropdown only in "chat" tab
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <motion.div 
-                          className="flex items-center gap-1 bg-slate-800/70 px-2 py-1 rounded-md border border-blue-500/20 backdrop-blur-sm cursor-pointer"
-                          initial={{ opacity: 0, x: 10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: 10 }}
-                          transition={{ duration: 0.3 }}
-                        >
-                          <motion.span 
-                            className="text-xs sm:text-sm font-medium text-blue-300 font-mono"
-                            animate={{ scale: [1, 1.02, 1] }}
-                            transition={{ duration: 2, repeat: Infinity }}
-                          >
-                            <span className="sm:hidden">{displayName.charAt(0).toUpperCase()}</span>
-                            <span className="hidden sm:inline">{displayName}</span>
-                          </motion.span>
-                          <Zap className="h-3 w-3 text-blue-400" />
-                        </motion.div>
-                      </DropdownMenuTrigger>
-
-                      <DropdownMenuContent align="end" className="bg-slate-900 border border-blue-500/30">
-                        
-
-
-                        {messages.length > 0 && (
-                          <DropdownMenuItem 
-                            className="text-blue-300 hover:bg-blue-800/30 cursor-pointer flex items-center gap-2"
-                            onClick={handleClearChat}
-                          >
-                            <Trash2 className="h-4 w-4 text-blue-400" />
-                            <span>チャット履歴をクリア</span>
-                          </DropdownMenuItem>
-                        )}
-
-                        {messages.length > 0 && (
-                          <DropdownMenuItem 
-                            onSelect={(e) => e.preventDefault()}
-                            className="p-0 focus:bg-transparent hover:bg-transparent"
-                          >
-                            <div className="w-full h-full px-2 py-1.5 flex items-center gap-2">
-                              <div onClick={(e) => e.stopPropagation()} className="ml-auto">
-                                <ChatPDFExport messages={messages} />
-                              </div>
-                            </div>
-                          </DropdownMenuItem>
-                        )}
-
-                        <DropdownMenuSeparator className="bg-blue-900/30" />
-                        <DropdownMenuItem 
-                          className="text-blue-300 hover:bg-blue-800/30 cursor-pointer flex items-center gap-2"
-                          onClick={() => setShowLogoutConfirm(true)}
-                          disabled={logoutMutation.isPending}
-                        >
-                          <LogOut className="h-4 w-4 text-blue-400" />
-                          <span>ログアウト</span>
-                        </DropdownMenuItem>
-
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  ) : (
-                    // Show static badge in all other tabs
-                    <motion.div 
-                      className="flex items-center gap-1 bg-slate-800/70 px-2 py-1 rounded-md border border-blue-500/20 backdrop-blur-sm"
-                      initial={{ opacity: 0, x: 10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 10 }}
-                      transition={{ duration: 0.3 }}
+                  <motion.div 
+                    className="flex items-center gap-1 bg-slate-800/70 px-2 py-1 rounded-md border border-blue-500/20 backdrop-blur-sm"
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 10 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <motion.span 
+                      className="text-xs sm:text-sm font-medium text-blue-300 font-mono"
+                      animate={{ scale: [1, 1.02, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
                     >
-                      <motion.span 
-                        className="text-xs sm:text-sm font-medium text-blue-300 font-mono"
-                        animate={{ scale: [1, 1.02, 1] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                      >
-                        <span className="sm:hidden">{displayName.charAt(0).toUpperCase()}</span>
-                        <span className="hidden sm:inline">{displayName}</span>
-                      </motion.span>
-                      <Zap className="h-3 w-3 text-blue-400" />
-                    </motion.div>
-                  )
+                      <span className="sm:hidden">
+                        {displayName.charAt(0).toUpperCase()}
+                      </span>
+                      <span className="hidden sm:inline">
+                        {displayName}
+                      </span>
+                    </motion.span>
+                    <Zap className="h-3 w-3 text-blue-400" />
+                  </motion.div>
                 )}
               </AnimatePresence>
 
 
               {/* Logout button */}
-              {(activeTab !== "chat" || window.innerWidth >= 768) && (
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setShowLogoutConfirm(true)}
-                    disabled={logoutMutation.isPending}
-                    className="text-blue-300 hover:bg-blue-900/20 h-8 w-8 sm:h-9 sm:w-9"
-                  >
-                    <LogOut className="h-4 w-4" />
-                  </Button>
-                </motion.div>
-              )}
-
+              <motion.div
+                // hidden by default (all sizes), becomes flex (or block) at sm+
+                className="hidden sm:flex"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowLogoutConfirm(true)}
+                  disabled={logoutMutation.isPending}
+                  className="text-blue-300 hover:bg-blue-900/20 h-8 w-8 sm:h-9 sm:w-9"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                </Button>
+              </motion.div>
             </div>
           </div>
         </div>

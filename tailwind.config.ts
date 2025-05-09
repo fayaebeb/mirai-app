@@ -64,26 +64,56 @@ export default {
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
       },
+      typography: (theme) => ({
+        invert: {
+          css: {
+            color: theme("colors.white"),
+            a: {
+              color: theme("colors.blue.400"),
+              "&:hover": { color: theme("colors.blue.300") },
+            },
+            strong: { color: theme("colors.white") },
+            code: {
+              color: theme("colors.white"),
+              backgroundColor: theme("colors.slate.800"),
+              padding: theme("spacing.0.5"),
+              borderRadius: theme("borderRadius.sm"),
+            },
+            pre: {
+              color: theme("colors.white"),
+              backgroundColor: theme("colors.slate.800"),
+            },
+            blockquote: {
+              borderLeftColor: theme("colors.blue.500"),
+              color: theme("colors.white"),
+            },
+            "h1, h2, h3, h4, h5, h6": {
+              color: theme("colors.white"),
+            },
+            "ul > li::marker, ol > li::marker": {
+              color: theme("colors.blue.400"),
+            },
+            thead: {
+              borderBottomColor: theme("colors.blue.500"),
+            },
+            "tbody tr": {
+              borderBottomColor: theme("colors.blue.400"),
+            },
+          },
+        },
+      }),
     },
   },
   plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],

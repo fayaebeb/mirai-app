@@ -13,6 +13,7 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
+import clsx from "clsx";
 import {
   Form,
   FormControl,
@@ -40,11 +41,17 @@ const exportFormSchema = z.object({
 
 type ExportFormValues = z.infer<typeof exportFormSchema>;
 
-interface ChatPDFExportProps {
+export interface ChatPDFExportProps {
   messages: Message[];
+  triggerContent?: React.ReactNode;
+  triggerClassName?: string;
 }
 
-export function ChatPDFExport({ messages }: ChatPDFExportProps) {
+  export function ChatPDFExport({
+    messages,
+    triggerContent,
+    triggerClassName,
+    }: ChatPDFExportProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
@@ -109,19 +116,27 @@ export function ChatPDFExport({ messages }: ChatPDFExportProps) {
     }
   };
 
-  return (
-    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-1 text-xs sm:text-sm flex items-center hover:bg-blue-50 hover:text-blue-600 transition-colors"
-        >
-          <FileText className="h-3.5 w-3.5" />
-          <span className="inline">PDFエクスポート</span>
-
-        </Button>
-      </DialogTrigger>
+      return (
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button
+              variant="outline" 
+              size="sm" 
+              className={clsx( 
+                // your existing defaults 
+               "flex items-center gap-2 px-3 py-2 text-sm hover:bg-blue-50 hover:text-blue-600 transition-colors", 
+                // **override** on mobile via the passed‐in prop 
+                triggerClassName 
+              )} 
+            > 
+              {triggerContent ?? ( 
+                <> 
+                  <FileText className="h-3.5 w-3.5" /> 
+                  <span className="inline">PDFエクスポート</span> 
+                </> 
+              )} 
+            </Button>
+          </DialogTrigger>
       <DialogContent className="sm:max-w-[425px] h-auto max-h-[90vh] overflow-y-auto">
         <DialogHeader className="mb-4">
           <DialogTitle>PDFエクスポート</DialogTitle>
@@ -293,15 +308,20 @@ export function ChatPDFExport({ messages }: ChatPDFExportProps) {
 
             <DialogFooter className="mt-6 flex justify-between sm:justify-end gap-2">
               <DialogClose asChild>
-                <Button type="button" variant="outline" size="sm" className="flex-1 sm:flex-none">
+                <Button
+                  type="button"
+                  variant="outline"
+                  // mobile: h-12 (3rem); desktop and up: h-8 (2rem)
+                  className="flex-1 sm:flex-none h-12 sm:h-8"
+                >
                   キャンセル
                 </Button>
               </DialogClose>
               <Button
                 type="submit"
                 disabled={isExporting}
-                className="flex items-center gap-1 flex-1 sm:flex-none"
-                size="sm"
+                // same height override
+                className="flex items-center gap-1 flex-1 sm:flex-none h-12 sm:h-8"
               >
                 {isExporting ? (
                   <>
@@ -316,6 +336,7 @@ export function ChatPDFExport({ messages }: ChatPDFExportProps) {
                 )}
               </Button>
             </DialogFooter>
+
           </form>
         </Form>
       </DialogContent>

@@ -21,16 +21,6 @@ const botDecorations = [
   "⚡", "🔹", "💠", "🔷", "🔌", "📡", "🛰️", "⚙️", "🔋", "💻"
 ];
 
-// Helper function to add decorations to bot messages
-const addRandomDecoration = (original: string) => {
-  if (Math.random() > 0.3) return original;
-  const decoration = botDecorations[Math.floor(Math.random() * botDecorations.length)];
-  const position = Math.floor(Math.random() * 3);
-  if (position === 0) return `${decoration} ${original}`;
-  if (position === 1) return `${original} ${decoration}`;
-  return `${decoration} ${original} ${decoration}`;
-};
-
 // Helper function to parse message content into sections
 const parseMessageContent = (content: string) => {
   const sections = {
@@ -99,10 +89,10 @@ const MessageSection = ({
               remarkPlugins={[remarkGfm]}
               components={{
                 p: ({ node, ...props }) => (
-                  <p className="w-full block text-white my-1.5" {...props} />
+                  <p className="text-white my-1.5" {...props} />
                 ),
                 table: ({ node, ...props }) => (
-                  <div className="overflow-x-auto w-full max-w-[calc(100%-16px)] mx-auto pb-1 relative">
+                  <div className="overflow-x-auto w-full mx-auto pb-1 relative">
                     <div>
                       <table className="text-[10px] sm:text-[11px] border-collapse table-auto border-spacing-0" {...props} />
                     </div>
@@ -146,7 +136,7 @@ export default function ChatMessage({
     // For all existing messages, display content immediately without animation
     setDisplayedContent(message.content);
     setIsTyping(false);
-    
+
     // Typing animation is now handled by a separate mechanism in the chat interface
     // when new messages are received from the API
   }, [message.content]);
@@ -331,12 +321,12 @@ export default function ChatMessage({
             </div>
           )}
 
-          <div className={cn("prose prose-sm break-words leading-relaxed font-normal text-[11px] sm:text-xs overflow-hidden", {
+          <div className={cn("prose break-words leading-relaxed font-normal text-base sm:text-base overflow-hidden", {
             "prose-invert": true,
             "w-full min-w-0 max-w-full": message.isBot,
             "w-auto max-w-full": !message.isBot,
-            "prose-p:my-1.5 prose-p:w-full": true,
-            "prose-pre:whitespace-pre-wrap prose-pre:break-words prose-p:text-left prose-p:text-white prose-p:inline-flex prose-p:w-full": message.isBot
+          "prose-p:my-1.5": true,
+          "prose-pre:whitespace-pre-wrap prose-pre:break-words prose-p:text-left prose-p:text-white": message.isBot 
           })}>
             {message.isBot && sections ? (
               <>
@@ -344,10 +334,10 @@ export default function ChatMessage({
                   remarkPlugins={[remarkGfm]}
                   components={{
                     p: ({ node, ...props }) => (
-                      <p className="w-full block text-white my-1.5" {...props} />
+                      <p className="text-white my-1.5" {...props} />
                     ),
                     table: ({ node, ...props }) => (
-                      <div className="overflow-x-auto w-full max-w-[calc(100%-16px)] mx-auto pb-1 relative">
+                      <div className="overflow-x-auto w-full mx-auto pb-1 relative">
                         <div>
                           <table className="text-[10px] sm:text-[11px] border-collapse table-auto border-spacing-0" {...props} />
                         </div>
@@ -388,10 +378,10 @@ export default function ChatMessage({
                 remarkPlugins={[remarkGfm]}
                 components={{
                   p: ({ node, ...props }) => (
-                    <p className="w-full block text-white my-1.5" {...props} />
+                    <p className="text-white my-1.5" {...props} />
                   ),
                   table: ({ node, ...props }) => (
-                    <div className="overflow-x-auto w-full max-w-[calc(100%-16px)] mx-auto pb-1 relative">
+                    <div className="overflow-x-auto w-full mx-auto pb-1 relative">
                       <div>
                         <table className="text-[10px] sm:text-[11px] border-collapse table-auto border-spacing-0" {...props} />
                       </div>
@@ -408,7 +398,7 @@ export default function ChatMessage({
                 {displayedContent}
               </ReactMarkdown>
             )}
-            
+
             {/* Typing indicator */}
             {isTyping && (
               <motion.div 
@@ -456,7 +446,7 @@ export default function ChatMessage({
                   </>
                 )}
               </div>
-              
+
               {/* Reaction buttons (new feature) */}
               {message.isBot && (
                 <div className="flex gap-1 mr-1">

@@ -367,6 +367,10 @@ export function MindMapGenerator() {
     <div className="flex flex-col w-full h-full">
       {/* ─────────────── controls */}
       <div className="p-4 bg-card rounded-lg mb-4">
+        <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2 mb-4">
+          <BrainCircuit className="h-5 w-5" />
+          マインドマップ
+        </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="topic">トピックを入力するか、メモを貼り付けてください</Label>
