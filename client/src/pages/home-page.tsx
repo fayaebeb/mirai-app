@@ -3,7 +3,8 @@ import { useAuth } from "@/hooks/use-auth";
 import ChatInterface from "@/components/chat-interface";
 import { ChatInput } from "@/components/chat-input";
 import { motion, AnimatePresence } from "framer-motion";
-import { Zap, Network, Cpu, Server, Database, Globe, LogOut, FileText, Book, Target, Trash2, FileOutput, MoreVertical, MessageSquare, Wand2 } from "lucide-react";
+import { Zap, Network, Cpu, Server, Database, Globe, LogOut, FileText, Book, Target, Trash2, FileOutput, MoreVertical, MessageSquare, Wand2, BrainCircuit } from "lucide-react";
+import { MindMapGenerator } from "@/components/mind-map-generator";
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { ChatPDFExport } from "@/components/chat-pdf-export";
@@ -38,6 +39,7 @@ export default function HomePage() {
   const [showParticles, setShowParticles] = useState(false);
   
   const [activeTab, setActiveTab] = useState<string>("chat");
+  const [showMindMap, setShowMindMap] = useState<boolean>(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [input, setInput] = useState("");
   const { toast } = useToast();
@@ -225,6 +227,43 @@ export default function HomePage() {
           </div>
         </motion.div>
 
+      );
+    } else if (activeTab === "mindmap") {
+      return (
+        <motion.div 
+          className="bg-slate-900/90 backdrop-blur-md rounded-xl shadow-xl p-4 max-w-3xl md:max-w-4xl lg:max-w-5xl mx-auto border border-blue-500/20 overflow-hidden relative h-[calc(100vh-8rem)]"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+        >
+          {/* Circuit-like pattern background */}
+          <div className="absolute inset-0 z-0 opacity-5 pointer-events-none">
+            <div className="absolute top-1/4 left-1/4 w-1/2 h-px bg-blue-400" />
+            <div className="absolute top-1/2 left-1/6 w-2/3 h-px bg-blue-400" />
+            <div className="absolute top-3/4 left-1/3 w-1/3 h-px bg-blue-400" />
+            <div className="absolute top-1/6 left-1/2 w-px h-2/3 bg-blue-400" />
+            <div className="absolute top-1/4 left-2/3 w-px h-1/2 bg-blue-400" />
+            <div className="absolute top-1/3 left-1/3 w-px h-1/3 bg-blue-400" />
+          </div>
+
+          {/* Tech corner elements */}
+          <div className="absolute top-2 left-2 text-blue-400 opacity-30">
+            <BrainCircuit size={14} />
+          </div>
+          <div className="absolute top-2 right-2 text-blue-500 opacity-30">
+            <Zap size={14} />
+          </div>
+          <div className="absolute bottom-2 left-2 text-blue-400 opacity-30">
+            <Database size={14} />
+          </div>
+          <div className="absolute bottom-2 right-2 text-blue-500 opacity-30">
+            <Cpu size={14} />
+          </div>
+
+          <div className="relative z-10 h-full">
+            <MindMapGenerator />
+          </div>
+        </motion.div>
       );
     } else if (activeTab === "notes") {
       return (
@@ -449,6 +488,13 @@ export default function HomePage() {
                     <span>ホーム</span>
                   </TabsTrigger>
                   <TabsTrigger 
+                    value="mindmap" 
+                    className="data-[state=active]:bg-blue-600/20 data-[state=active]:text-blue-300 gap-1.5"
+                  >
+                    <BrainCircuit className="h-3.5 w-3.5" />
+                    <span>マインドマップ</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
                     value="notes" 
                     className="data-[state=active]:bg-blue-600/20 data-[state=active]:text-blue-300 gap-1.5"
                   >
@@ -474,14 +520,20 @@ export default function HomePage() {
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    // Cycle through tabs: chat -> notes -> goals -> chat
-                    if (activeTab === "chat") setActiveTab("notes");
+                    // Cycle through tabs: chat -> mindmap -> notes -> goals -> chat
+                    if (activeTab === "chat") setActiveTab("mindmap");
+                    else if (activeTab === "mindmap") setActiveTab("notes");
                     else if (activeTab === "notes") setActiveTab("goals");
                     else setActiveTab("chat");
                   }}
                   className="text-blue-300 hover:bg-blue-900/20 flex items-center gap-1.5"
                 >
                   {activeTab === "chat" ? (
+                    <>
+                      <BrainCircuit className="h-4 w-4" />
+                      <span className="sr-only sm:not-sr-only sm:text-xs">マインドマップ</span>
+                    </>
+                  ) : activeTab === "mindmap" ? (
                     <>
                       <Book className="h-4 w-4" />
                       <span className="sr-only sm:not-sr-only sm:text-xs">ノート</span>

@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { insertMessageSchema, insertNoteSchema, insertGoalSchema } from "@shared/schema";
+import { generateMindMap } from "./services/openai";
 
 const LANGFLOW_API = process.env.LANGFLOW_API || "";
 const LANGFLOW_API_GOAL = process.env.LANGFLOW_API_GOAL || process.env.LANGFLOW_API || "";
@@ -972,6 +973,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error deleting note:", error);
       res.status(500).json({
         message: "Failed to delete note",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  });
+
+  // Mind Map API route
+  app.post("/api/mind-map", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const { topic } = req.body;
+      
+      if (!topic || typeof topic !== "string" || topic.trim() === "") {
+        return res.status(400).json({ error: "Topic is required" });
+      }
+
+      console.log(`Generating mind map for topic: ${topic}`);
+      
+      const mindMap = await generateMindMap(topic);
+      
+      res.json(mindMap);
+    } catch (error) {
+      console.error("Error generating mind map:", error);
+      res.status(500).json({
+        message: "Failed to generate mind map",
         error: error instanceof Error ? error.message : "Unknown error",
       });
     }
