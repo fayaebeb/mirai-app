@@ -92,10 +92,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           output_type: "chat",
           input_type: "chat",
           tweaks: {
-            "TextInput-2I0N2": {
+            "TextInput-ccIjk": {
               input_value: goalSessionId,
             },
-            "TextInput-nxava": {
+            "TextInput-lhk1k": {
               input_value: goalsText,
             },
           },
@@ -301,10 +301,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             output_type: "chat",
             input_type: "chat",
             tweaks: {
-              "TextInput-2I0N2": {
+              "TextInput-ccIjk": {
                 input_value: persistentSessionId,
               },
-              "TextInput-nxava": {
+              "TextInput-lhk1k": {
                 input_value: goalsText,
               },
             },
@@ -325,7 +325,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             output_type: "chat",
             input_type: "chat",
             tweaks: {
-              "TextInput-hzmTC": {
+              "TextInput-wYnRI": {
                 input_value: persistentSessionId,
               },
             },
@@ -596,7 +596,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           output_type: "chat",
           input_type: "chat",
           tweaks: {
-            "TextInput-hzmTC": {
+            "TextInput-wYnRI": {
               input_value: persistentSessionId,
             },
           },
@@ -844,10 +844,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           output_type: "chat",
           input_type: "chat",
           tweaks: {
-            "TextInput-RlWdI": {
+            "TextInput-uBazc": {
               input_value: notesSessionId,
             },
-            "TextInput-KSYAb": {
+            "TextInput-rVgxa": {
               input_value: formattedNotes,
             },
           },
