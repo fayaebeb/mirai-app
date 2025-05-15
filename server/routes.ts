@@ -857,7 +857,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   "ChatOutput-8PN13": {
     "should_store_message": false
   },
-},
 
           },
         }),
