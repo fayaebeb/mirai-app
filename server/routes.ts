@@ -844,16 +844,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           output_type: "chat",
           input_type: "chat",
           tweaks: {
-            "TextInput-nkPbe": {
-              input_value: notesSessionId,
-            },
+            
             "TextInput-wey9B": {
               input_value: formattedNotes,
             },
             
-  "ChatInput-tfYHv": {
-    "should_store_message": false
-  },
+  
   "ChatOutput-8PN13": {
     "should_store_message": false
   },
