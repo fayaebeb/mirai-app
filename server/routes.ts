@@ -92,9 +92,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           output_type: "chat",
           input_type: "chat",
           tweaks: {
-            "TextInput-E4faB": {
-              input_value: goalSessionId,
-            },
+            "ChatOutput-kgSTp": {
+    "should_store_message": false
+  },
             "TextInput-OaHXy": {
               input_value: goalsText,
             },
@@ -301,9 +301,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             output_type: "chat",
             input_type: "chat",
             tweaks: {
-              "TextInput-E4faB": {
-                input_value: persistentSessionId,
-              },
+              "ChatOutput-kgSTp": {
+    "should_store_message": false
+  },
               "TextInput-OaHXy": {
                 input_value: goalsText,
               },
@@ -325,9 +325,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             output_type: "chat",
             input_type: "chat",
             tweaks: {
-              "TextInput-LelB7": {
-                input_value: persistentSessionId,
-              },
+              "ChatOutput-IQYG4": {
+    "should_store_message": false
+  },
             },
           }),
         });
