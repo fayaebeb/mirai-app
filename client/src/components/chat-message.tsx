@@ -23,20 +23,28 @@ const botDecorations = [
 
 // Helper function to parse message content into sections
 const parseMessageContent = (content: string) => {
-  const sections = {
-    mainText: "",
-    companyDocs: "",
-    onlineInfo: ""
-  };
+  const sections = { mainText: "", companyDocs: "", onlineInfo: "" };
 
-  // Split by company docs marker
-  const [beforeCompanyDocs, afterCompanyDocs = ""] = content.split("### 社内文書情報:");
-  sections.mainText = beforeCompanyDocs.trim();
+  const companyMarker = "### 社内文書情報:";
+  const onlineMarker = "### オンラインWeb情報:";
 
-  // Split remaining content by online info marker
-  const [companyDocs, onlineInfo = ""] = afterCompanyDocs.split("### オンラインWeb情報:");
-  sections.companyDocs = companyDocs.trim();
-  sections.onlineInfo = onlineInfo.trim();
+  const companyIndex = content.indexOf(companyMarker);
+  const onlineIndex = content.indexOf(onlineMarker);
+
+  if (companyIndex !== -1 && (onlineIndex === -1 || companyIndex < onlineIndex)) {
+    sections.mainText = content.slice(0, companyIndex).trim();
+    if (onlineIndex !== -1) {
+      sections.companyDocs = content.slice(companyIndex + companyMarker.length, onlineIndex).trim();
+      sections.onlineInfo = content.slice(onlineIndex + onlineMarker.length).trim();
+    } else {
+      sections.companyDocs = content.slice(companyIndex + companyMarker.length).trim();
+    }
+  } else if (onlineIndex !== -1) {
+    sections.mainText = content.slice(0, onlineIndex).trim();
+    sections.onlineInfo = content.slice(onlineIndex + onlineMarker.length).trim();
+  } else {
+    sections.mainText = content.trim();
+  }
 
   return sections;
 };

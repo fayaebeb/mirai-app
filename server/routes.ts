@@ -139,6 +139,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sessionId: persistentSessionId,
       });
 
+      console.log(`Sending request to external Chat API: ${userContent}`);
+
+      // Call the external chat API
+      const externalApiResponse = await fetch('https://mapi-on6dq.ondigitalocean.app/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: userContent,
+          useweb: false,
+            usedb: false,
+          }),
+      });
+
+      if (!externalApiResponse.ok) {
+        throw new Error(`External API error: ${externalApiResponse.status} ${externalApiResponse.statusText}`);
+      }
+
+      const externalApiData = await externalApiResponse.json();
+      const botResponseText = externalApiData.reply || externalApiData.response || externalApiData.message || "申し訳ございません。回答を生成できませんでした。";
+      const formattedResponse = formatBotResponse(botResponseText);
+
+      // Save the bot response
+      const botMessage = await storage.createMessage(req.user!.id, {
+        content: formattedResponse,
+        isBot: true,
+        sessionId: persistentSessionId,
+      });
+
+      console.log(`Generated bot response: ${formattedResponse.substring(0, 100)}...`);
+
+      res.status(201).json(botMessage);
+    } catch (error) {
+      console.error("Error handling message post:", error);
+      res.status(500).json({
+        message: "Failed to process message",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  });
+
+  // Get messages for the main chat interface
+  app.get("/api/messages", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const persistentSessionId = `user_${req.user!.id}_${req.user!.username}`;
+
+      const existingUserSession = await storage.getSessionBySessionId(persistentSessionId);
+      if (!existingUserSession) {
+        console.log(`Creating new session for user ${req.user!.id} with sessionId ${persistentSessionId}`);
+        await storage.createUserSession(req.user!.id, persistentSessionId);
+      }
+
+      const messages = await storage.getMessagesByUserAndSession(
+        req.user!.id,
+        persistentSessionId
+      );
+      console.log(`Retrieved ${messages.length} messages for user ${req.user!.id} with sessionId ${persistentSessionId}`);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error retrieving messages:", error);
+      res.status(500).json({
+        message: "Failed to retrieve messages",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  });
+
   app.get("/api/goal-messages", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
@@ -184,103 +254,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error deleting goal chat messages:", error);
       res.status(500).json({
         message: "Failed to delete goal chat messages",
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
-    }
-  });
-
-  app.post("/api/chat", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-
-    // Use the full username as the session ID to ensure uniqueness across users
-      const persistentSessionId = `user_${req.user!.id}_${req.user!.username}`;
-
-    const result = insertMessageSchema.safeParse(req.body);
-    if (!result.success) {
-      console.error("Invalid request body:", result.error);
-      return res.status(400).json({ error: "Invalid request data" });
-    }
-
-    const body = result.data;
-
-    try {
-      const existingUserSession = await storage.getSessionBySessionId(persistentSessionId);
-      if (!existingUserSession) {
-        console.log(`Creating new session for user ${req.user!.id} with sessionId ${persistentSessionId}`);
-        await storage.createUserSession(req.user!.id, persistentSessionId);
-      }
-
-      await storage.createMessage(req.user!.id, {
-        ...body,
-        isBot: false,
-        sessionId: persistentSessionId,
-      });
-
-      console.log(`Sending request to Langchain API: ${body.content}`);
-      const response = await fetch(LANGFLOW_API, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: body.content,
-          useweb: true,
-          usedb: true,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Mirai API Error:", errorText);
-        throw new Error(`Mirai API responded with status ${response.status}`);
-      }
-
-      const aiResponse = await response.json();
-      const aiOutputText = aiResponse.reply;
-
-      if (!aiOutputText) {
-        throw new Error("Missing 'reply' in AI response");
-      }
-
-      const formattedResponse = formatBotResponse(aiOutputText);
-
-      const botMessage = await storage.createMessage(req.user!.id, {
-        content: formattedResponse,
-        isBot: true,
-        sessionId: persistentSessionId,
-      });
-
-      res.json(botMessage);
-    } catch (error) {
-      console.error("Error in /api/messages:", error);
-      res.status(500).json({
-        message: "Failed to process message",
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
-    }
-  });
-
-  app.get("/api/messages/:sessionId", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-
-    try {
-      // Use the full username as the session ID to ensure uniqueness across users
-      const persistentSessionId = `user_${req.user!.id}_${req.user!.username}`;
-
-      // Check if the session with the specific ID exists first
-      const existingUserSession = await storage.getSessionBySessionId(persistentSessionId);
-      if (!existingUserSession) {
-        console.log(`Creating new session for user ${req.user!.id} with sessionId ${persistentSessionId}`);
-        await storage.createUserSession(req.user!.id, persistentSessionId);
-      }
-
-      const messages = await storage.getMessagesByUserAndSession(
-        req.user!.id,
-        persistentSessionId
-      );
-      res.json(messages);
-    } catch (error) {
-      console.error("Error retrieving messages:", error);
-      res.status(500).json({
-        message: "Failed to retrieve messages",
         error: error instanceof Error ? error.message : "Unknown error",
       });
     }
@@ -569,15 +542,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const { topic } = req.body;
-      
+
       if (!topic || typeof topic !== "string" || topic.trim() === "") {
         return res.status(400).json({ error: "Topic is required" });
       }
 
       console.log(`Generating mind map for topic: ${topic}`);
-      
+
       const mindMap = await generateMindMap(topic);
-      
+
       res.json(mindMap);
     } catch (error) {
       console.error("Error generating mind map:", error);

@@ -29,7 +29,7 @@ export async function generateMindMap(topic: string): Promise<any> {
           content: `Create a mind map for: ${topic}`,
         },
       ],
-      temperature: 0.7,
+      temperature: 0.8,
       response_format: { type: "json_object" },
     });
 

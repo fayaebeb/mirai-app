@@ -319,7 +319,7 @@ export const ChatInterface = ({
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
-  
+
   // Use either the external or internal state and functions
   const setInput = externalSetInput || setInputInternal;
   const currentInput = externalInput !== undefined ? externalInput : input;
@@ -478,7 +478,6 @@ export const ChatInterface = ({
 
       // Detect if this is a goal-related message (handled on the server)
       console.log("Message being sent:", content);
-      console.log("Is goal-related:", isGoalRelated(content));
 
       // Send to API and get the response
       const response = await apiRequest(
@@ -487,10 +486,7 @@ export const ChatInterface = ({
         { content }
       );
 
-      // Parse the response JSON to get the bot message
       const botMessage = await response.json();
-      console.log("Received bot response:", botMessage);
-
       return botMessage;
     },
     onSuccess: (newBotMessage: Message) => {
@@ -524,13 +520,23 @@ export const ChatInterface = ({
         }
       }, 100);
     },
-    onError: (error) => {
+    onError: (error, content, context) => {
       console.error("Error sending message:", error);
+
+      // Rollback to the previous state if there was an error
+      if (context?.previousMessages) {
+        queryClient.setQueryData(['/api/messages'], context.previousMessages);
+      }
+
       toast({
         title: "エラーが発生しました",
         description: error.message,
         variant: "destructive"
       });
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure consistency
+      queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
     }
   });
 
@@ -783,7 +789,7 @@ export const ChatInterface = ({
             )}
 
             <div ref={messageEndRef} />
-            
+
           </div>
         </ScrollArea>
       </div>

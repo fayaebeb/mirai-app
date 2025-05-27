@@ -56,8 +56,8 @@ export default function HomePage() {
     enabled: !!user,
   });
   
-  // Send message mutation
-  const sendMessage = useMutation<Message, Error, string>({
+  // Send message mutation with optimistic updates
+  const sendMessage = useMutation<Message, Error, string, { previousMessages?: Message[] }>({
     mutationFn: async (content: string) => {
       const response = await apiRequest(
         'POST',
@@ -66,20 +66,58 @@ export default function HomePage() {
       );
       return response.json();
     },
-    onSuccess: () => {
+    onMutate: async (content: string) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['/api/messages'] });
+
+      // Snapshot the previous value
+      const previousMessages = queryClient.getQueryData<Message[]>(['/api/messages']);
+
+      // Optimistically add user message
+      const tempUserMessage: Message = {
+        id: -Date.now(), // Temporary ID
+        userId: user!.id,
+        content,
+        isBot: false,
+        sessionId: `user_${user!.id}_${user!.username}`,
+        timestamp: new Date(),
+      };
+
+      queryClient.setQueryData<Message[]>(['/api/messages'], (old = []) => [
+        ...old,
+        tempUserMessage
+      ]);
+
+      // Return a context object with the snapshotted value
+      return { previousMessages };
+    },
+    onSuccess: (newBotMessage: Message) => {
       // Clear input field
       setInput('');
       
-      // Force a refresh of the messages query
-      queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+      // Add the bot message to the existing messages without invalidating
+      queryClient.setQueryData<Message[]>(['/api/messages'], (old = []) => [
+        ...old,
+        newBotMessage
+      ]);
     },
-    onError: (error) => {
+    onError: (error, content, context) => {
       console.error("Error sending message:", error);
+      
+      // Rollback to the previous state if there was an error
+      if (context?.previousMessages) {
+        queryClient.setQueryData(['/api/messages'], context.previousMessages);
+      }
+
       toast({
         title: "エラーが発生しました",
         description: error.message,
         variant: "destructive"
       });
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure consistency
+      queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
     }
   });
 
@@ -170,44 +208,7 @@ export default function HomePage() {
     };
   }, []);
 
-  // Tech particles animation
-  const TechParticlesAnimation = () => (
-    <AnimatePresence>
-      {showParticles && (
-        <div className="absolute inset-0 overflow-hidden pointer-events-none z-10">
-          {Array.from({ length: 20 }).map((_, index) => (
-            <motion.div
-              key={index}
-              className="absolute text-lg"
-              initial={{ 
-                top: `-5%`,
-                left: `${Math.random() * 100}%`,
-                rotate: 0,
-                opacity: 0
-              }}
-              animate={{ 
-                top: `${Math.random() * 110 + 10}%`,
-                left: `${Math.random() * 100}%`,
-                rotate: 360 * (Math.random() > 0.5 ? 1 : -1),
-                opacity: [0, 1, 0.8, 0]
-              }}
-              exit={{ opacity: 0 }}
-              transition={{ 
-                duration: 5 + Math.random() * 7,
-                ease: "easeInOut"
-              }}
-            >
-              {Math.random() > 0.5 ? 
-                <Zap size={18} className="text-blue-400" /> : 
-                <Network size={18} className="text-blue-500" />
-              }
-            </motion.div>
-          ))}
-        </div>
-      )}
-    </AnimatePresence>
-  );
-
+  
   // Render main content based on active tab
   const renderMainContent = () => {
     if (activeTab === "chat") {
@@ -413,9 +414,6 @@ export default function HomePage() {
           <Globe className="h-20 w-20 text-blue-400" />
         </motion.div>
       </div>
-
-      {/* Tech particles animation */}
-      <TechParticlesAnimation />
 
       {/* Improved header for mobile */}
               <header className="fixed top-0 left-0 right-0 z-50 w-full border-b border-blue-900/50 bg-slate-950/90 backdrop-blur-lg shadow-md">
