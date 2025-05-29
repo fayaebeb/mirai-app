@@ -82,6 +82,11 @@ export const insertMessageSchema = createInsertSchema(messages).pick({
   sessionId: true,
 });
 
+export const chatRequestSchema = insertMessageSchema.extend({
+  useWeb: z.boolean().optional(),
+  useDb: z.boolean().optional(),
+});
+
 export const insertNoteSchema = createInsertSchema(notes).pick({
   title: true,
   content: true,

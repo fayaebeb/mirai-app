@@ -66,7 +66,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           dueDateStr = `, Due: ${dueDate}`;
         }
 
-        return `${goal.description} ${goal.completed ? "[COMPLETED]" : "[ACTIVE]"} - Created: ${createdDate}, Last Updated: ${updatedDate}${dueDateStr}`;
+        return JSON.stringify({   id: goal.id,   title: goal.title,   description: goal.description,   completed: goal.completed,   createdAt: createdDate,   updatedAt: updatedDate,   dueDate: goal.dueDate ? new Date(goal.dueDate).toISOString() : null,   priority: goal.priority,   category: goal.category,   tags: goal.tags,   reminderTime: goal.reminderTime ? new Date(goal.reminderTime).toISOString() : null,   isRecurring: goal.isRecurring,   recurringType: goal.recurringType,   recurringInterval: goal.recurringInterval,   recurringEndDate: goal.recurringEndDate ? new Date(goal.recurringEndDate).toISOString() : null, });
       }).join("\n- ");
 
       const goalsText = formattedGoals ? `- ${formattedGoals}` : "No goals found.";
@@ -149,9 +149,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
         body: JSON.stringify({
           message: userContent,
-          useweb: false,
-            usedb: false,
-          }),
+          useweb: req.body.useWeb ?? false,
+          usedb: req.body.useDb ?? false,
+        }),
       });
 
       if (!externalApiResponse.ok) {
@@ -204,6 +204,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error retrieving messages:", error);
       res.status(500).json({
         message: "Failed to retrieve messages",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  });
+
+  // DELETE endpoint to clear regular chat history
+  app.delete("/api/messages", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      // Use the same session ID pattern as other regular chat endpoints
+      const persistentSessionId = `user_${req.user!.id}_${req.user!.username}`;
+
+      // Delete all messages with this session ID
+      const result = await storage.deleteMessagesBySessionId(req.user!.id, persistentSessionId);
+
+      console.log(`Deleted regular chat messages for user ${req.user!.id} with sessionId ${persistentSessionId}, success: ${result}`);
+
+      res.json({ success: result });
+    } catch (error) {
+      console.error("Error deleting regular chat messages:", error);
+      res.status(500).json({
+        message: "Failed to delete chat messages",
         error: error instanceof Error ? error.message : "Unknown error",
       });
     }

@@ -38,7 +38,7 @@ import {
 export default function HomePage() {
   const { user, logoutMutation } = useAuth();
   const [showParticles, setShowParticles] = useState(false);
-  
+
   const [activeTab, setActiveTab] = useState<string>("chat");
   const [showMindMap, setShowMindMap] = useState<boolean>(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
@@ -47,7 +47,9 @@ export default function HomePage() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const isMobile = useIsMobile();
-  
+  const [useWeb, setUseWeb] = useState(false);
+  const [useDb, setUseDb] = useState(true);
+
 
 
   // Get messages for PDF export
@@ -55,18 +57,23 @@ export default function HomePage() {
     queryKey: ['/api/messages'],
     enabled: !!user,
   });
-  
+
   // Send message mutation with optimistic updates
-  const sendMessage = useMutation<Message, Error, string, { previousMessages?: Message[] }>({
-    mutationFn: async (content: string) => {
-      const response = await apiRequest(
-        'POST',
-        '/api/messages',
-        { content }
-      );
+    const sendMessage = useMutation<
+      Message,                                 
+      Error,                                   
+      { content: string; useWeb: boolean; useDb: boolean }, 
+      { previousMessages?: Message[] }         
+    >({
+    mutationFn: async ({ content, useWeb, useDb }: { content: string; useWeb: boolean; useDb: boolean }) => {
+      const response = await apiRequest('POST', '/api/messages', {
+        content,
+        useWeb,
+        useDb,
+      });
       return response.json();
     },
-    onMutate: async (content: string) => {
+    onMutate: async ({ content }: { content: string; useWeb: boolean; useDb: boolean }) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['/api/messages'] });
 
@@ -94,7 +101,7 @@ export default function HomePage() {
     onSuccess: (newBotMessage: Message) => {
       // Clear input field
       setInput('');
-      
+
       // Add the bot message to the existing messages without invalidating
       queryClient.setQueryData<Message[]>(['/api/messages'], (old = []) => [
         ...old,
@@ -103,7 +110,7 @@ export default function HomePage() {
     },
     onError: (error, content, context) => {
       console.error("Error sending message:", error);
-      
+
       // Rollback to the previous state if there was an error
       if (context?.previousMessages) {
         queryClient.setQueryData(['/api/messages'], context.previousMessages);
@@ -124,12 +131,16 @@ export default function HomePage() {
   // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!input.trim() || sendMessage.isPending) return;
-    
-    sendMessage.mutate(input);
+
+    // Clear immediately
+    setInput("");
+
+    sendMessage.mutate({ content: input, useWeb, useDb });
   };
-  
+
+
   // Handle emotion selection from dropdown
   const handleEmotionSelect = (text: string) => {
     const textarea = inputRef.current;
@@ -147,7 +158,7 @@ export default function HomePage() {
       textarea.selectionStart = textarea.selectionEnd = start + text.length;
     }, 0);
   };
-  
+
   // Clear chat history mutation
   const clearChatHistory = useMutation({
     mutationFn: async () => {
@@ -179,7 +190,7 @@ export default function HomePage() {
       });
     }
   });
-  
+
   // Handle clear chat button click
   const handleClearChat = () => {
     setShowClearConfirm(true);
@@ -188,7 +199,7 @@ export default function HomePage() {
   // Extract username before '@' from email
   const displayName = user?.username?.split("@")[0];
 
-  
+
 
   // Floating tech particles animation trigger
   useEffect(() => {
@@ -208,7 +219,7 @@ export default function HomePage() {
     };
   }, []);
 
-  
+
   // Render main content based on active tab
   const renderMainContent = () => {
     if (activeTab === "chat") {
@@ -220,12 +231,14 @@ export default function HomePage() {
           transition={{ delay: 0.2, duration: 0.5 }}
         >
           <div className="relative z-10 pb-16 sm:pb-24">
-            <ChatInterface 
+            <ChatInterface
               input={input}
               setInput={setInput}
               handleSubmit={handleSubmit}
               sendMessageMutation={sendMessage}
               handleEmotionSelect={handleEmotionSelect}
+              useWeb={useWeb}
+              useDb={useDb}
             />
           </div>
         </motion.div>
@@ -313,9 +326,9 @@ export default function HomePage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
         >
-         
 
-         
+
+
 
           <div className="relative z-10 h-full">
             <div className="h-full flex flex-col md:flex-row gap-4">
@@ -379,6 +392,10 @@ export default function HomePage() {
               setInput={setInput}
               handleSubmit={handleSubmit}
               sendMessage={sendMessage}
+              useWeb={useWeb}
+              setUseWeb={setUseWeb}
+              useDb={useDb}
+              setUseDb={setUseDb}
             />
 
           </div>
@@ -472,7 +489,7 @@ export default function HomePage() {
                                 <BrainCircuit className="h-3.5 w-3.5 text-blue-400" />
                                 <span className="text-sm">マインドマップ</span>
                               </DropdownMenuItem>
-                             
+
                              {/* separator before logout */}
                              <DropdownMenuSeparator className="bg-blue-900/30" />
 
@@ -488,7 +505,7 @@ export default function HomePage() {
                            </DropdownMenuContent>
                          </DropdownMenu>
                        </div>
-                                 
+
 
                        {/* Logo + Brand */}
                        <div
@@ -506,7 +523,9 @@ export default function HomePage() {
                              className="h-full w-full object-contain"
                            />
                          </motion.div>
-                         <div className="relative font-mono text-lg sm:text-xl lg:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-400 font-extrabold">
+                         <div
+                           className="relative font-mono text-lg sm:text-xl lg:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-400 font-extrabold whitespace-nowrap flex-shrink-0"
+                         >
                            ミライ
                            <motion.div
                              className="absolute inset-0 -z-10 rounded-full border border-cyan-400/20"
@@ -516,7 +535,7 @@ export default function HomePage() {
                          </div>
                        </div>
                      </div>
-                        
+
 
             {/* Center: View Tabs - desktop only */}
             <div className="hidden md:flex justify-center items-center">
@@ -585,7 +604,7 @@ export default function HomePage() {
               )}
 
 
-              
+
 
               {/* Username badge */}
               <AnimatePresence>
@@ -637,7 +656,7 @@ export default function HomePage() {
         </div>
       </header>
 
-     
+
 
 
       {/* Main content section */}

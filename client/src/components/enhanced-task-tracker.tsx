@@ -154,8 +154,14 @@ export function EnhancedTaskTracker() {
   // Fetch goals
   const { data: goals = [], isLoading, error } = useQuery<Goal[]>({
     queryKey: ['/api/goals'],
-    refetchOnWindowFocus: true,
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/goals');
+      return await res.json();
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: false,
   });
+
 
   // Filter and sort goals based on filters
   const filteredGoals = goals.filter(goal => {

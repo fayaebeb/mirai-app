@@ -1,8 +1,12 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { useQuery, useMutation, UseMutationResult } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  UseMutationResult,
+} from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Heart, Lightbulb, Wand2, MessageSquare, FileText, Trash2 } from "lucide-react";
+import { Sparkles, Heart, Lightbulb, FileText } from "lucide-react";
 import { Message } from "@shared/schema";
 import { nanoid } from "nanoid";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -11,8 +15,9 @@ import { ScrollArea } from "./ui/scroll-area";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import ChatLoadingIndicator, { SakuraPetalLoading } from "./chat-loading-indicator";
 import { motion, AnimatePresence } from "framer-motion";
+import { ChatLoadingIndicator } from "./chat-loading-indicator";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,17 +28,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { promptCategories } from "@/components/starter-prompts";
 import { Badge } from "@/components/ui/badge";
 
 // Define a type for optimistic messages that uses string IDs instead of numbers
 type OptimisticMessage = {
-  id: string; 
+  id: string;
   userId: number;
   content: string;
   isBot: boolean;
   timestamp: Date;
   sessionId: string;
-}
+};
 
 // Array of cute emoji mood indicators for the network status
 const onlineEmojis = ["⚙️", "🔋", "🔌", "📡", "📱", "🤖"];
@@ -44,19 +50,20 @@ const getRandomEmoji = (emojiArray: string[]) => {
   return emojiArray[Math.floor(Math.random() * emojiArray.length)];
 };
 
-
 const Tutorial = ({ onClose }: { onClose: () => void }) => {
   const [step, setStep] = useState(1);
   const steps = [
     {
       title: "ようこそ！",
-      description: "「ミライ」は、PCKKにおいて、情報提供や質問への回答を行うAIです。私の役割は、さまざまなトピックについて正確で分かりやすい情報を提供し、ユーザーのリクエストに的確にお応えすることです。たとえば、データに基づくご質問には、社内資料や外部情報を参照しながら丁寧にお答えします。",
-      icon: <Sparkles className="h-5 w-5 text-pink-400" />
+      description:
+        "「ミライ」は、PCKKにおいて、情報提供や質問への回答を行うAIです。私の役割は、さまざまなトピックについて正確で分かりやすい情報を提供し、ユーザーのリクエストに的確にお応えすることです。たとえば、データに基づくご質問には、社内資料や外部情報を参照しながら丁寧にお答えします。",
+      icon: <Sparkles className="h-5 w-5 text-pink-400" />,
     },
     {
       title: "楽しくお話ししましょう！",
-      description: "「ミライ」は、OpenAIの生成モデル「GPT-4o」を使用しています。社内の全国うごき統計に関する営業資料や、人流に関する社内ミニ講座の内容を基礎データとして取り込み、さらにWikipediaやGoogleのAPIを通じてインターネット上の情報も収集しています。これらの情報をもとに、最適な回答を生成しています。",
-      icon: <Heart className="h-5 w-5 text-red-400" />
+      description:
+        "「ミライ」は、OpenAIの生成モデル「GPT-4o」を使用しています。社内の全国うごき統計に関する営業資料や、人流に関する社内ミニ講座の内容を基礎データとして取り込み、さらにWikipediaやGoogleのAPIを通じてインターネット上の情報も収集しています。これらの情報をもとに、最適な回答を生成しています。",
+      icon: <Heart className="h-5 w-5 text-red-400" />,
     },
   ];
 
@@ -105,11 +112,7 @@ const Tutorial = ({ onClose }: { onClose: () => void }) => {
         </div>
 
         <div className="flex justify-between">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onClose}
-          >
+          <Button variant="outline" size="sm" onClick={onClose}>
             スキップ
           </Button>
           <div className="flex gap-2">
@@ -123,17 +126,11 @@ const Tutorial = ({ onClose }: { onClose: () => void }) => {
               </Button>
             )}
             {step < steps.length ? (
-              <Button
-                size="sm"
-                onClick={() => setStep(step + 1)}
-              >
+              <Button size="sm" onClick={() => setStep(step + 1)}>
                 次へ
               </Button>
             ) : (
-              <Button
-                size="sm"
-                onClick={onClose}
-              >
+              <Button size="sm" onClick={onClose}>
                 始める
               </Button>
             )}
@@ -151,73 +148,6 @@ interface Prompt {
   description: string;
 }
 
-// Prompt categories to organize the prompts
-interface PromptCategory {
-  name: string;
-  icon: JSX.Element;
-  prompts: Prompt[];
-}
-
-const promptCategories: PromptCategory[] = [
-  {
-    name: "出力形式 📄",
-    icon: <MessageSquare className="h-4 w-4" />,
-    prompts: [
-      {
-            text: "会話形式で💬",
-            message: "AさんとBさんの会話形式で出力して",
-            description: "フレンドリーな会話形式で回答します",
-          },
-          {
-            text: "箇条書き形式で📝",
-            message: "箇条書き形式で出力して",
-            description: "箇条書き形式で出力します",
-          },
-          {
-            text: "表形式で📊",
-            message: "表形式で出力して",
-            description: "表形式で出力します",
-          },
-          {
-            text: "FAQ形式で❓",
-            message: "FAQ形式で出力して",
-            description: "FAQ形式で出力します",
-          },
-          {
-            text: "比喩・たとえ話形式🎭",
-            message: "比喩・たとえ話形式で出力して",
-            description: "比喩・たとえ話形式で出力します",
-          },
-          {
-            text: "簡潔に要約✨",
-            message: "簡潔に要約で出力して",
-            description: "簡潔に要約で出力します",
-      },
-    ]
-  },
-  {
-    name: "アシスタント 🤖",
-    icon: <Wand2 className="h-4 w-4" />,
-    prompts: [
-      {
-        text: "＋指示のコツ🎯",
-        message: "質問に対してさらに理解を深めるために、どのような指示をすればよいか提案して",
-        description: "より良い指示の出し方をアドバイスします",
-      },
-      {
-        text: "「外部情報なし」🚫",
-        message: "インターネットからの情報を利用しないで",
-        description: "外部情報を使わずに回答します",
-      },
-      {
-        text: "初心者向け📘",
-        message: "説明に出てくる専門用語には、それぞれ説明を加え、初心者でも理解しやすいように。具体的な例を挙げながら丁寧に解説して",
-        description: "具体的な例を挙げながら丁寧に解説します",
-      },
-    ]
-  },
-];
-
 // Component for selecting emotion/prompt buttons
 interface EmotionButtonsProps {
   onSelect: (message: string) => void;
@@ -225,25 +155,32 @@ interface EmotionButtonsProps {
 }
 
 const EmotionButtons = ({ onSelect, onClose }: EmotionButtonsProps) => {
-  const [selectedCategory, setSelectedCategory] = useState<string>(promptCategories[0].name);
+  const [selectedCategory, setSelectedCategory] = useState<string>(
+    promptCategories[0].name,
+  );
 
   // Handle clicks outside the emotion buttons to close it
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleClickOutside = (event: MouseEvent) => {
-    if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+    if (
+      containerRef.current &&
+      !containerRef.current.contains(event.target as Node)
+    ) {
       onClose();
     }
   };
 
   useEffect(() => {
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
-  const selectedCategoryData = promptCategories.find(cat => cat.name === selectedCategory) || promptCategories[0];
+  const selectedCategoryData =
+    promptCategories.find((cat) => cat.name === selectedCategory) ||
+    promptCategories[0];
 
   return (
     <motion.div
@@ -274,20 +211,22 @@ const EmotionButtons = ({ onSelect, onClose }: EmotionButtonsProps) => {
       {/* Prompt buttons */}
       <div className="grid grid-cols-1 gap-1 p-2 max-h-60 overflow-y-auto">
         {selectedCategoryData.prompts.map((prompt, index) => (
-      <motion.button
-        type="button" // Prevents default submit behavior
-        key={index}
-        className="flex flex-col items-start rounded-lg px-3 py-2 text-left hover:bg-accent transition-colors"
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={() => {
-          onSelect(prompt.message || prompt.text);
-          onClose();
-        }}
-      >
-        <span className="font-medium text-sm">{prompt.text}</span>
-        <span className="text-xs text-muted-foreground mt-0.5">{prompt.description}</span>
-      </motion.button>
+          <motion.button
+            type="button" // Prevents default submit behavior
+            key={index}
+            className="flex flex-col items-start rounded-lg px-3 py-2 text-left hover:bg-accent transition-colors"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => {
+              onSelect(prompt.message || prompt.text);
+              onClose();
+            }}
+          >
+            <span className="font-medium text-sm">{prompt.text}</span>
+            <span className="text-xs text-muted-foreground mt-0.5">
+              {prompt.description}
+            </span>
+          </motion.button>
         ))}
       </div>
     </motion.div>
@@ -298,16 +237,26 @@ interface ChatInterfaceProps {
   input?: string;
   setInput?: (input: string) => void;
   handleSubmit?: (e: React.FormEvent) => void;
-  sendMessageMutation?: UseMutationResult<Message, Error, string>;
+  sendMessageMutation?: UseMutationResult<
+    Message,
+    Error,
+    { content: string; useWeb: boolean; useDb: boolean },
+    { previousMessages?: Message[] }
+  >;
   handleEmotionSelect?: (text: string) => void;
+  onClearChat?: () => void;
+  useWeb?: boolean;
+  useDb?: boolean;
 }
 
-export const ChatInterface = ({ 
-  input: externalInput, 
+export const ChatInterface = ({
+  input: externalInput,
   setInput: externalSetInput,
   handleSubmit: externalHandleSubmit,
   sendMessageMutation: externalSendMessageMutation,
-  handleEmotionSelect: externalHandleEmotionSelect 
+  handleEmotionSelect: externalHandleEmotionSelect,
+  useWeb = false,
+  useDb = false,
 }: ChatInterfaceProps = {}) => {
   const [input, setInputInternal] = useState("");
   const [isOnline, setIsOnline] = useState(true);
@@ -330,45 +279,42 @@ export const ChatInterface = ({
       setIsOnline(navigator.onLine);
     };
 
-    window.addEventListener('online', checkOnline);
-    window.addEventListener('offline', checkOnline);
+    window.addEventListener("online", checkOnline);
+    window.addEventListener("offline", checkOnline);
 
     // Set initial status
     checkOnline();
 
     return () => {
-      window.removeEventListener('online', checkOnline);
-      window.removeEventListener('offline', checkOnline);
+      window.removeEventListener("online", checkOnline);
+      window.removeEventListener("offline", checkOnline);
     };
   }, []);
 
   // Show tutorial on first visit
   useEffect(() => {
-    const hasSeenTutorial = localStorage.getItem('hasSeenChatTutorial');
+    const hasSeenTutorial = localStorage.getItem("hasSeenChatTutorial");
     if (!hasSeenTutorial && user) {
       setShowTutorial(false); // Disable tutorial for now
-      localStorage.setItem('hasSeenChatTutorial', 'true');
+      localStorage.setItem("hasSeenChatTutorial", "true");
     }
   }, [user]);
 
   // Fetch previous messages
   const { data: messages = [] } = useQuery<Message[]>({
-    queryKey: ['/api/messages'],
+    queryKey: ["/api/messages"],
     enabled: !!user,
   });
 
   // Clear chat history mutation
   const clearChatHistory = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest(
-        'DELETE',
-        '/api/messages'
-      );
+      const response = await apiRequest("DELETE", "/api/messages");
       return response.json();
     },
     onSuccess: () => {
       // Clear the messages in the query cache
-      queryClient.setQueryData<Message[]>(['/api/messages'], []);
+      queryClient.setQueryData<Message[]>(["/api/messages"], []);
 
       // Close the confirmation dialog
       setShowClearConfirm(false);
@@ -382,7 +328,7 @@ export const ChatInterface = ({
       // Ensure UI refreshes and scrolls to empty state properly
       setTimeout(() => {
         if (messageEndRef.current) {
-          messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
+          messageEndRef.current.scrollIntoView({ behavior: "smooth" });
         }
       }, 100);
     },
@@ -391,9 +337,9 @@ export const ChatInterface = ({
       toast({
         title: "エラーが発生しました",
         description: "チャット履歴のクリアに失敗しました。",
-        variant: "destructive"
+        variant: "destructive",
       });
-    }
+    },
   });
 
   // Handle clear chat button click
@@ -408,16 +354,16 @@ export const ChatInterface = ({
 
     // Function to ensure header is visible on mobile devices
     const ensureHeaderVisible = () => {
-      const header = document.querySelector('.chat-header');
+      const header = document.querySelector(".chat-header");
       if (header && header instanceof HTMLElement) {
         // Set visibility directly through style
-        header.style.opacity = '1';
-        header.style.visibility = 'visible';
-        header.style.display = 'flex';
+        header.style.opacity = "1";
+        header.style.visibility = "visible";
+        header.style.display = "flex";
 
         // Fix position (ensure it stays fixed at top)
-        header.style.position = 'sticky';
-        header.style.top = '0';
+        header.style.position = "sticky";
+        header.style.top = "0";
       }
     };
 
@@ -432,131 +378,33 @@ export const ChatInterface = ({
     ];
 
     // Also run on resize events
-    window.addEventListener('resize', ensureHeaderVisible);
+    window.addEventListener("resize", ensureHeaderVisible);
 
     // Clean up timers and event listener
     return () => {
       timers.forEach(clearTimeout);
-      window.removeEventListener('resize', ensureHeaderVisible);
+      window.removeEventListener("resize", ensureHeaderVisible);
     };
   }, []);
 
   // Scroll to bottom when messages change
   useEffect(() => {
     if (messageEndRef.current) {
-      messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      messageEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages, messageEndRef]);
 
-  // Send message mutation
-  // Helper function to check if a message is goal-related
-  const isGoalRelated = (content: string): boolean => {
-    const lowerContent = content.toLowerCase();
-    return lowerContent.includes('goal') || 
-           lowerContent.includes('objective') ||
-           lowerContent.includes('target') ||
-           lowerContent.includes('achievement') ||
-           lowerContent.includes('my goals');
-  };
-
-  const sendMessage = useMutation<Message, Error, string>({
-    mutationFn: async (content: string) => {
-      // Optimistic update for user message
-      const optimisticUserMessage: OptimisticMessage = {
-        id: nanoid(), // Using string ID for optimistic updates
-        userId: user?.id || 0,
-        content,
-        isBot: false,
-        sessionId: 'current',
-        timestamp: new Date(),
-      };
-
-      // Update cache with user message
-      queryClient.setQueryData<Message[]>(['/api/messages'], (old: Message[] = []) => {
-        return [...old, optimisticUserMessage as any as Message];
-      });
-
-      // Detect if this is a goal-related message (handled on the server)
-      console.log("Message being sent:", content);
-
-      // Send to API and get the response
-      const response = await apiRequest(
-        'POST',
-        '/api/messages',
-        { content }
-      );
-
-      const botMessage = await response.json();
-      return botMessage;
-    },
-    onSuccess: (newBotMessage: Message) => {
-      console.log("Successfully added bot message to chat:", newBotMessage);
-
-      // Update cache with bot response
-      queryClient.setQueryData<Message[]>(['/api/messages'], (old: Message[] = []) => {
-        // Make sure we're not getting duplicates
-        const messageExists = old.some(msg => 
-          typeof msg.id === 'number' && 
-          typeof newBotMessage.id === 'number' && 
-          msg.id === newBotMessage.id
-        );
-
-        if (!messageExists) {
-          return [...old, newBotMessage];
-        }
-        return old;
-      });
-
-      // Clear input field
-      setInput('');
-
-      // Force a refresh of the messages query
-      queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
-
-      // Scroll to bottom when the new message appears
-      setTimeout(() => {
-        if (messageEndRef.current) {
-          messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 100);
-    },
-    onError: (error, content, context) => {
-      console.error("Error sending message:", error);
-
-      // Rollback to the previous state if there was an error
-      if (context?.previousMessages) {
-        queryClient.setQueryData(['/api/messages'], context.previousMessages);
-      }
-
-      toast({
-        title: "エラーが発生しました",
-        description: error.message,
-        variant: "destructive"
-      });
-    },
-    onSettled: () => {
-      // Always refetch after error or success to ensure consistency
-      queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
-    }
-  });
-
   // Updated function to insert prompt text at the current position
-  const handleEmotionSelect = externalHandleEmotionSelect || ((text: string) => {
-    // Simply append the text to the current input when there's no proper cursor positioning
-    setInput(currentInput + text);
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!input.trim() || sendMessage.isPending) return;
-
-    sendMessage.mutate(input);
-  };
+  const handleEmotionSelect =
+    externalHandleEmotionSelect ||
+    ((text: string) => {
+      // Simply append the text to the current input when there's no proper cursor positioning
+      setInput(currentInput + text);
+    });
 
   // Define type for grouped messages
   type MessageGroup = {
-    sender: 'user' | 'bot';
+    sender: "user" | "bot";
     messages: Message[];
     lastTimestamp: Date;
   };
@@ -568,16 +416,16 @@ export const ChatInterface = ({
     return messages.reduce((groups: MessageGroup[], message) => {
       const lastGroup = groups[groups.length - 1];
 
-      if (lastGroup && (lastGroup.sender === 'bot') === message.isBot) {
+      if (lastGroup && (lastGroup.sender === "bot") === message.isBot) {
         // Same sender as previous message group - add to existing group
         lastGroup.messages.push(message);
         lastGroup.lastTimestamp = new Date(message.timestamp);
       } else {
         // Different sender - create a new group
         groups.push({
-          sender: message.isBot ? 'bot' : 'user',
+          sender: message.isBot ? "bot" : "user",
           messages: [message],
-          lastTimestamp: new Date(message.timestamp)
+          lastTimestamp: new Date(message.timestamp),
         });
       }
 
@@ -601,10 +449,10 @@ export const ChatInterface = ({
   // Get random status message
   const getStatusMessage = () => {
     const messages = [
-      "接続完了", 
-      "データリンク確立", 
-      "ライブ接続", 
-      "メモリ最適化完了"
+      "接続完了",
+      "データリンク確立",
+      "ライブ接続",
+      "メモリ最適化完了",
     ];
     return messages[Math.floor(Math.random() * messages.length)];
   };
@@ -630,14 +478,18 @@ export const ChatInterface = ({
       <AlertDialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
         <AlertDialogContent className="bg-slate-900 border border-blue-500/30">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-blue-100">チャット履歴をクリアしますか？</AlertDialogTitle>
+            <AlertDialogTitle className="text-blue-100">
+              チャット履歴をクリアしますか？
+            </AlertDialogTitle>
             <AlertDialogDescription className="text-blue-300/70">
               この操作は取り消せません。すべてのチャットメッセージがデータベースから削除されます。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-blue-500/30 hover:bg-blue-950/50 text-blue-300">キャンセル</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogCancel className="border-blue-500/30 hover:bg-blue-950/50 text-blue-300">
+              キャンセル
+            </AlertDialogCancel>
+            <AlertDialogAction
               onClick={() => clearChatHistory.mutate()}
               className="bg-red-600 hover:bg-red-700 text-white"
             >
@@ -649,15 +501,13 @@ export const ChatInterface = ({
 
       {/* Main chat container with auto-scroll */}
       <div className="flex-1 overflow-y-auto overscroll-none">
-        <ScrollArea 
-          className="h-full px-1 sm:px-4 py-1 w-full -webkit-overflow-scrolling-touch bg-gradient-to-b from-slate-900 to-slate-950 overflow-auto" 
+        <ScrollArea
+          className="h-full px-1 sm:px-4 py-1 w-full overflow-auto -webkit-overflow-scrolling-touch bg-slate-900/90 backdrop-blur-md rounded-none sm:rounded-xl shadow-xl border-0 sm:border border-blue-500/20 pt-1 pb-12"
           ref={scrollAreaRef}
         >
           <div className="space-y-2 w-full max-w-full">
             {messages.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center sm:min-h-[300px] text-center py-4">
-
-
+              <div className="flex flex-col items-center justify-center sm:min-h-[300px] text-center py-4">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -667,40 +517,50 @@ export const ChatInterface = ({
                   <div className="relative mb-4 mx-auto w-14 h-14 flex items-center justify-center">
                     <motion.div
                       className="absolute inset-0 rounded-full border border-blue-400/30"
-                      animate={{ 
+                      animate={{
                         scale: [1, 1.1, 1],
                         opacity: [0.3, 0.5, 0.3],
-                        rotate: 360
+                        rotate: 360,
                       }}
-                      transition={{ 
-                        duration: 4, 
-                        repeat: Infinity, 
-                        ease: "linear" 
+                      transition={{
+                        duration: 4,
+                        repeat: Infinity,
+                        ease: "linear",
                       }}
                     />
                     <Sparkles className="h-10 w-10 text-blue-400" />
                   </div>
 
-                  <h3 className="text-lg font-medium mb-2 text-blue-100">対話を始めましょう</h3>
+                  <h3 className="text-lg font-medium mb-2 text-blue-100">
+                    対話を始めましょう
+                  </h3>
                   <p className="text-blue-300/80 max-w-xs mx-auto text-sm">
-                    下のテキストボックスにメッセージを入力して、<br />ミライと対話を開始してください
+                    下のテキストボックスにメッセージを入力して、
+                    <br />
+                    ミライと対話を開始してください
                   </p>
 
                   {/* New: Quick start suggestions */}
                   <div className="mt-5 space-y-2">
-                    <p className="text-xs text-blue-400 font-semibold">試してみる:</p>
+                    <p className="text-xs text-blue-400 font-semibold">
+                      試してみる:
+                    </p>
                     <div className="flex flex-wrap gap-2 justify-center">
-                      {promptCategories[0].prompts.slice(0, 3).map((prompt, i) => (
-                        <motion.button
-                          key={i}
-                          onClick={() => handleEmotionSelect(prompt.message || prompt.text)}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="text-xs px-3 py-1.5 rounded-full bg-blue-900/30 text-blue-300 border border-blue-500/20 hover:bg-blue-800/40 transition-colors"
-                        >
-                          {prompt.text}
-                        </motion.button>
-                      ))}
+                      {promptCategories[0].prompts
+                        .slice(0, 3)
+                        .map((prompt, i) => (
+                          <motion.button
+                            key={i}
+                            onClick={() =>
+                              handleEmotionSelect(prompt.message || prompt.text)
+                            }
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="text-xs px-3 py-1.5 rounded-full bg-blue-900/30 text-blue-300 border border-blue-500/20 hover:bg-blue-800/40 transition-colors"
+                          >
+                            {prompt.text}
+                          </motion.button>
+                        ))}
                     </div>
                   </div>
                 </motion.div>
@@ -710,17 +570,26 @@ export const ChatInterface = ({
               groupedMessages.map((group: MessageGroup, groupIndex: number) => (
                 <div key={`group-${groupIndex}`} className="mb-3">
                   {/* Messages from the same sender grouped together */}
-                  <div className={`flex flex-col ${group.sender === 'user' ? 'items-end' : 'items-start'}`}>
+                  <div
+                    className={`flex flex-col ${group.sender === "user" ? "items-end" : "items-start"}`}
+                  >
                     {group.messages.map((message: Message, i: number) => {
                       // Find the corresponding user message for bot messages to enable regeneration
                       const lastUserMessageIndex = message.isBot
                         ? messages.findIndex((m) => m.id === message.id) - 1
                         : -1;
-                      const lastUserMessage = lastUserMessageIndex >= 0 ? messages[lastUserMessageIndex] : null;
+                      const lastUserMessage =
+                        lastUserMessageIndex >= 0
+                          ? messages[lastUserMessageIndex]
+                          : null;
 
                       const handleRegenerateAnswer = () => {
                         if (lastUserMessage?.content) {
-                          sendMessage.mutate(lastUserMessage.content);
+                          externalSendMessageMutation?.mutate({
+                            content: lastUserMessage.content,
+                            useWeb,
+                            useDb,
+                          });
                         }
                       };
 
@@ -728,14 +597,20 @@ export const ChatInterface = ({
                       const isFirstInGroup = i === 0;
 
                       return (
-                        <div 
-                          className={`w-full max-w-full ${i > 0 ? 'mt-1' : 'mt-0'}`} 
-                          key={typeof message.id === 'string' ? message.id : `msg-${message.id}`}
+                        <div
+                          className={`w-full max-w-full ${i > 0 ? "mt-1" : "mt-0"}`}
+                          key={
+                            typeof message.id === "string"
+                              ? message.id
+                              : `msg-${message.id}`
+                          }
                         >
                           <ChatMessage
                             message={{
                               ...message,
-                              onRegenerateAnswer: message.isBot ? handleRegenerateAnswer : undefined,
+                              onRegenerateAnswer: message.isBot
+                                ? handleRegenerateAnswer
+                                : undefined,
                             }}
                             isFirstInGroup={isFirstInGroup}
                             isLastInGroup={i === group.messages.length - 1}
@@ -745,51 +620,52 @@ export const ChatInterface = ({
                     })}
 
                     {/* Timestamp shown once per group at the end */}
-                    <div className={`text-[9px] text-blue-400/50 font-mono mt-1 ${group.sender === 'user' ? 'mr-2' : 'ml-2'}`}>
-                      {group.lastTimestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    </div>
-                  </div>
+                    {/*<div className={`text-[9px] text-blue-400/50 font-mono mt-1 ${group.sender === 'user' ? 'mr-2' : 'ml-2'}`}>
+                              {group.lastTimestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                            </div>*/}
 
-                  {/* Quick replies after bot messages */}
-                  {group.sender === 'bot' && groupIndex === groupedMessages.length - 1 && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: 5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3, duration: 0.3 }}
-                      className="ml-10 mt-2 flex flex-wrap gap-2"
-                    >
-                      {quickReplies.map((reply, i) => (
-                        <motion.button
-                          key={i}
-                          onClick={() => handleQuickReplySelect(reply.text)}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="text-xs px-2 py-1 rounded-full bg-blue-900/20 text-blue-400 border border-blue-500/20 hover:bg-blue-900/40 transition-colors flex items-center gap-1.5"
-                        >
-                          {reply.icon}
-                          <span>{reply.text}</span>
-                        </motion.button>
-                      ))}
-                    </motion.div>
-                  )}
+                    {/* Quick replies after bot messages */}
+                    {/* {group.sender === 'bot' && groupIndex === groupedMessages.length - 1 && (
+                            <motion.div 
+                              initial={{ opacity: 0, y: 5 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: 0.3, duration: 0.3 }}
+                              className="ml-10 mt-2 flex flex-wrap gap-2"
+                            >
+                              {quickReplies.map((reply, i) => (
+                                <motion.button
+                                  key={i}
+                                  onClick={() => handleQuickReplySelect(reply.text)}
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  className="text-xs px-2 py-1 rounded-full bg-blue-900/20 text-blue-400 border border-blue-500/20 hover:bg-blue-900/40 transition-colors flex items-center gap-1.5"
+                                >
+                                  {reply.icon}
+                                  <span>{reply.text}</span>
+                                </motion.button>
+                              ))}
+                            </motion.div>
+                          )}*/}
+                  </div>
                 </div>
               ))
             )}
 
             {/* Enhanced loading state */}
-            {sendMessage.isPending && (
-              <motion.div 
+            {externalSendMessageMutation?.isPending && (
+              <motion.div
                 className="flex justify-start pt-2 pb-4 pl-2"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <ChatLoadingIndicator variant="character" message="ミライが処理中..." />
+                <ChatLoadingIndicator
+                  variant="character"
+                  message="ミライが処理中..."
+                />
               </motion.div>
             )}
-
             <div ref={messageEndRef} />
-
           </div>
         </ScrollArea>
       </div>
