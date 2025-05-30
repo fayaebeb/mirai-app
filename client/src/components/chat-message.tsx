@@ -7,7 +7,7 @@ import remarkGfm from "remark-gfm";
 import { motion } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, Database, Globe, Cpu, Server } from "lucide-react";
+import { ChevronDown, Database, Globe, Cpu, Server, Clipboard, Check } from "lucide-react";
 import { Button } from "./ui/button";
 import { SaveChatAsNote } from "./save-chat-as-note";
 
@@ -138,6 +138,19 @@ export default function ChatMessage({
   const [isTyping, setIsTyping] = useState(false);
   const [displayedContent, setDisplayedContent] = useState(message.content);
   const contentRef = useRef(message.content);
+
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(message.content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy message:", err);
+    }
+  };
+
 
   // Only show typing animation for NEW bot messages (not existing ones on page load)
   useEffect(() => {
@@ -450,11 +463,28 @@ export default function ChatMessage({
                       再生成
                     </button>
 
+                    <button
+                      onClick={handleCopy}
+                      className="text-[9px] sm:text-[10px] text-blue-400 hover:text-blue-300 flex items-center gap-1 opacity-60 hover:opacity-100 transition-all hover:scale-105"
+                    >
+                      {copied ? (
+                        <>
+                          <Check className="w-3 h-3" />
+                          Copied
+                        </>
+                      ) : (
+                        <>
+                          <Clipboard className="w-3 h-3" />
+                          コピー
+                        </>
+                      )}
+                    </button>
+
                     <SaveChatAsNote message={message} />
                   </>
                 )}
               </div>
-
+              
               {/* Reaction buttons (new feature) */}
               {message.isBot && (
                 <div className="flex gap-1 mr-1">
