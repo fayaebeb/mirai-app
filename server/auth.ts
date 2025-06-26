@@ -11,7 +11,7 @@ import rateLimit from "express-rate-limit";
 
 declare global {
   namespace Express {
-    interface User extends SelectUser {}
+    interface User extends SelectUser { }
   }
 }
 
@@ -31,7 +31,7 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
-  const sessionSecret = process.env.SESSION_SECRET || (() => {throw new Error('SESSION_SECRET must be set')})();
+  const sessionSecret = process.env.SESSION_SECRET || (() => { throw new Error('SESSION_SECRET must be set') })();
 
   const isProduction = process.env.NODE_ENV === 'production';
   console.log('Auth setup - Environment:', isProduction ? 'Production' : 'Development');
@@ -41,12 +41,14 @@ export function setupAuth(app: Express) {
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore,
+    name: 'mirai.sid',
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-      secure: true,
+      maxAge: 24 * 60 * 60 * 1000, // 7 days
+      secure: isProduction,
       httpOnly: true,
-      sameSite: 'strict',
-    }
+      sameSite: isProduction ? 'strict' : 'lax',
+    },
+    rolling: true,
   };
 
   app.set("trust proxy", 1);
