@@ -1,65 +1,108 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
+import { pgTable, integer, text, boolean, timestamp, unique, serial, index, varchar, json, foreignKey } from "drizzle-orm/pg-core"
+
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+export const goalsBackup = pgTable("goals_backup", {
+  id: integer(),
+  userId: integer("user_id"),
+  description: text(),
+  completed: boolean(),
+  createdAt: timestamp("created_at", { mode: 'string' }),
+  updatedAt: timestamp("updated_at", { mode: 'string' }),
+  dueDate: timestamp("due_date", { mode: 'string' }),
 });
+
+export const users = pgTable("users", {
+  id: serial().primaryKey().notNull(),
+  username: text().notNull(),
+  password: text().notNull(),
+  email: text(),
+}, (table) => [
+  unique("users_username_key").on(table.username),
+]);
+
+export const session = pgTable("session", {
+  sid: varchar().primaryKey().notNull(),
+  sess: json().notNull(),
+  expire: timestamp({ precision: 6, mode: 'string' }).notNull(),
+}, (table) => [
+  index("IDX_session_expire").using("btree", table.expire.asc().nullsLast().op("timestamp_ops")),
+]);
 
 export const sessions = pgTable("sessions", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id),
+  id: serial().primaryKey().notNull(),
+  userId: integer("user_id").notNull(),
   sessionId: text("session_id").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+  createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+  foreignKey({
+    columns: [table.userId],
+    foreignColumns: [users.id],
+    name: "sessions_user_id_fkey"
+  }).onDelete("cascade"),
+  unique("sessions_session_id_unique").on(table.sessionId),
+]);
 
 export const messages = pgTable("messages", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id),
-  content: text("content").notNull(),
+  id: serial().primaryKey().notNull(),
+  userId: integer("user_id").notNull(),
+  content: text().notNull(),
   isBot: boolean("is_bot").notNull(),
-  timestamp: timestamp("timestamp").defaultNow().notNull(),
-  sessionId: text("session_id").notNull().references(() => sessions.sessionId),
-});
+  timestamp: timestamp({ mode: 'string' }).defaultNow().notNull(),
+  sessionId: text("session_id").notNull(),
+}, (table) => [
+  foreignKey({
+    columns: [table.sessionId],
+    foreignColumns: [sessions.sessionId],
+    name: "messages_session_id_fkey"
+  }),
+  foreignKey({
+    columns: [table.userId],
+    foreignColumns: [users.id],
+    name: "messages_user_id_fkey"
+  }).onDelete("cascade"),
+]);
 
 export const notes = pgTable("notes", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id),
-  title: text("title").notNull(),
-  content: text("content").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+  id: serial().primaryKey().notNull(),
+  userId: integer("user_id").notNull(),
+  title: text().notNull(),
+  content: text().notNull(),
+  createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+  foreignKey({
+    columns: [table.userId],
+    foreignColumns: [users.id],
+    name: "notes_user_id_fkey"
+  }).onDelete("cascade"),
+]);
 
 export const goals = pgTable("goals", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id),
-  title: text("title").notNull(),
-  description: text("description").notNull(),
-  completed: boolean("completed").notNull().default(false),
-  dueDate: timestamp("due_date"),
-  priority: text("priority").default("medium"),
-  category: text("category"),
-  tags: text("tags").array(),
-  reminderTime: timestamp("reminder_time"),
-  // Recurring task fields
+  id: serial().primaryKey().notNull(),
+  userId: integer("user_id").notNull(),
+  description: text().notNull(),
+  completed: boolean().default(false).notNull(),
+  createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
+  dueDate: timestamp("due_date", { mode: 'string' }),
+  title: text().notNull(),
+  priority: text().default('medium'),
+  category: text(),
+  tags: text().array(),
+  reminderTime: timestamp("reminder_time", { mode: 'string' }),
   isRecurring: boolean("is_recurring").default(false),
-  recurringType: text("recurring_type"), // daily, weekly, monthly, custom
-  recurringInterval: integer("recurring_interval"), // e.g., every X days, weeks, etc.
-  recurringEndDate: timestamp("recurring_end_date"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+  recurringType: text("recurring_type"),
+  recurringInterval: integer("recurring_interval"),
+  recurringEndDate: timestamp("recurring_end_date", { mode: 'string' }),
+}, (table) => [
+  foreignKey({
+    columns: [table.userId],
+    foreignColumns: [users.id],
+    name: "goals_user_id_fkey"
+  }).onDelete("cascade"),
+]);
 
 // Add password validation to the insert schema
 export const insertUserSchema = createInsertSchema(users)
@@ -108,19 +151,19 @@ export const insertGoalSchema = createInsertSchema(goals).pick({
 }).extend({
   title: z.string().min(1, "タイトルは必須です"),
   description: z.string().optional(),
-  dueDate: z.string().or(z.date()).nullable().optional().transform(val => 
+  dueDate: z.string().or(z.date()).nullable().optional().transform(val =>
     val ? new Date(val) : null
   ),
   priority: z.enum(["low", "medium", "high"]).optional().default("medium"),
   category: z.string().optional(),
   tags: z.array(z.string()).optional().default([]),
-  reminderTime: z.string().or(z.date()).nullable().optional().transform(val => 
+  reminderTime: z.string().or(z.date()).nullable().optional().transform(val =>
     val ? new Date(val) : null
   ),
   isRecurring: z.boolean().optional().default(false),
   recurringType: z.enum(["daily", "weekly", "monthly", "custom"]).optional(),
   recurringInterval: z.number().positive().optional(),
-  recurringEndDate: z.string().or(z.date()).nullable().optional().transform(val => 
+  recurringEndDate: z.string().or(z.date()).nullable().optional().transform(val =>
     val ? new Date(val) : null
   )
 });
