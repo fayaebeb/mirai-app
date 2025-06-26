@@ -86,6 +86,7 @@
     "react-textarea-autosize": "^8.5.9",
     "react-time-picker": "^7.0.0",
     "recharts": "^2.13.0",
+    "recoil": "^0.7.7",
     "remark-gfm": "^4.0.1",
     "tailwind-merge": "^2.5.4",
     "tailwindcss-animate": "^1.0.7",
