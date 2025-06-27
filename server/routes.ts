@@ -1,10 +1,104 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { insertMessageSchema, insertNoteSchema, insertGoalSchema } from "@shared/schema";
 import { generateMindMap } from "./services/openai";
+import rateLimit from 'express-rate-limit';
 import { openai } from './openaiClient';
+import dotenv from "dotenv";
+import multer from "multer";
+import { apiRateLimit } from "./security";
+dotenv.config();
+
+const createUserAwareRateLimiter = (options: { windowMs: number; max: number; message?: string }) =>
+  rateLimit({
+    windowMs: options.windowMs,
+    max: options.max,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { success: false, message: options.message || 'Too many requests' },
+    keyGenerator: (req: Request) => {
+      const userId = req.user?.id ?? 'anonymous';
+      const ip = req.ip;
+      return `${userId}-${ip}`;
+    },
+  });
+
+// Chat: 10 messages per minute per user
+const granularChatLimiter = createUserAwareRateLimiter({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: "Too many chat requests. Please wait a moment.",
+});
+
+// Transcribe: 5 uploads per 5 minutes per user
+const granularTranscribeLimiter = createUserAwareRateLimiter({
+  windowMs: 5 * 60 * 1000,
+  max: 5,
+  message: "Too many transcription requests. Please wait and try again.",
+});
+
+// Setup multer for handling file uploads (in-memory storage) with enhanced security
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 25 * 1024 * 1024, // 25MB limit (OpenAI requirement)
+    files: 1 // Only allow one file
+  },
+  fileFilter: (req, file, cb) => {
+    // Only allow audio files for voice transcription
+    const allowedMimeTypes = [
+      'audio/mpeg', 'audio/mp4', 'audio/wav', 'audio/webm',
+      'audio/m4a', 'audio/mpga', 'audio/mp3', 'audio/webm;codecs=opus'
+    ];
+
+    if (allowedMimeTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      console.log(`Security: Rejected file upload with mime type: ${file.mimetype}`);
+      cb(new Error('Invalid file type. Only audio files are allowed.'));
+    }
+  }
+});
+
+const SKAPI = process.env.SKAPI!;
+
+async function sendMessageToLangchain(
+  message: string,
+  useWeb: boolean,
+  useDb: boolean,
+): Promise<string> {
+  // console.log(`Sending request to LangChain FastAPI: ${message}`);
+
+  const response = await fetch(SKAPI, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      message,
+      useweb: useWeb,
+      usedb: useDb,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("LangChain FastAPI Error:", errorText);
+    throw new Error(`LangChain API responded with status ${response.status}`);
+  }
+
+  const data = await response.json();
+  console.log("LangChain API Response:", JSON.stringify(data, null, 2));
+
+  if (!data.reply) {
+    throw new Error("No reply field in LangChain API response");
+  }
+
+  return data.reply.trim();
+}
+
 
 function formatBotResponse(text: string): string {
   return text.replace(/\\n/g, '\n').trim();
@@ -12,6 +106,9 @@ function formatBotResponse(text: string): string {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
+  
+  app.use("/api", apiRateLimit);
+
 
   // Add a dedicated goal tracker chat endpoint
   app.post("/api/goal-chat", async (req, res) => {
