@@ -8,18 +8,21 @@ export const goalsBackup = pgTable("goals_backup", {
   userId: integer("user_id"),
   description: text(),
   completed: boolean(),
-  createdAt: timestamp("created_at", { mode: 'string' }),
-  updatedAt: timestamp("updated_at", { mode: 'string' }),
-  dueDate: timestamp("due_date", { mode: 'string' }),
+  createdAt: timestamp("created_at"),
+  updatedAt: timestamp("updated_at"),
+  dueDate: timestamp("due_date"),
 });
 
 export const users = pgTable("users", {
   id: serial().primaryKey().notNull(),
-  username: text().notNull(),
+  username: text("username").notNull(),
   password: text().notNull(),
-  email: text(),
+  email: text("email").notNull(),
+  initialLoginAt: timestamp("initial_login_at", { withTimezone: true }),
+  onboardingCompletedAt: timestamp("onboarding_completed_at", { withTimezone: true }),
 }, (table) => [
-  unique("users_username_key").on(table.username),
+  unique("users_email_key").on(table.email),      // ⇦ new unique
+  unique("users_username_key").on(table.username) // (keep or drop, your choice)
 ]);
 
 export const session = pgTable("session", {
@@ -34,7 +37,7 @@ export const sessions = pgTable("sessions", {
   id: serial().primaryKey().notNull(),
   userId: integer("user_id").notNull(),
   sessionId: text("session_id").notNull(),
-  createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [
   foreignKey({
     columns: [table.userId],
@@ -47,9 +50,9 @@ export const sessions = pgTable("sessions", {
 export const messages = pgTable("messages", {
   id: serial().primaryKey().notNull(),
   userId: integer("user_id").notNull(),
-  content: text().notNull(),
+  content: text("content").notNull(),
   isBot: boolean("is_bot").notNull(),
-  timestamp: timestamp({ mode: 'string' }).defaultNow().notNull(),
+  timestamp: timestamp().defaultNow().notNull(),
   sessionId: text("session_id").notNull(),
 }, (table) => [
   foreignKey({
@@ -69,8 +72,8 @@ export const notes = pgTable("notes", {
   userId: integer("user_id").notNull(),
   title: text().notNull(),
   content: text().notNull(),
-  createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [
   foreignKey({
     columns: [table.userId],
@@ -82,20 +85,20 @@ export const notes = pgTable("notes", {
 export const goals = pgTable("goals", {
   id: serial().primaryKey().notNull(),
   userId: integer("user_id").notNull(),
-  description: text().notNull(),
+  description: text("description").notNull(),
   completed: boolean().default(false).notNull(),
-  createdAt: timestamp("created_at", { mode: 'string' }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().notNull(),
-  dueDate: timestamp("due_date", { mode: 'string' }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  dueDate: timestamp("due_date"),
   title: text().notNull(),
   priority: text().default('medium'),
   category: text(),
   tags: text().array(),
-  reminderTime: timestamp("reminder_time", { mode: 'string' }),
+  reminderTime: timestamp("reminder_time"),
   isRecurring: boolean("is_recurring").default(false),
   recurringType: text("recurring_type"),
   recurringInterval: integer("recurring_interval"),
-  recurringEndDate: timestamp("recurring_end_date", { mode: 'string' }),
+  recurringEndDate: timestamp("recurring_end_date"),
 }, (table) => [
   foreignKey({
     columns: [table.userId],
@@ -105,14 +108,37 @@ export const goals = pgTable("goals", {
 ]);
 
 // Add password validation to the insert schema
-export const insertUserSchema = createInsertSchema(users)
-  .pick({
-    username: true,
-    password: true
+
+  export const insertUserSchema = z
+  .object({
+    email: z.string().email("有効なメールアドレスを入力してください"),
+    password: z
+      .string()
+      .min(8, "パスワードは8文字以上でなければなりません")
+      .max(128, "パスワードは128文字以下でなければなりません")
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/,
+        "英大文字・小文字・数字・記号を含めてください"
+      ),
+    confirmPassword: z.string(),
   })
-  .extend({
-    password: z.string().min(6, "パスワードは6文字以上でなければなりません")
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "パスワードが一致しません",
+    path: ["confirmPassword"],
   });
+
+  export const insertUserSafeSchema = createInsertSchema(users).pick({
+  email: true,
+  password: true,
+  username: true,
+});
+
+// ✅ Lightweight schema for login only (no strength checks)
+export const loginUserSchema = z.object({
+  email: z.string().email("有効なメールアドレスを入力してください"),
+  password: z.string().min(1, "パスワードは必須です"),
+});
+
 
 export const insertSessionSchema = createInsertSchema(sessions).pick({
   userId: true,
@@ -155,7 +181,7 @@ export const insertGoalSchema = createInsertSchema(goals).pick({
     val ? new Date(val) : null
   ),
   priority: z.enum(["low", "medium", "high"]).optional().default("medium"),
-  category: z.string().optional(),
+  category: z.string().optional().default(""),
   tags: z.array(z.string()).optional().default([]),
   reminderTime: z.string().or(z.date()).nullable().optional().transform(val =>
     val ? new Date(val) : null
@@ -169,6 +195,7 @@ export const insertGoalSchema = createInsertSchema(goals).pick({
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type InsertUserSafe = z.infer<typeof insertUserSafeSchema>;
 export type User = typeof users.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type Message = typeof messages.$inferSelect;

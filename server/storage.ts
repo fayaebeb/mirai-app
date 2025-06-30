@@ -1,4 +1,4 @@
-import { users, messages, sessions, notes, goals, type User, type InsertUser, type Message, type InsertMessage, type Session, type Note, type InsertNote, type Goal, type InsertGoal } from "@shared/schema";
+import { users, messages, sessions, notes, goals, type User, type InsertUser, type Message, type InsertMessage, type Session, type Note, type InsertNote, type Goal, type InsertGoal, InsertUserSafe } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, not } from "drizzle-orm";
 import session from "express-session";
@@ -10,10 +10,11 @@ const PostgresSessionStore = connectPg(session);
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  createUser(user: InsertUserSafe): Promise<User>;
   getMessagesByUserAndSession(userId: number, sessionId: string): Promise<Message[]>;
   createMessage(userId: number, message: InsertMessage): Promise<Message>;
   deleteMessagesBySessionId(userId: number, sessionId: string): Promise<boolean>;
+  deleteMessagesByUserAndSession(userId: number, sessionId: string): Promise<void>;
   getUserLastSession(userId: number): Promise<Session | undefined>;
   getSessionBySessionId(sessionId: string): Promise<Session | undefined>;
   createUserSession(userId: number, sessionId: string): Promise<Session>;
@@ -46,12 +47,18 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getUserByEmail(email: string) : Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email))
+    return user
+  }
+  
+
   async getUserByUsername(username: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.username, username));
     return user;
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
+  async createUser(insertUser: InsertUserSafe): Promise<User> {
     const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
@@ -92,6 +99,12 @@ export class DatabaseStorage implements IStorage {
     return !!result.rowCount;
   }
 
+  async deleteMessagesByUserAndSession(userId: number, sessionId: string): Promise<void> {
+    await db
+      .delete(messages)
+      .where(and(eq(messages.userId, userId), eq(messages.sessionId, sessionId)));
+  }
+
   async getUserLastSession(userId: number): Promise<Session | undefined> {
     const [session] = await db
       .select()
@@ -101,7 +114,7 @@ export class DatabaseStorage implements IStorage {
       .limit(1);
     return session;
   }
-  
+
   async getSessionBySessionId(sessionId: string): Promise<Session | undefined> {
     const [session] = await db
       .select()
@@ -111,6 +124,8 @@ export class DatabaseStorage implements IStorage {
     return session;
   }
 
+
+
   async createUserSession(userId: number, sessionId: string): Promise<Session> {
     // First check if the session already exists
     const existingSession = await this.getSessionBySessionId(sessionId);
@@ -118,7 +133,7 @@ export class DatabaseStorage implements IStorage {
       // Session already exists, just return it
       return existingSession;
     }
-    
+
     // Create a new session if it doesn't exist
     const [session] = await db
       .insert(sessions)
@@ -234,9 +249,19 @@ export class DatabaseStorage implements IStorage {
       .insert(goals)
       .values({
         userId,
-        ...goal,
-        createdAt: now,
-        updatedAt: now
+        // ensure description is never undefined:
+        description: goal.description ?? "",
+        title: goal.title,
+        completed: goal.completed,
+        dueDate: goal.dueDate,
+        priority: goal.priority,
+        category: goal.category,
+        tags: goal.tags,
+        reminderTime: goal.reminderTime,
+        isRecurring: goal.isRecurring,
+        recurringType: goal.recurringType,
+        recurringInterval: goal.recurringInterval,
+        recurringEndDate: goal.recurringEndDate,
       })
       .returning();
     return newGoal;

@@ -40,7 +40,7 @@ const createBruteForce = () => {
 
 // Input validation middleware
 export const validateRegistration = [
-  body("username")
+  body("email")
     .notEmpty()
     .withMessage("Email is required")
     .isEmail()
@@ -55,7 +55,7 @@ export const validateRegistration = [
 ];
 
 export const validateLogin = [
-  body("username")
+  body("email")
     .notEmpty()
     .withMessage("Email is required")
     .isEmail()
@@ -75,10 +75,6 @@ export const validateMessage = [
     .withMessage("Message must be between 1 and 10000 characters")
     .trim()
     .escape(),
-  body("category")
-    .optional()
-    .isIn(["SELF", "PRIVATE", "ADMINISTRATIVE"])
-    .withMessage("Invalid message category"),
   body("useWeb")
     .optional()
     .isBoolean()
@@ -87,11 +83,6 @@ export const validateMessage = [
     .optional()
     .isBoolean()
     .withMessage("useDb must be a boolean"),
-  body("db")
-    .optional()
-    .isLength({ max: 100 })
-    .withMessage("Database name too long")
-    .escape(),
 ];
 
 export const validateFeedback = [

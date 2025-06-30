@@ -83,7 +83,7 @@ const Navbar = () => {
         setActiveTab(value as ActiveTab);
     };
 
-    const displayName = user?.username?.split("@")[0];
+    const displayName = user?.username;
 
 
 

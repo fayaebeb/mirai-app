@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { nanoid } from "nanoid";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,12 +53,14 @@ export default function HomePage() {
   const isMobile = useIsMobile();
   const [useWeb, setUseWeb] = useState(false);
   const [useDb, setUseDb] = useState(true);
+  const [sessionId, setSessionId] = useState<string>("");
 
- 
 
+
+  const CHAT_SESSION_KEY_PREFIX = "chat_session_id_user_";
 
   // Get messages for PDF export
- 
+
 
   // Send message mutation with optimistic updates
   const sendMessage = useMutation<
@@ -67,10 +70,17 @@ export default function HomePage() {
     { previousMessages?: Message[] }
   >({
     mutationFn: async ({ content, useWeb, useDb }: { content: string; useWeb: boolean; useDb: boolean }) => {
+
+      if (!sessionId) {
+        throw new Error("セッションIDが見つかりません。再ログインしてください。");
+      }
+
       const response = await apiRequest('POST', '/api/messages', {
         content,
         useWeb,
         useDb,
+        isBot: false,
+        sessionId
       });
       return response.json();
     },
@@ -87,7 +97,7 @@ export default function HomePage() {
         userId: user!.id,
         content,
         isBot: false,
-        sessionId: `user_${user!.id}_${user!.username}`,
+        sessionId: `user_${user!.id}_${user!.email}`,
         timestamp: new Date(),
       };
 
@@ -161,13 +171,53 @@ export default function HomePage() {
   };
 
   // Clear chat history mutation
-  
+
 
   // Handle clear chat button click
   const handleClearChat = () => {
     setShowClearConfirm(true);
   };
 
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const storageKey = `${CHAT_SESSION_KEY_PREFIX}${user.id}`;
+    let savedSessionId = localStorage.getItem(storageKey);
+
+    // Validate saved session ID
+    if (!savedSessionId || savedSessionId.trim() === "") {
+      console.log("Creating new session ID - no previous ID found");
+      savedSessionId = nanoid();
+      localStorage.setItem(storageKey, savedSessionId);
+    }
+
+    console.log(`Using session ID: ${savedSessionId}`);
+    setSessionId(savedSessionId);
+
+    const persistentSessionId = user.email.split('@')[0];
+
+    if (savedSessionId !== persistentSessionId) {
+      console.log(
+        `Note: localStorage session ID (${savedSessionId}) differs from persistent ID (${persistentSessionId})`
+      );
+    }
+
+    // Setup periodic check for session integrity
+    const interval = setInterval(() => {
+      const currentStoredId = localStorage.getItem(storageKey);
+      if (currentStoredId !== savedSessionId) {
+        console.log("Session ID changed in another tab, updating");
+        setSessionId(currentStoredId || savedSessionId);
+        // Restore the session ID if it was accidentally cleared
+        if (!currentStoredId) {
+          localStorage.setItem(storageKey, savedSessionId);
+        }
+      }
+    }, 30000); // Check every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [user]);
 
 
 
@@ -403,7 +453,7 @@ export default function HomePage() {
       </div>
 
       {/* Improved header for mobile */}
-        <Navbar/>
+      <Navbar />
 
       {/* Main content section */}
       <main className="flex-1 w-full max-w-full px-0 pt-16 sm:pt-18">

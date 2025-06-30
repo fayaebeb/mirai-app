@@ -370,7 +370,7 @@ export function NotesList() {
         content,
         isBot: false,
         timestamp: new Date(),
-        sessionId: `notes_${user?.id}_${user?.username}`,
+        sessionId: `notes_${user?.id}_${user?.email}`,
       };
 
       // Add optimistic message to local state

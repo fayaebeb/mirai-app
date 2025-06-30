@@ -6,10 +6,12 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User as SelectUser } from "@shared/schema";
+import { User as SelectUser, users } from "@shared/schema";
 
 import rateLimit from "express-rate-limit";
 import { authRateLimit, bruteForce, handleValidationErrors, validateLogin, validateRegistration } from './security';
+import { db } from './db';
+import { eq } from 'drizzle-orm';
 
 declare global {
   namespace Express {
@@ -32,6 +34,25 @@ const scryptAsync = promisify(scrypt);
 //   const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
 //   return timingSafeEqual(hashedBuf, suppliedBuf);
 // }
+
+async function generateUniqueUsername(base: string): Promise<string> {
+  let candidate = base;
+  let suffix = 1;
+
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const exists = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.username, candidate))
+      .limit(1);
+
+    if (exists.length === 0) return candidate;
+
+    candidate = `${base}${suffix}`;
+    suffix += 1;
+  }
+}
 
 export async function hashPassword(password: string): Promise<string> {
   return await bcrypt.hash(password, SALT_ROUNDS);
@@ -100,24 +121,26 @@ export function setupAuth(app: Express) {
   });
 
   passport.use(
-    new LocalStrategy(async (username, password, done) => {
+    new LocalStrategy({
+      usernameField: "email",
+    }, async (email, password, done) => {
       try {
-        console.log(`Auth - Login attempt for user: ${username}`);
-        const user = await storage.getUserByUsername(username);
+        console.log(`Auth - Login attempt for user: ${email}`);
+        const user = await storage.getUserByEmail(email);
         if (!user) {
-          console.log(`Auth - User not found: ${username}`);
+          console.log(`Auth - User not found: ${email}`);
           return done(null, false);
         }
 
         const passwordValid = await comparePasswords(password, user.password);
         if (!passwordValid) {
-          console.log(`Auth - Invalid password for user: ${username}`);
+          console.log(`Auth - Invalid password for user: ${email}`);
           return done(null, false);
         }
-        console.log(`Auth - Login successful for user: ${username}`);
+        console.log(`Auth - Login successful for user: ${email}`);
         return done(null, user);
       } catch (error) {
-        console.error(`Auth - Login error for ${username}:`, error);
+        console.error(`Auth - Login error for ${email}:`, error);
         return done(error);
       }
     }),
@@ -149,28 +172,33 @@ export function setupAuth(app: Express) {
     handleValidationErrors,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        console.log(`Auth - Register attempt: ${req.body.username}`);
-        const existingUser = await storage.getUserByUsername(req.body.username);
+        console.log(`Auth - Register attempt: ${req.body.email}`);
+        const existingUser = await storage.getUserByEmail(req.body.email);
         if (existingUser) {
-          console.log(`Auth - Registration failed: ${req.body.username} already exists`);
+          console.log(`Auth - Registration failed: ${req.body.email} already exists`);
           return res.status(409).json({
             error: "このユーザー名は既に使用されています。"
           });
         }
+
+        const baseUsername = req.body.email;
+        const username = await generateUniqueUsername(baseUsername);
+
         const user = await storage.createUser({
           ...req.body,
+          username: username,
           password: await hashPassword(req.body.password),
         });
 
-        console.log(`Auth - User registered: ${user.username}`);
+        console.log(`Auth - User registered: ${user.email}`);
         req.login(user, (err: any) => {
           if (err) {
-            console.error(`Auth - Login after registration failed for ${user.username}:`, err);
+            console.error(`Auth - Login after registration failed for ${user.email}:`, err);
             return next(err);
           }
           console.log(`Auth - User logged in after registration: ${user.email}`);
 
-          res.status(201).json({ id: user.id, username: user.username });
+          res.status(201).json({ id: user.id, email: user.email, username: user.username });
         });
       } catch (error) {
         console.error(`Auth - Registration error:`, error);
@@ -193,9 +221,8 @@ export function setupAuth(app: Express) {
             console.error("Auth - Login error:", err);
             return res.status(500).json({ error: "ログイン処理中にエラーが発生しました。" });
           }
-
           if (!user) {
-            console.log("Auth - Login failed for:", req.body.username);
+            console.log("Auth - Login failed for:", req.body.email);
 
             // const userExists = await storage.getUserByUsername(req.body.username);
 
@@ -225,14 +252,14 @@ export function setupAuth(app: Express) {
             // Now login with the new session
             req.login(userData, (loginErr: any) => {
               if (loginErr) {
-                console.error(`Auth - Session creation error for ${userData.username}:`, loginErr);
+                console.error(`Auth - Session creation error for ${userData.email}:`, loginErr);
                 return res.status(500).json({
                   error: "セッションの作成に失敗しました。"
                 });
               }
 
-              console.log(`Auth - Login successful: ${userData.username}`);
-              res.status(200).json({ id: user.id, username: user.username });
+              console.log(`Auth - Login successful: ${userData.email}`);
+              res.status(200).json({ id: user.id, email: user.email, username: user.username });
             });
           });
         }
@@ -247,12 +274,12 @@ export function setupAuth(app: Express) {
   // });
 
   app.post("/api/logout", (req, res, next) => {
-    const username = req.user?.username;
-    console.log(`Auth - Logout attempt: ${username || 'Unknown user'}`);
+    const email = req.user?.email;
+    console.log(`Auth - Logout attempt: ${email || 'Unknown user'}`);
 
     req.logout((err) => {
       if (err) {
-        console.error(`Auth - Logout error for ${username}:`, err);
+        console.error(`Auth - Logout error for ${email}:`, err);
         return next(err);
       }
 
@@ -265,7 +292,7 @@ export function setupAuth(app: Express) {
           });
         }
 
-        console.log(`Auth - Logout successful: ${username}`);
+        console.log(`Auth - Logout successful: ${email}`);
         res.clearCookie('mirai.sid');
         res.sendStatus(200);
       });
@@ -283,7 +310,7 @@ export function setupAuth(app: Express) {
       return res.sendStatus(401);
     }
 
-    console.log(`Auth - Authorized /api/user access: ${req.user?.username}`);
-    res.json({ id: req.user!.id, username: req.user!.username });
+    console.log(`Auth - Authorized /api/user access: ${req.user?.email}`);
+    res.json({ id: req.user!.id, email: req.user!.email });
   });
 }

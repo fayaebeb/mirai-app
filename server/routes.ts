@@ -2,13 +2,14 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
-import { insertMessageSchema, insertNoteSchema, insertGoalSchema } from "@shared/schema";
+import { insertMessageSchema, insertNoteSchema, insertGoalSchema, chatRequestSchema } from "@shared/schema";
 import { generateMindMap } from "./services/openai";
 import rateLimit from 'express-rate-limit';
 import { openai } from './openaiClient';
 import dotenv from "dotenv";
 import multer from "multer";
-import { apiRateLimit } from "./security";
+import { apiRateLimit, handleValidationErrors, validateMessage } from "./security";
+import { getPersistentSessionId, sendError } from "./utils/errorResponse";
 dotenv.config();
 
 const createUserAwareRateLimiter = (options: { windowMs: number; max: number; message?: string }) =>
@@ -106,7 +107,7 @@ function formatBotResponse(text: string): string {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
-  
+
   app.use("/api", apiRateLimit);
 
 
@@ -115,7 +116,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
     // Use a different session ID pattern for goal chat to ensure separation from regular chat
-    const goalSessionId = `goal_${req.user!.id}_${req.user!.username}`;
+    const goalSessionId = `goal_${req.user!.id}_${req.user!.email}`;
     const userContent = req.body.content;
 
     try {
@@ -140,7 +141,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Format goals with completion status and dates for better context
       const formattedGoals = allGoals.map(goal => {
-        const createdDate = new Date(goal.createdAt).toLocaleDateString('en-US', { 
+        const createdDate = new Date(goal.createdAt).toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'short',
           day: 'numeric'
@@ -163,7 +164,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           dueDateStr = `, Due: ${dueDate}`;
         }
 
-        return JSON.stringify({   id: goal.id,   title: goal.title,   description: goal.description,   completed: goal.completed,   createdAt: createdDate,   updatedAt: updatedDate,   dueDate: goal.dueDate ? new Date(goal.dueDate).toISOString() : null,   priority: goal.priority,   category: goal.category,   tags: goal.tags,   reminderTime: goal.reminderTime ? new Date(goal.reminderTime).toISOString() : null,   isRecurring: goal.isRecurring,   recurringType: goal.recurringType,   recurringInterval: goal.recurringInterval,   recurringEndDate: goal.recurringEndDate ? new Date(goal.recurringEndDate).toISOString() : null, });
+        return JSON.stringify({ id: goal.id, title: goal.title, description: goal.description, completed: goal.completed, createdAt: createdDate, updatedAt: updatedDate, dueDate: goal.dueDate ? new Date(goal.dueDate).toISOString() : null, priority: goal.priority, category: goal.category, tags: goal.tags, reminderTime: goal.reminderTime ? new Date(goal.reminderTime).toISOString() : null, isRecurring: goal.isRecurring, recurringType: goal.recurringType, recurringInterval: goal.recurringInterval, recurringEndDate: goal.recurringEndDate ? new Date(goal.recurringEndDate).toISOString() : null, });
       }).join("\n- ");
 
       const goalsText = formattedGoals ? `- ${formattedGoals}` : "No goals found.";
@@ -214,82 +215,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add a direct messages endpoint for the client
-  app.post("/api/messages", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.post("/api/messages",
+    granularChatLimiter,
+    validateMessage,
+    handleValidationErrors,
+    async (req: Request, res: Response) => {
+      if (!req.isAuthenticated()) return sendError(res, 401, "Unauthorized");
 
-    // Use the full username as the session ID to ensure uniqueness across users
-    const persistentSessionId = `user_${req.user!.id}_${req.user!.username}`;
-    const userContent = req.body.content;
+      // Use the full email as the session ID to ensure uniqueness across users
+      const persistentSessionId = getPersistentSessionId(req.user!.email);
+      const result = chatRequestSchema.safeParse(req.body);
 
-    try {
-      // Check if the session with the specific ID exists first
-      const existingUserSession = await storage.getSessionBySessionId(persistentSessionId);
-      if (!existingUserSession) {
-        console.log(`Creating new session for user ${req.user!.id} with sessionId ${persistentSessionId}`);
-        await storage.createUserSession(req.user!.id, persistentSessionId);
+      if (!result.success) {
+        console.error("Invalid request body:", result.error);
+        return sendError(res, 400, "Invalid request data", result.error);
       }
 
-      // Save the user message
-      const userMessage = await storage.createMessage(req.user!.id, {
-        content: userContent,
-        isBot: false,
-        sessionId: persistentSessionId,
-      });
+      const body = result.data;
 
-      console.log(`Sending request to external Chat API: ${userContent}`);
+      try {
+        // Check if the session with the specific ID exists first
+        const existingUserSession = await storage.getUserLastSession(req.user!.id);
+        if (!existingUserSession) {
+          console.log(`Creating new session for user ${req.user!.id} with sessionId ${persistentSessionId}`);
+          await storage.createUserSession(req.user!.id, persistentSessionId);
+        }
 
-      // Call the external chat API
-      const externalApiResponse = await fetch('https://mapi-on6dq.ondigitalocean.app/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: userContent,
-          useweb: req.body.useWeb ?? false,
-          usedb: req.body.useDb ?? false,
-        }),
-      });
+        // Save the user message
+        await storage.createMessage(req.user!.id, {
+          ...body,
+          isBot: false,
+          sessionId: persistentSessionId,
+        });
 
-      if (!externalApiResponse.ok) {
-        throw new Error(`External API error: ${externalApiResponse.status} ${externalApiResponse.statusText}`);
+
+        // Get response from langchain
+        const formattedResponse = await sendMessageToLangchain(
+          body.content,
+          body.useWeb ?? false,
+          body.useDb ?? false,
+        );
+
+        // Bot message should inherit the same category as the user message
+        const botMessage = await storage.createMessage(req.user!.id, {
+          content: formattedResponse,
+          isBot: true,
+          sessionId: persistentSessionId,
+        });
+
+        res.json(botMessage);
+
+      } catch (error) {
+        console.error("Error in chat processing:", error);
+        return sendError(res, 500, "Failed to process message", error instanceof Error ? error.message : "Unknown error");
       }
-
-      const externalApiData = await externalApiResponse.json();
-      const botResponseText = externalApiData.reply || externalApiData.response || externalApiData.message || "申し訳ございません。回答を生成できませんでした。";
-      const formattedResponse = formatBotResponse(botResponseText);
-
-      // Save the bot response
-      const botMessage = await storage.createMessage(req.user!.id, {
-        content: formattedResponse,
-        isBot: true,
-        sessionId: persistentSessionId,
-      });
-
-      console.log(`Generated bot response: ${formattedResponse.substring(0, 100)}...`);
-
-      res.status(201).json(botMessage);
-    } catch (error) {
-      console.error("Error handling message post:", error);
-      res.status(500).json({
-        message: "Failed to process message",
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
-    }
-  });
+    });
 
   // Get messages for the main chat interface
   app.get("/api/messages", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
     try {
-      const persistentSessionId = `user_${req.user!.id}_${req.user!.username}`;
+      const persistentSessionId = getPersistentSessionId(req.user!.email);
+      console.log(persistentSessionId)
 
-      const existingUserSession = await storage.getSessionBySessionId(persistentSessionId);
-      if (!existingUserSession) {
-        console.log(`Creating new session for user ${req.user!.id} with sessionId ${persistentSessionId}`);
-        await storage.createUserSession(req.user!.id, persistentSessionId);
-      }
+      // Check if the session exists, if not, create it
+      const existingSession = await storage.getUserLastSession(req.user!.id);
+    
+      if (!existingSession || existingSession.sessionId !== persistentSessionId) {
+          console.log(`Creating new session for user ${req.user!.id} with sessionId ${persistentSessionId}`);
+          await storage.createUserSession(req.user!.id, persistentSessionId);
+        }
 
       const messages = await storage.getMessagesByUserAndSession(
         req.user!.id,
@@ -307,33 +303,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // DELETE endpoint to clear regular chat history
-  app.delete("/api/messages", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.delete("/api/messages",
+    apiRateLimit,
+    async (req: Request, res: Response) => {
+      if (!req.isAuthenticated()) return sendError(res, 401, "Unauthorized");
 
-    try {
-      // Use the same session ID pattern as other regular chat endpoints
-      const persistentSessionId = `user_${req.user!.id}_${req.user!.username}`;
+      try {
+        // Use the same session ID pattern as other regular chat endpoints
+        const persistentSessionId = getPersistentSessionId(req.user!.email);
 
-      // Delete all messages with this session ID
-      const result = await storage.deleteMessagesBySessionId(req.user!.id, persistentSessionId);
 
-      console.log(`Deleted regular chat messages for user ${req.user!.id} with sessionId ${persistentSessionId}, success: ${result}`);
+        // Delete all messages with this session ID
+        await storage.deleteMessagesByUserAndSession(
+          req.user!.id,
+          persistentSessionId
+        );
 
-      res.json({ success: result });
-    } catch (error) {
-      console.error("Error deleting regular chat messages:", error);
-      res.status(500).json({
-        message: "Failed to delete chat messages",
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
-    }
-  });
+        console.log(`Deleted all messages for user ${req.user!.id} with sessionId ${persistentSessionId}`);
+
+        res.status(200).json({ message: "Chat history deleted successfully" });
+
+      } catch (error) {
+        console.error("Error deleting messages:", error);
+        return sendError(
+          res,
+          500,
+          "Failed to delete messages",
+          error instanceof Error ? error.message : "Unknown error"
+        );
+      }
+    });
 
   app.get("/api/goal-messages", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
     try {
-      const goalSessionId = `goal_${req.user!.id}_${req.user!.username}`;
+      const goalSessionId = `goal_${req.user!.id}_${req.user!.email}`;
 
       const existingGoalSession = await storage.getSessionBySessionId(goalSessionId);
       if (!existingGoalSession) {
@@ -362,7 +367,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       // Use the same session ID pattern as other goal chat endpoints
-      const goalSessionId = `goal_${req.user!.id}_${req.user!.username}`;
+      const goalSessionId = `goal_${req.user!.id}_${req.user!.email}`;
 
       // Delete all messages with this session ID
       const result = await storage.deleteMessagesBySessionId(req.user!.id, goalSessionId);
@@ -425,7 +430,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       // Use a different session ID pattern for notes chat to ensure separation from regular chat
-      const notesSessionId = `notes_${req.user!.id}_${req.user!.username}`;
+      const notesSessionId = `notes_${req.user!.id}_${req.user!.email}`;
 
       // Check if the session with the specific ID exists first
       const existingNotesSession = await storage.getSessionBySessionId(notesSessionId);
@@ -455,7 +460,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       // Use the same session ID pattern as other notes chat endpoints
-      const notesSessionId = `notes_${req.user!.id}_${req.user!.username}`;
+      const notesSessionId = `notes_${req.user!.id}_${req.user!.email}`;
 
       // Delete all messages with this session ID
       const result = await storage.deleteMessagesBySessionId(req.user!.id, notesSessionId);
@@ -477,7 +482,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
     // Use a different session ID pattern for notes chat to ensure separation from regular chat
-    const notesSessionId = `notes_${req.user!.id}_${req.user!.username}`;
+    const notesSessionId = `notes_${req.user!.id}_${req.user!.email}`;
     const userContent = req.body.content;
     const selectedNotes = req.body.notes || [];
 
@@ -502,7 +507,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let formattedNotes = "";
       if (selectedNotes && selectedNotes.length > 0) {
         formattedNotes = selectedNotes.map((note: any) => {
-          const createdDate = new Date(note.createdAt).toLocaleDateString('en-US', { 
+          const createdDate = new Date(note.createdAt).toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'short',
             day: 'numeric'
@@ -515,7 +520,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const allNotes = await storage.getNotesByUserId(req.user!.id);
         if (allNotes && allNotes.length > 0) {
           formattedNotes = allNotes.map(note => {
-            const createdDate = new Date(note.createdAt).toLocaleDateString('en-US', { 
+            const createdDate = new Date(note.createdAt).toLocaleDateString('en-US', {
               year: 'numeric',
               month: 'short',
               day: 'numeric'
@@ -874,6 +879,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
+  //Feedback
+  
 
 
   const httpServer = createServer(app);
