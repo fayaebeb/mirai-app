@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, Volume2, VolumeX, ArrowLeft, MessageSquare, AudioLines, Play, Pause, Square, Database, Globe,ChevronDown, Check } from "lucide-react";
+import { Mic, MicOff, Volume2, VolumeX, ArrowLeft, MessageSquare, AudioLines, Play, Pause, Square, Database, Globe, ChevronDown, Check } from "lucide-react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -132,7 +132,7 @@ export default function VoiceModePage() {
             setCurrentTranscript(data.text);
             break;
 
-            case "ai_response":
+          case "ai_response":
             console.log("AI response received:", data.message);
 
             if (data.userMessage && data.message) {
@@ -491,17 +491,17 @@ export default function VoiceModePage() {
   const displayName = user?.email?.split("@")[0];
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col bg-gradient-to-b from-[#ffefd5] to-[#fff0f5]">
+    <div className="h-screen overflow-hidden flex flex-col bg-gradient-to-b from-slate-900 to-slate-800">
       {/* Header */}
-      <header className="border-b border-pink-100 bg-white/80 backdrop-blur-sm shadow-sm sticky top-0 z-20">
+      <header className="border-b border-blue-900/50 bg-slate-950/90 backdrop-blur-lg shadow-md sticky top-0 z-20">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <Link href="/">
-              <Button variant="ghost" size="icon" className="text-pink-700 hover:bg-pink-50">
+              <Button variant="ghost" size="icon" className="text-blue-700 hover:bg-blue-50">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
-            <div className="font-medium text-lg text-pink-700 break-words truncate sm:truncate sm:whitespace-nowrap">
+            <div className="font-medium text-lg text-blue-700 break-words truncate sm:truncate sm:whitespace-nowrap">
               ボイスモード
             </div>
 
@@ -521,7 +521,7 @@ export default function VoiceModePage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="border-pink-200 text-pink-700 hover:bg-pink-50"
+                className="border-blue-200 text-blue-700 hover:bg-blue-50"
               >
                 <MessageSquare className="h-4 w-4 mr-1" />
                 <span className="hidden sm:inline">テキストモード</span>
@@ -533,76 +533,77 @@ export default function VoiceModePage() {
       </header>
 
       {/* Main content area */}
-                      <main className="flex-1 container mx-auto px-4 py-2 flex flex-col overflow-hidden">
-                        <div className="flex-1 flex flex-col min-h-0">
-                            <div className="flex-1 bg-white rounded-2xl shadow-lg p-3 border border-pink-100 flex flex-col overflow-hidden mb-3">
+      <main className="flex-1 container mx-auto px-4 py-2 flex flex-col overflow-hidden ">
+        <div className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 border-blue-600/20 shadow-lg shadow-blue-900/10 bg-gradient-to-b from-slate-950 to-slate-900  rounded-2xl  p-3 border  flex flex-col overflow-hidden mb-3">
 
-                            <ScrollArea className="h-full pr-2 sm:pr-4" viewportRef={messageEndRef}>
+            <ScrollArea className="h-full pr-2 sm:pr-4" viewportRef={messageEndRef}>
 
-                      <div className="flex-1 overflow-y-auto pr-2 sm:pr-4 space-y-4 pb-4">
-                        {messages.length === 0 && !currentTranscript && !isProcessing ? (
-                          <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-4">
-                            <motion.div 
-                              className="flex items-center"
-                              initial={{ scale: 0.9, y: -10, opacity: 0 }}
-                              animate={{ scale: 1, y: 0, opacity: 1 }}
-                              transition={{ type: "spring", duration: 0.8 }}
-                            >
-                              <motion.img 
-                                src="/images/sakura-logo.png" 
-                                alt="桜AI ロゴ" 
-                                className="h-48 sm:h-48 w-auto"
-                                whileHover={{ scale: 1.05, rotate: [-1, 1, -1, 0] }}
-                                transition={{ rotate: { duration: 0.5 } }}
-                              />
-                            </motion.div>
-                  <AudioLines className="h-16 w-16 text-pink-200 mb-4" />
-                  <h3 className="text-lg font-medium text-pink-700 mb-2">
-                    音声モードへようこそ！
-                  </h3>
-                  <p className="text-pink-500 max-w-md">
-                    下の「録音ボタン」を押して話しかけてください。
-                  </p>
-                </div>
-              ) : (
-                <>
-                  {/* Map through messages */}
-                  {messages.map((message) => (
-                    <ChatMessage
-                      key={message.id}
-                      message={message}
-                      isPlayingAudio={false}
-                      playingMessageId={null}
-                      onPlayAudio={() => {}}
-                    />
-                  ))}
+              <div className="flex-1 overflow-y-auto pr-2 sm:pr-4 space-y-4 pb-4">
+                {messages.length === 0 && !currentTranscript && !isProcessing ? (
+                  <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-4">
+                    <motion.div
+                      className="flex items-center"
+                      initial={{ scale: 0.9, y: -10, opacity: 0 }}
+                      animate={{ scale: 1, y: 0, opacity: 1 }}
+                      transition={{ type: "spring", duration: 0.8 }}
+                    >
+                      <motion.img
+                        src="/images/mirai.png"
+                        alt="桜AI ロゴ"
+                        className="h-48 sm:h-48 w-auto"
+                        whileHover={{ scale: 1.05, rotate: [-1, 1, -1, 0] }}
+                        transition={{ rotate: { duration: 0.5 } }}
+                      />
+                    </motion.div>
+                    <AudioLines className="h-16 w-16 text-blue-200 mb-4" />
+                    <h3 className="text-lg font-medium text-blue-700 mb-2">
+                      音声モードへようこそ！
+                    </h3>
+                    <p className="text-blue-500 max-w-md">
+                      下の「録音ボタン」を押して話しかけてください。
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Map through messages */}
+                    {messages.map((message) => (
+                      <ChatMessage
+                        key={message.id}
+                        message={message}
+                        isPlayingAudio={false}
+                        playingMessageId={null}
+                        onPlayAudio={() => { }}
+                      />
+                    ))}
 
-                  {/* Current transcript display */}
-                  {currentTranscript && (
-                    <div className="flex flex-col ml-auto max-w-[80%] bg-pink-100 p-3 rounded-lg opacity-70">
-                      <div className="text-pink-700 text-sm italic">
-                        {currentTranscript}
+                    {/* Current transcript display */}
+                    {currentTranscript && (
+                      <div className="flex flex-col ml-auto max-w-[80%] bg-blue-700 p-3 rounded-lg opacity-70">
+                        <div className="text-blue-700 text-sm italic">
+                          {currentTranscript}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Processing indicator */}
-                  {isProcessing && (
-                    <div className="flex justify-center my-4">
-                      <ChatLoadingIndicator variant="minimal" message="返信を生成中..." />
-                    </div>
-                  )}
+                    {/* Processing indicator */}
+                    {isProcessing && (
+                      <div className="flex justify-center my-4">
+                        <ChatLoadingIndicator variant="minimal" message="返信を生成中..." />
+                      </div>
+                    )}
 
-                  {/* Invisible element for auto-scrolling */}
-                  <div ref={messageEndRef} />
-                </>
-              )}
-            </div>
-          </ScrollArea>
-        </div></div>
+                    {/* Invisible element for auto-scrolling */}
+                    <div ref={messageEndRef} />
+                  </>
+                )}
+              </div>
+            </ScrollArea>
+          </div>
+        </div>
 
         {/* Voice control panel */}
-        <div className="bg-white rounded-2xl shadow-lg p-4 border border-pink-100 flex flex-col items-center">
+        <div className="border-blue-600/20 shadow-lg shadow-blue-900/10 bg-gradient-to-b from-slate-950 to-slate-900 rounded-2xl p-4 border flex flex-col items-center">
           <div className="flex flex-col items-center gap-2">
             {/* Recording timer */}
             {isRecording && (
@@ -653,7 +654,7 @@ export default function VoiceModePage() {
                   <Button
                     disabled={!isConnected || isProcessing}
                     onClick={isRecording ? stopRecording : startRecording}
-                    className="h-12 w-12 rounded-full bg-pink-500 hover:bg-pink-600"
+                    className="h-12 w-12 rounded-full bg-blue-500 hover:bg-blue-600"
                   >
                     {isRecording ? (
                       <MicOff className="h-5 w-5" />
@@ -672,11 +673,10 @@ export default function VoiceModePage() {
                 <Button
                   disabled={!isConnected || isProcessing}
                   onClick={isRecording ? stopRecording : startRecording}
-                  className={`h-16 w-16 rounded-full ${
-                    isRecording 
-                      ? 'bg-red-500 hover:bg-red-600' 
-                      : 'bg-pink-500 hover:bg-pink-600'
-                  }`}
+                  className={`h-16 w-16 rounded-full ${isRecording
+                    ? 'bg-red-500 hover:bg-red-600'
+                    : 'bg-blue-500 hover:bg-blue-600'
+                    }`}
                 >
                   {isRecording ? (
                     <MicOff className="h-6 w-6" />
@@ -687,11 +687,11 @@ export default function VoiceModePage() {
               </motion.div>
             )}
 
-            <p className="text-sm text-pink-600 mt-2">
-              {isRecording 
-                ? "録音中... 話し終わると自動的に停止します" 
-                : isProcessing 
-                  ? "処理中..." 
+            <p className="text-sm text-blue-600 mt-2">
+              {isRecording
+                ? "録音中... 話し終わると自動的に停止します"
+                : isProcessing
+                  ? "処理中..."
                   : isAudioPlaying || isAudioPaused
                     ? "音声再生中です。録音するには停止してください"
                     : "録音ボタンを押して話しかけてください"}
@@ -701,10 +701,10 @@ export default function VoiceModePage() {
             <Button
               onClick={() => setUseWeb(!useWeb)}
               className={`px-4 py-2 rounded-full shadow-md flex items-center gap-1 transition
-                ${useWeb 
-                  ? "bg-gradient-to-r from-pink-400 to-pink-500 text-white border border-pink-500 hover:brightness-105" 
+                ${useWeb
+                  ? "bg-gradient-to-r from-blue-400 to-blue-500 text-white border border-blue-500 hover:brightness-105"
                   : "bg-muted text-muted-foreground border border-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"}
-                hover:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-300
+                hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-300
               `}
             >
               <Globe className="h-4 w-4" />
@@ -712,11 +712,11 @@ export default function VoiceModePage() {
             </Button>
 
             <DbButton
-                            useDb={useDb}
-                            setUseDb={setUseDb}
-                            selectedDb={selectedDb}
-                            setSelectedDb={setSelectedDb}
-                          />
+              useDb={useDb}
+              setUseDb={setUseDb}
+              selectedDb={selectedDb}
+              setSelectedDb={setSelectedDb}
+            />
 
 
           </div>

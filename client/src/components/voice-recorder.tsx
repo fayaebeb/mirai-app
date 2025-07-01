@@ -158,16 +158,16 @@ export default function VoiceRecorder({ onRecordingComplete, isProcessing }: Voi
         type="button"
         variant={isRecording ? "destructive" : "outline"}
         size="icon"
-        className={`w-[36px] h-[36px] sm:w-9 sm:h-9 rounded-full ${isRecording ? "bg-gradient-to-r from-indigo-500 to-indigo-600 text-white border border-indigo-500 shadow-sm transition-all" : "bg-slate-700 text-slate-300 border border-slate-600 hover:border-slate-400"} hover:bg-gradient-to-r hover:from-indigo-500 hover:to-indigo-600 hover:text-white hover:ring-1 hover:ring-indigo-400 focus:indigo-none focus:ring-2 focus:ring-indigo-500/70`}
+        className={`h-8 w-8 sm:w-[36px] sm:h-[36px]   rounded-full ${isRecording ? "bg-gradient-to-r from-indigo-500 to-indigo-600 text-white border border-indigo-500 shadow-sm transition-all" : "bg-slate-700 text-slate-300 border border-slate-600 hover:border-slate-400"} hover:bg-gradient-to-r hover:from-indigo-500 hover:to-indigo-600 hover:text-white hover:ring-1 hover:ring-indigo-400 focus:indigo-none focus:ring-2 focus:ring-indigo-500/70`}
         onClick={isRecording ? stopRecording : startRecording}
         disabled={isProcessing}
       >
         {isProcessing ? (
-          <Loader2 className="h-5 w-5 animate-spin  " />
+          <Loader2 className="h-4 w-4 animate-spin  " />
         ) : isRecording ? (
-          <MicOff className="h-5 w-5" />
+          <MicOff className="h-4 w-4 " />
         ) : (
-          <Mic className="h-5 w-5" />
+          <Mic className="h-4 w-4" />
         )}
       </Button>
     </div>

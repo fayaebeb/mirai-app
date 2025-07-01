@@ -10,6 +10,7 @@ import { ProtectedRoute } from "./lib/protected-route";
 import { TaskReminderService } from "@/components/task-reminder-service";
 import { RecoilRoot } from "recoil";
 import Settings from "./components/Settings";
+import VoiceModePage from "./pages/voice-mode-page";
 
 // Wrapper component that only renders the reminder service when authenticated
 function TaskReminders() {
@@ -24,6 +25,7 @@ function Router() {
   return (
     <Switch>
       <ProtectedRoute path="/" component={HomePage} />
+      <ProtectedRoute path="/voice" component={VoiceModePage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>
@@ -38,7 +40,7 @@ function App() {
           <Router />
           <TaskReminders />
           <Toaster />
-          <Settings/>
+          <Settings />
         </AuthProvider>
       </QueryClientProvider>
     </RecoilRoot>

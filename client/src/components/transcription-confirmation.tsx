@@ -88,7 +88,7 @@ export default function TranscriptionConfirmation({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
-      className="w-full bg-indigo-900/6 0 backdrop-blur-sm border border-indigo-600 rounded-2xl p-3 mb-3"
+      className="w-full bg-indigo-950/60 backdrop-blur-sm border border-indigo-600 rounded-2xl p-3 mb-3"
     >
       <div className="flex flex-col gap-2">
         <div className="text-sm font-medium flex items-center justify-between">
