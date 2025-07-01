@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Zap, Book, Target, Trash2, BrainCircuit, Menu, Home, X, Download, LogOut } from "lucide-react";
+import { Zap, Book, Target, Trash2, BrainCircuit, Menu, Home, X, Download, LogOut, LucideHandHelping } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRecoilState } from 'recoil';
 import { ActiveTab, activeTabState } from '@/states/activeTabState';
@@ -30,6 +30,8 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { ChatPDFExport } from './chat-pdf-export';
 import { useToast } from '@/hooks/use-toast';
+import { settingsStateAtom } from '@/states/settingsState';
+import FeedbackDialog from './feedback-dialog';
 
 const Navbar = () => {
 
@@ -37,7 +39,10 @@ const Navbar = () => {
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const { user, logoutMutation } = useAuth();
     const [showClearConfirm, setShowClearConfirm] = useState(false);
+    const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
     const { toast } = useToast();
+    const [_, setIsSettingsOpen] = useRecoilState(settingsStateAtom);
+
 
     const { data: messages = [] } = useQuery<Message[]>({
         queryKey: ['/api/messages'],
@@ -46,6 +51,12 @@ const Navbar = () => {
 
     const handleClearChat = () => {
         setShowClearConfirm(true);
+    };
+
+    const handleOpenSheet = () => {
+
+        setIsSettingsOpen(true);
+        // setIsSidebarOpen(false)
     };
 
     const clearChatHistory = useMutation({
@@ -278,14 +289,41 @@ const Navbar = () => {
                                             animate={{ scale: [1, 1.02, 1] }}
                                             transition={{ duration: 2, repeat: Infinity }}
                                         >
-                                            <span className="sm:hidden">
-                                                {displayName.charAt(0).toUpperCase()}
-                                            </span>
-                                            <span className="hidden sm:inline">
-                                                {displayName}
-                                            </span>
+                                            <div onClick={handleOpenSheet} className='cursor-pointer'>
+                                                <span className="sm:hidden">
+                                                    {displayName.charAt(0).toUpperCase()}
+                                                </span>
+                                                <span className="hidden sm:inline">
+                                                    {displayName}
+                                                </span>
+                                            </div>
                                         </motion.span>
                                         <Zap className="h-3 w-3 text-blue-400" />
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                            {/* Feedback badge */}
+                            <AnimatePresence>
+                                {displayName && (
+                                    <motion.div
+                                        className="flex items-center gap-1 bg-slate-800/70 px-2 py-1 rounded-md border border-blue-500/20 backdrop-blur-sm"
+                                        initial={{ opacity: 0, x: 10 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: 10 }}
+                                        transition={{ duration: 0.3 }}
+                                    >
+                                        <motion.span
+                                            className="text-xs sm:text-sm font-medium text-blue-300 font-mono"
+                                            animate={{ scale: [1, 1.02, 1] }}
+                                            transition={{ duration: 2, repeat: Infinity }}
+                                        >
+                                            <div onClick={() => setShowFeedbackDialog(true)} className='cursor-pointer'>
+                                                <span className="">
+                                                    Feedback
+                                                </span>
+                                            </div>
+                                        </motion.span>
+                                        <LucideHandHelping className="h-3 w-3 text-blue-400" />
                                     </motion.div>
                                 )}
                             </AnimatePresence>
@@ -355,6 +393,8 @@ const Navbar = () => {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            <FeedbackDialog open={showFeedbackDialog} onOpenChange={setShowFeedbackDialog} />
         </>
     )
 }

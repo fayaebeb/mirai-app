@@ -1,9 +1,10 @@
-import { users, messages, sessions, notes, goals, type User, type InsertUser, type Message, type InsertMessage, type Session, type Note, type InsertNote, type Goal, type InsertGoal, InsertUserSafe } from "@shared/schema";
+import { users, messages, sessions, notes, goals, type User, type InsertUser, type Message, type InsertMessage, type Session, type Note, type InsertNote, type Goal, type InsertGoal, InsertUserSafe, InsertFeedback, Feedback } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, not } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
+import { integer, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
 
 const PostgresSessionStore = connectPg(session);
 
@@ -32,6 +33,19 @@ export interface IStorage {
   sessionStore: session.Store;
 }
 
+// Representing the feedback table that already exists in the database
+export const feedback = pgTable("feedback", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  sessionId: text("session_id").references(() => sessions.sessionId),
+  messageId: integer("message_id").references(() => messages.id),
+  comment: text("comment"),
+  rating: integer("rating"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
 
@@ -47,11 +61,11 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async getUserByEmail(email: string) : Promise<User | undefined> {
+  async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email))
     return user
   }
-  
+
 
   async getUserByUsername(username: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.username, username));
@@ -294,6 +308,35 @@ export class DatabaseStorage implements IStorage {
         )
       );
     return !!result.rowCount;
+  }
+
+  async stampInitialLogin(id: number) {
+    await db.update(users)
+      .set({ initialLoginAt: new Date() })
+      .where(eq(users.id, id));
+  }
+
+  async completeOnboarding(id: number) {
+    await db.update(users)
+      .set({ onboardingCompletedAt: new Date() })
+      .where(eq(users.id, id));
+  }
+
+  async updateUserPassword(userId: number, newPassword: string): Promise<void> {
+    await db.update(users)
+      .set({ password: newPassword })
+      .where(eq(users.id, userId));
+  }
+
+  async createFeedback(userId: number, feedbackData: InsertFeedback): Promise<Feedback> {
+    const [newFeedback] = await db
+      .insert(feedback)
+      .values({
+        userId,
+        ...feedbackData,
+      })
+      .returning();
+    return newFeedback;
   }
 }
 

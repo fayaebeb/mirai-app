@@ -131,7 +131,7 @@ export const handleValidationErrors = (req: Request, res: Response, next: NextFu
 // Security headers and CORS configuration
 export function setupSecurity(app: Express) {
   const isProduction = process.env.NODE_ENV === "production";
-  
+
   // Helmet for security headers (disable CSP in development)
   if (isProduction) {
     app.use(helmet({
@@ -141,7 +141,7 @@ export function setupSecurity(app: Express) {
           styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
           fontSrc: ["'self'", "https://fonts.gstatic.com"],
           imgSrc: ["'self'", "data:", "https:"],
-          scriptSrc: ["'self'"],
+          scriptSrc: ["'self'", "https://challenges.cloudflare.com"],
           connectSrc: ["'self'", "wss:", "https://skapi-qkrap.ondigitalocean.app"],
           mediaSrc: ["'self'", "blob:"],
           objectSrc: ["'none'"],
@@ -149,8 +149,9 @@ export function setupSecurity(app: Express) {
             "'self'",
             "https://drive.google.com",
             "https://docs.google.com",
-            "https://drive-thirdparty.googleusercontent.com"
-           ],
+            "https://drive-thirdparty.googleusercontent.com",
+            "https://challenges.cloudflare.com",
+          ],
         },
       },
       crossOriginEmbedderPolicy: false,
@@ -165,7 +166,7 @@ export function setupSecurity(app: Express) {
 
   // CORS configuration
   app.use(cors({
-    origin: isProduction 
+    origin: isProduction
       ? process.env.ALLOWED_ORIGINS?.split(',') || false
       : true,
     credentials: true,
@@ -225,11 +226,11 @@ export const bruteForce = createBruteForce();
 export const securityLogger = (req: Request, res: Response, next: NextFunction) => {
   const sensitiveEndpoints = ['/api/login', '/api/register', '/api/chat'];
   const isSensitive = sensitiveEndpoints.some(endpoint => req.path.includes(endpoint));
-  
+
   if (isSensitive) {
     console.log(`Security: ${req.method} ${req.path} from IP: ${req.ip} User-Agent: ${req.get('User-Agent')}`);
   }
-  
+
   next();
 };
 
@@ -256,7 +257,7 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction) =
   if (req.body) {
     req.body = sanitizeObject(req.body);
   }
-  
+
   next();
 };
 
@@ -268,6 +269,6 @@ export const sessionSecurity = (req: Request, res: Response, next: NextFunction)
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
   }
-  
+
   next();
 };

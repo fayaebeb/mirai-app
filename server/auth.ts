@@ -12,6 +12,7 @@ import rateLimit from "express-rate-limit";
 import { authRateLimit, bruteForce, handleValidationErrors, validateLogin, validateRegistration } from './security';
 import { db } from './db';
 import { eq } from 'drizzle-orm';
+import { verifyTurnstile } from './utils/verifyTurnstile';
 
 declare global {
   namespace Express {
@@ -168,6 +169,7 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register",
     authRateLimit,
+    verifyTurnstile,
     validateRegistration,
     handleValidationErrors,
     async (req: Request, res: Response, next: NextFunction) => {
@@ -180,8 +182,8 @@ export function setupAuth(app: Express) {
             error: "このユーザー名は既に使用されています。"
           });
         }
-
-        const baseUsername = req.body.email;
+        const email = req.body.email;
+        const baseUsername = email.split('@')[0];
         const username = await generateUniqueUsername(baseUsername);
 
         const user = await storage.createUser({
@@ -191,14 +193,17 @@ export function setupAuth(app: Express) {
         });
 
         console.log(`Auth - User registered: ${user.email}`);
-        req.login(user, (err: any) => {
+        req.login(user, async (err: any) => {
           if (err) {
             console.error(`Auth - Login after registration failed for ${user.email}:`, err);
             return next(err);
           }
           console.log(`Auth - User logged in after registration: ${user.email}`);
-
-          res.status(201).json({ id: user.id, email: user.email, username: user.username });
+          await storage.stampInitialLogin(user.id);
+          user.initialLoginAt = new Date();
+          const { password, ...userResponse } = user;
+          (userResponse as any).needsOnboarding = true;
+          res.status(201).json(userResponse);
         });
       } catch (error) {
         console.error(`Auth - Registration error:`, error);
@@ -210,6 +215,7 @@ export function setupAuth(app: Express) {
 
   app.post("/api/login",
     authRateLimit,
+    verifyTurnstile,
     bruteForce.prevent,
     validateLogin,
     handleValidationErrors,
@@ -240,6 +246,14 @@ export function setupAuth(app: Express) {
 
           const userData = user;
 
+          let needsOnboarding = !userData.onboardingCompletedAt;
+          console.log("needsOnBoarding:", needsOnboarding);
+          if (!userData.initialLoginAt) {
+            await storage.stampInitialLogin(userData.id);
+            userData.initialLoginAt = new Date();
+            needsOnboarding = true;
+          }
+
 
           req.session.regenerate((regenerateErr: any) => {
             if (regenerateErr) {
@@ -259,7 +273,7 @@ export function setupAuth(app: Express) {
               }
 
               console.log(`Auth - Login successful: ${userData.email}`);
-              res.status(200).json({ id: user.id, email: user.email, username: user.username });
+              res.status(200).json({ id: user.id, email: user.email, username: user.username, needsOnboarding: needsOnboarding });
             });
           });
         }
@@ -311,6 +325,12 @@ export function setupAuth(app: Express) {
     }
 
     console.log(`Auth - Authorized /api/user access: ${req.user?.email}`);
-    res.json({ id: req.user!.id, email: req.user!.email });
+    res.json({ id: req.user!.id, email: req.user!.email, username: req.user!.username, needsOnBoarding: (req.user!.onboardingCompletedAt ? false : true) });
+  });
+
+  app.post("/api/onboarding/complete", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    await storage.completeOnboarding(req.user!.id);
+    res.sendStatus(204);
   });
 }

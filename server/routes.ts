@@ -1,14 +1,14 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth } from "./auth";
-import { insertMessageSchema, insertNoteSchema, insertGoalSchema, chatRequestSchema } from "@shared/schema";
+import { comparePasswords, hashPassword, setupAuth } from "./auth";
+import { insertMessageSchema, insertNoteSchema, insertGoalSchema, chatRequestSchema, insertFeedbackSchema } from "@shared/schema";
 import { generateMindMap } from "./services/openai";
 import rateLimit from 'express-rate-limit';
 import { openai } from './openaiClient';
 import dotenv from "dotenv";
 import multer from "multer";
-import { apiRateLimit, handleValidationErrors, validateMessage } from "./security";
+import { apiRateLimit, handleValidationErrors, validateFeedback, validateMessage, validatePasswordChange } from "./security";
 import { getPersistentSessionId, sendError } from "./utils/errorResponse";
 dotenv.config();
 
@@ -880,8 +880,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  //Feedback
-  
+  app.post("/api/change-password",
+    apiRateLimit,
+    validatePasswordChange, // Use the password validation defined above
+    handleValidationErrors, // Handle validation errors
+    async (req: Request, res: Response) => {
+      if (!req.isAuthenticated()) return sendError(res, 401, "Unauthorized");
+      console.log("🔍 Received change-password request");
+      console.log("🔐 req.user:", req.user); // <== log this
+
+      const { oldPassword, newPassword } = req.body;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      try {
+        // Fetch user from the database
+        const user = await storage.getUser(userId);
+        if (!user) {
+          return res.status(404).json({ error: "User not found" });
+        }
+
+        // Compare old password
+        const passwordValid = await comparePasswords(oldPassword, user.password);
+        if (!passwordValid) {
+          return res.status(400).json({ error: "Old password is incorrect" });
+        }
+
+        // Hash the new password and update it in the database
+        const hashedPassword = await hashPassword(newPassword);
+        await storage.updateUserPassword(userId, hashedPassword);
+
+        // Respond with success
+        res.status(200).json({ message: "Password changed successfully" });
+      } catch (error) {
+        console.error("Error changing password:", error);
+        res.status(500).json({ error: "Failed to change password" });
+      }
+    }
+  );
+
+  // Submit feedback with validation
+  app.post("/api/feedback",
+    apiRateLimit,
+    validateFeedback,
+    handleValidationErrors,
+    async (req: Request, res: Response) => {
+      if (!req.isAuthenticated()) return sendError(res, 401, "Unauthorized");
+
+      const result = insertFeedbackSchema.safeParse(req.body);
+      if (!result.success) {
+        console.error("Invalid feedback data:", result.error);
+        return sendError(res, 400, "Invalid feedback data", result.error);
+      }
+
+      try {
+        // Get the user's persistent session ID
+        const persistentSessionId = getPersistentSessionId(req.user!.email);
+
+        // Create feedback entry
+        const feedback = await storage.createFeedback(req.user!.id, {
+          ...result.data,
+          sessionId: persistentSessionId, // Use the persistent session ID
+        });
+
+        console.log(`Feedback submitted for user ${req.user!.id}`);
+        res.status(201).json(feedback);
+      } catch (error) {
+        console.error("Error saving feedback:", error);
+        return sendError(
+          res,
+          500,
+          "Failed to save feedback",
+          error instanceof Error ? error.message : "Unknown error"
+        );
+      }
+    }
+  );
 
 
   const httpServer = createServer(app);

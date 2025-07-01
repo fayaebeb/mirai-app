@@ -18,6 +18,7 @@ import { useLocation } from "wouter";
 import { Loader2, Shield, Network, Zap, Cpu, Server, Globe, Database, Key, EyeOff, Eye } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import zxcvbn from "zxcvbn";
+import TurnstileWidget from "@/components/TurnstileWidget";
 
 
 // Futuristic tech symbols for the login page
@@ -34,6 +35,7 @@ export default function AuthPage() {
   const [particleCount, setParticleCount] = useState(0);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [captcha, setCaptcha] = useState<string | null>(null);
 
 
   // Periodically change the tech symbol
@@ -84,11 +86,12 @@ export default function AuthPage() {
 
   if (!user) {
     const onSubmit = form.handleSubmit((data) => {
+      if (!captcha) return alert("Please solve the CAPTCHA");
       if (isLogin) {
-        const {email, password} = data;
-        loginMutation.mutate({email, password});
+        const { email, password } = data;
+        loginMutation.mutate({ email, password, turnstileToken: captcha });
       } else {
-        registerMutation.mutate(data);
+        registerMutation.mutate({ ...data, turnstileToken: captcha });
       }
     });
 
@@ -362,6 +365,7 @@ export default function AuthPage() {
                       </>
                     )}
                   </motion.div>
+                  <TurnstileWidget onToken={setCaptcha} />
 
                   <motion.div
                     initial={{ y: 20, opacity: 0 }}
@@ -372,7 +376,7 @@ export default function AuthPage() {
                     <Button
                       type="submit"
                       className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-md shadow-lg shadow-blue-700/30 relative"
-                      disabled={loginMutation.isPending || registerMutation.isPending}
+                      disabled={loginMutation.isPending || registerMutation.isPending || !captcha}
                     >
                       {loginMutation.isPending || registerMutation.isPending ? (
                         <Loader2 className="h-4 w-4 animate-spin" />

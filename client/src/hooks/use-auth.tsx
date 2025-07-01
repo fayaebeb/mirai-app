@@ -12,12 +12,19 @@ type AuthContextType = {
   user: SelectUser | null;
   isLoading: boolean;
   error: Error | null;
-  loginMutation: UseMutationResult<SelectUser, Error, LoginData>;
+  loginMutation: UseMutationResult<SelectUser, Error, LoginPayload>;
   logoutMutation: UseMutationResult<void, Error, void>;
-  registerMutation: UseMutationResult<SelectUser, Error, InsertUser>;
+  registerMutation: UseMutationResult<SelectUser, Error, RegisterPayload>;
 };
 
-type LoginData = Pick<InsertUser, "email" | "password">;
+// type LoginData = Pick<InsertUser, "email" | "password">;
+
+type LoginPayload = {
+  email: string;
+  password: string;
+  turnstileToken: string;
+};
+type RegisterPayload = InsertUser & { turnstileToken: string };
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -51,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refetch]);
 
   const loginMutation = useMutation({
-    mutationFn: async (credentials: LoginData) => {
+    mutationFn: async (credentials: LoginPayload) => {
       console.log("Auth - Login attempt", { email: credentials.email });
       const res = await apiRequest("POST", "/api/login", credentials);
       if (!res.ok) {
@@ -79,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const registerMutation = useMutation({
-    mutationFn: async (credentials: InsertUser) => {
+    mutationFn: async (credentials: RegisterPayload) => {
       console.log("Auth - Register attempt", { email: credentials.email });
       const res = await apiRequest("POST", "/api/register", credentials);
       return await res.json();

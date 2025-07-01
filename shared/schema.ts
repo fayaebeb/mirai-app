@@ -107,6 +107,19 @@ export const goals = pgTable("goals", {
   }).onDelete("cascade"),
 ]);
 
+// Representing the feedback table that already exists in the database
+export const feedback = pgTable("feedback", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  sessionId: text("session_id").references(() => sessions.sessionId),
+  messageId: integer("message_id").references(() => messages.id),
+  comment: text("comment"),
+  rating: integer("rating"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Add password validation to the insert schema
 
   export const insertUserSchema = z
@@ -194,6 +207,13 @@ export const insertGoalSchema = createInsertSchema(goals).pick({
   )
 });
 
+export const insertFeedbackSchema = createInsertSchema(feedback).pick({
+  comment: true,
+  rating: true,
+  messageId: true,
+  sessionId: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertUserSafe = z.infer<typeof insertUserSafeSchema>;
 export type User = typeof users.$inferSelect;
@@ -204,3 +224,5 @@ export type Note = typeof notes.$inferSelect;
 export type InsertNote = z.infer<typeof insertNoteSchema>;
 export type Goal = typeof goals.$inferSelect;
 export type InsertGoal = z.infer<typeof insertGoalSchema>;
+export type Feedback = typeof feedback.$inferSelect;
+export type InsertFeedback = z.infer<typeof insertFeedbackSchema>;

@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ProtectedRoute } from "./lib/protected-route";
 import { TaskReminderService } from "@/components/task-reminder-service";
 import { RecoilRoot } from "recoil";
+import Settings from "./components/Settings";
 
 // Wrapper component that only renders the reminder service when authenticated
 function TaskReminders() {
@@ -37,6 +38,7 @@ function App() {
           <Router />
           <TaskReminders />
           <Toaster />
+          <Settings/>
         </AuthProvider>
       </QueryClientProvider>
     </RecoilRoot>
