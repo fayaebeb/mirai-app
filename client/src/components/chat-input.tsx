@@ -206,6 +206,7 @@ export const ChatInput = ({
               <Database className="h-4 w-4" />
               {!isMobile && <span className="hidden sm:inline">データ</span>}
             </button>
+            
             <VoiceRecorder
               onRecordingComplete={handleVoiceRecording}
               isProcessing={isProcessingVoice}

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Mic, MicOff, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface VoiceRecorderProps {
   onRecordingComplete: (audioBlob: Blob) => void;
@@ -122,10 +123,33 @@ export default function VoiceRecorder({ onRecordingComplete, isProcessing }: Voi
     <div className="flex flex-row-reverse items-center gap-2">
       {/* Recording timer */}
       {isRecording && (
-        <div className="flex items-center gap-2 text-sm">
-          <span className="animate-pulse text-red-500">●</span>
-          <span>{formatTime(recordingTime)}</span>
-        </div>
+        <AnimatePresence>
+        {isRecording && (
+          <motion.div
+            key="timer"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.3 }}
+            className="flex items-center space-x-2 text-sm font-mono text-indigo-300"
+          >
+            <motion.span
+              animate={{ scale: [1, 1.4, 1] }}
+              transition={{ duration: 1, repeat: Infinity }}
+              className="text-indigo-400"
+            >
+              ●
+            </motion.span>
+            <motion.span
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              {formatTime(recordingTime)}
+            </motion.span>
+          </motion.div>
+        )}
+      </AnimatePresence>
       )}
 
       {/* Recording button */}
@@ -134,12 +158,12 @@ export default function VoiceRecorder({ onRecordingComplete, isProcessing }: Voi
         type="button"
         variant={isRecording ? "destructive" : "outline"}
         size="icon"
-        className="w-[36px] h-[36px] sm:w-10 sm:h-10 rounded-full"
+        className={`w-[36px] h-[36px] sm:w-9 sm:h-9 rounded-full ${isRecording ? "bg-gradient-to-r from-indigo-500 to-indigo-600 text-white border border-indigo-500 shadow-sm transition-all" : "bg-slate-700 text-slate-300 border border-slate-600 hover:border-slate-400"} hover:bg-gradient-to-r hover:from-indigo-500 hover:to-indigo-600 hover:text-white hover:ring-1 hover:ring-indigo-400 focus:indigo-none focus:ring-2 focus:ring-indigo-500/70`}
         onClick={isRecording ? stopRecording : startRecording}
         disabled={isProcessing}
       >
         {isProcessing ? (
-          <Loader2 className="h-5 w-5 animate-spin" />
+          <Loader2 className="h-5 w-5 animate-spin  " />
         ) : isRecording ? (
           <MicOff className="h-5 w-5" />
         ) : (
