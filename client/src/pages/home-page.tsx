@@ -17,28 +17,41 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { nanoid } from "nanoid";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import Footer from "@/components/Footer";
 import { useRecoilState } from "recoil";
 import { ActiveTab, activeTabState } from "@/states/activeTabState";
 import Navbar from "@/components/Navbar";
+import TranscriptionConfirmation from "@/components/transcription-confirmation";
+import { currentAudioUrlAtom, isPlayingAudioAtom, isProcessingVoiceAtom, playingMessageIdAtom } from "@/states/voicePlayerStates";
+
+// Audio player for bot responses
+const AudioPlayer = ({ audioUrl, isPlaying, onPlayComplete }: { audioUrl: string, isPlaying: boolean, onPlayComplete: () => void }) => {
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.play().catch(err => console.error("Audio playback error:", err));
+      } else {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+    }
+  }, [isPlaying]);
+
+  return (
+    <audio
+      ref={audioRef}
+      src={audioUrl}
+      onEnded={onPlayComplete}
+      className="hidden"
+    />
+  );
+};
+
+
+
+
 
 export default function HomePage() {
   const { user, logoutMutation } = useAuth();
@@ -54,6 +67,13 @@ export default function HomePage() {
   const [useWeb, setUseWeb] = useState(false);
   const [useDb, setUseDb] = useState(true);
   const [sessionId, setSessionId] = useState<string>("");
+  const [showTranscriptionConfirmation, setShowTranscriptionConfirmation] = useState(false);
+  const [transcribedText, setTranscribedText] = useState<string | null>(null);
+  const [currentAudioUrl, setCurrentAudioUrl] = useRecoilState(currentAudioUrlAtom);
+  const [playingMessageId, setPlayingMessageId] = useRecoilState(playingMessageIdAtom);
+  const [isProcessingVoice, setIsProcessingVoice] = useRecoilState(isProcessingVoiceAtom);
+  const [isPlayingAudio, setIsPlayingAudio] = useRecoilState(isPlayingAudioAtom);
+
 
 
 
@@ -138,6 +158,110 @@ export default function HomePage() {
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
     }
   });
+
+  const handleVoiceRecording = async (audioBlob: Blob) => {
+    setIsProcessingVoice(true);
+
+    try {
+      // Show a toast to indicate processing
+      toast({
+        title: "音声認識中...",
+        description: "あなたの声を認識しています。少々お待ちください。",
+        duration: 2500,
+      });
+
+      // Validate audio blob
+      if (!audioBlob || audioBlob.size === 0) {
+        throw new Error("音声データが空です。もう一度録音してください。");
+      }
+
+      // Check audio blob type 
+      if (!audioBlob.type.includes('audio') && !audioBlob.type.includes('webm')) {
+        console.warn(`Unexpected audio blob type: ${audioBlob.type}, size: ${audioBlob.size}`);
+      }
+
+      const formData = new FormData();
+      formData.append("audio", audioBlob, "recording.webm");
+
+      const res = await fetch("/api/voice/transcribe", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text().catch(() => "Unknown error");
+        throw new Error(`Transcription failed with status ${res.status}: ${errorText}`);
+      }
+
+      const data = await res.json().catch(() => {
+        throw new Error("Invalid JSON response from transcription service");
+      });
+
+      if (!data || !data.transcribedText) {
+        throw new Error("音声認識結果が取得できませんでした。");
+      }
+
+      // Show confirmation with the transcribed text
+      setTranscribedText(data.transcribedText);
+      setShowTranscriptionConfirmation(true);
+
+      toast({
+        title: "音声認識成功",
+        description: "内容を確認してから送信してください",
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error("Voice transcription error:", error);
+      toast({
+        title: "音声処理エラー",
+        description: error instanceof Error
+          ? `認識できませんでした: ${error.message}`
+          : "認識できませんでした。もう一度試してね！",
+        variant: "destructive",
+        duration: 4000,
+      });
+    } finally {
+      setIsProcessingVoice(false);
+    }
+  };
+
+  // Handle confirming the transcribed text
+  const handleConfirmTranscription = (confirmedText: string) => {
+    setTranscribedText(null);
+    setShowTranscriptionConfirmation(false);
+
+    if (confirmedText.trim()) {
+      sendMessage.mutate({
+        content: confirmedText,
+        useWeb: useWeb,
+        useDb: useDb,
+      });
+    }
+  };
+
+  // Handle editing the transcribed text
+  const handleEditTranscription = (editedText: string) => {
+    setTranscribedText(editedText);
+  };
+
+  // Handle canceling the transcription
+  const handleCancelTranscription = () => {
+    setTranscribedText(null);
+    setShowTranscriptionConfirmation(false);
+  };
+
+
+  // Handle audio playback completion
+  const handlePlaybackComplete = () => {
+    setIsPlayingAudio(false);
+    setPlayingMessageId(null);
+    if (currentAudioUrl) {
+      URL.revokeObjectURL(currentAudioUrl);
+      setCurrentAudioUrl(null);
+    }
+  };
+
 
   // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
@@ -400,13 +524,36 @@ export default function HomePage() {
     }
     return null;
   };
-
+  useEffect(() => {
+    console.log(showTranscriptionConfirmation, transcribedText)
+  })
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-900 to-slate-800 relative overflow-hidden">
       {/* Fixed position chat input for chat tab only */}
       {activeTab === "chat" && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 px-2 sm:px-4 pb-3 pt-2 bg-gradient-to-t from-slate-900 via-slate-900/95 to-slate-900/0">
-          <div className="max-w-3xl mx-auto">
+        <div className="fixed bottom-0 md:bottom-5  p-5  md:p-0 left-0 right-0 z-[100]">
+          <div className="max-w-3xl mx-auto ">
+            {currentAudioUrl && (
+              <AudioPlayer
+                audioUrl={currentAudioUrl}
+                isPlaying={isPlayingAudio}
+                onPlayComplete={handlePlaybackComplete}
+              />
+            )}
+
+            <AnimatePresence>
+              {showTranscriptionConfirmation && transcribedText && (
+                <div className="w-full">
+                  <TranscriptionConfirmation
+                    text={transcribedText}
+                    onConfirm={handleConfirmTranscription}
+                    onCancel={handleCancelTranscription}
+                    onEdit={handleEditTranscription}
+                  />
+                </div>
+              )}
+            </AnimatePresence>
+
             <ChatInput
               input={input}
               setInput={setInput}
@@ -416,6 +563,8 @@ export default function HomePage() {
               setUseWeb={setUseWeb}
               useDb={useDb}
               setUseDb={setUseDb}
+              handleVoiceRecording={handleVoiceRecording}
+              isProcessingVoice={isProcessingVoice}
             />
 
           </div>

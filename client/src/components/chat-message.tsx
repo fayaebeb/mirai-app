@@ -7,7 +7,7 @@ import remarkGfm from "remark-gfm";
 import { motion } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, Database, Globe, Cpu, Server, Clipboard, Check } from "lucide-react";
+import { ChevronDown, Database, Globe, Cpu, Server, Clipboard, Check, Volume2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { SaveChatAsNote } from "./save-chat-as-note";
 
@@ -49,22 +49,22 @@ const parseMessageContent = (content: string) => {
   return sections;
 };
 
-const MessageSection = ({ 
-  title, 
-  content, 
-  icon: Icon 
-}: { 
-  title: string; 
-  content: string; 
-  icon: React.ComponentType<any>; 
+const MessageSection = ({
+  title,
+  content,
+  icon: Icon
+}: {
+  title: string;
+  content: string;
+  icon: React.ComponentType<any>;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   if (!content) return null;
 
   return (
-    <Collapsible 
-      open={isOpen} 
+    <Collapsible
+      open={isOpen}
       onOpenChange={setIsOpen}
       className="mt-2 rounded-md border border-blue-400/20 overflow-hidden transition-all duration-200"
     >
@@ -93,7 +93,7 @@ const MessageSection = ({
           className="p-2 bg-slate-900/50 backdrop-blur-sm"
         >
           <div className="prose prose-xs prose-invert max-w-none w-full text-[10px] sm:text-xs">
-            <ReactMarkdown 
+            <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={{
                 p: ({ node, ...props }) => (
@@ -123,14 +123,20 @@ const MessageSection = ({
   );
 };
 
-export default function ChatMessage({ 
-  message, 
+export default function ChatMessage({
+  message,
   isFirstInGroup = true,
-  isLastInGroup = true
-}: { 
+  isLastInGroup = true,
+  isPlayingAudio,
+  playingMessageId,
+  onPlayAudio,
+}: {
   message: Message;
   isFirstInGroup?: boolean;
   isLastInGroup?: boolean;
+  isPlayingAudio: boolean;
+  playingMessageId: number | null;
+  onPlayAudio: (messageId: number, text: string) => void;
 }) {
   const [showEmoji, setShowEmoji] = useState(false);
   const [emojiPosition, setEmojiPosition] = useState({ x: 0, y: 0 });
@@ -186,27 +192,27 @@ export default function ChatMessage({
   const getBubbleStyles = () => {
     if (message.isBot) {
       return {
-        borderRadius: isFirstInGroup && isLastInGroup 
-          ? '0.75rem' 
-          : isFirstInGroup 
-            ? '0.75rem 0.75rem 0.25rem 0.75rem' 
-            : isLastInGroup 
-              ? '0.25rem 0.75rem 0.75rem 0.75rem' 
+        borderRadius: isFirstInGroup && isLastInGroup
+          ? '0.75rem'
+          : isFirstInGroup
+            ? '0.75rem 0.75rem 0.25rem 0.75rem'
+            : isLastInGroup
+              ? '0.25rem 0.75rem 0.75rem 0.75rem'
               : '0.25rem 0.75rem 0.25rem 0.75rem',
         marginTop: isFirstInGroup ? '0.375rem' : '0.125rem',
         marginBottom: isLastInGroup ? '0.375rem' : '0.125rem'
       };
     } else {
       return {
-        borderRadius: isFirstInGroup && isLastInGroup 
-          ? '0.75rem' 
-          : isFirstInGroup 
-            ? '0.75rem 0.75rem 0.75rem 0.25rem' 
-            : isLastInGroup 
-              ? '0.75rem 0.25rem 0.75rem 0.75rem' 
+        borderRadius: isFirstInGroup && isLastInGroup
+          ? '0.75rem'
+          : isFirstInGroup
+            ? '0.75rem 0.75rem 0.75rem 0.25rem'
+            : isLastInGroup
+              ? '0.75rem 0.25rem 0.75rem 0.75rem'
               : '0.75rem 0.25rem 0.25rem 0.75rem',
         marginTop: isFirstInGroup ? '0.375rem' : '0.125rem',
-        marginBottom: isLastInGroup ? '0.375rem' : '0.125rem'  
+        marginBottom: isLastInGroup ? '0.375rem' : '0.125rem'
       };
     }
   };
@@ -249,14 +255,14 @@ export default function ChatMessage({
       )}
 
       {message.isBot && decoration && isFirstInGroup && (
-        <motion.div 
+        <motion.div
           className="absolute -top-2 sm:-top-3 -left-1 text-xs sm:text-sm text-blue-400"
-          animate={{ 
+          animate={{
             y: [0, -3, 0],
             opacity: [0.5, 1, 0.5],
             scale: [1, 1.2, 1],
           }}
-          transition={{ 
+          transition={{
             duration: 3,
             repeat: Infinity,
             repeatType: "reverse",
@@ -287,20 +293,20 @@ export default function ChatMessage({
       ) : null}
 
 
-        <motion.div
-          initial={message.isBot ? { x: -10, opacity: 0 } : { x: 10, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ duration: 0.3 }}
-          whileHover={message.isBot && !isTyping ? { scale: 1.01 } : { scale: 1 }}
-          onHoverStart={handleBotMessageHover}
-          className={cn({
-            // Bot message bubble takes full width on mobile, max 85% on sm+
-            "w-full sm:max-w-[85%] flex justify-start md:pl-4": message.isBot,
+      <motion.div
+        initial={message.isBot ? { x: -10, opacity: 0 } : { x: 10, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        whileHover={message.isBot && !isTyping ? { scale: 1.01 } : { scale: 1 }}
+        onHoverStart={handleBotMessageHover}
+        className={cn({
+          // Bot message bubble takes full width on mobile, max 85% on sm+
+          "w-full sm:max-w-[85%] flex justify-start md:pl-4": message.isBot,
 
-            // User message stays constrained at all sizes
-            "w-auto max-w-[85%] ml-auto flex justify-end md:pr-4": !message.isBot,
-          })}
-        >
+          // User message stays constrained at all sizes
+          "w-auto max-w-[85%] ml-auto flex justify-end md:pr-4": !message.isBot,
+        })}
+      >
 
         <Card
           className={cn(
@@ -315,8 +321,8 @@ export default function ChatMessage({
           {/* Enhanced futuristic tech pattern overlay for bot messages */}
           {message.isBot && (
             <div className="absolute inset-0 opacity-5 pointer-events-none overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-full" 
-                style={{ 
+              <div className="absolute top-0 left-0 w-full h-full"
+                style={{
                   backgroundImage: `
                     radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.3) 0%, transparent 15%),
                     radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.3) 0%, transparent 15%),
@@ -326,17 +332,17 @@ export default function ChatMessage({
                 }}
               />
               {/* Animated gradient line */}
-              <motion.div 
+              <motion.div
                 className="absolute h-[1px] bg-gradient-to-r from-transparent via-blue-400/40 to-transparent"
                 style={{ width: '150%', left: '-25%' }}
-                animate={{ 
+                animate={{
                   top: ['0%', '100%', '0%'],
                   opacity: [0, 0.5, 0],
                 }}
-                transition={{ 
-                  duration: Math.random() * 5 + 10, 
+                transition={{
+                  duration: Math.random() * 5 + 10,
                   repeat: Infinity,
-                  ease: 'linear' 
+                  ease: 'linear'
                 }}
               />
             </div>
@@ -346,8 +352,8 @@ export default function ChatMessage({
             "prose-invert": true,
             "w-full min-w-0 max-w-full": message.isBot,
             "w-auto max-w-full": !message.isBot,
-          "prose-p:my-1.5": true,
-          "prose-pre:whitespace-pre-wrap prose-pre:break-words prose-p:text-left prose-p:text-white": message.isBot 
+            "prose-p:my-1.5": true,
+            "prose-pre:whitespace-pre-wrap prose-pre:break-words prose-p:text-left prose-p:text-white": message.isBot
           })}>
             {message.isBot && sections ? (
               <>
@@ -420,9 +426,30 @@ export default function ChatMessage({
               </ReactMarkdown>
             )}
 
+            <div id="highlighted-component-1" className="mt-2 flex items-center justify-between">
+              <div className="text-[9px] sm:text-[10px] text-gray-400">
+                {message.timestamp && new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              </div>
+              {message.isBot ? (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 p-1 rounded-full"
+                  onClick={() => onPlayAudio(message.id, message.content)}
+                  disabled={isPlayingAudio && playingMessageId !== message.id}
+                >
+                  {isPlayingAudio && playingMessageId === message.id ? (
+                    <span className="animate-pulse text-xs">■</span>
+                  ) : (
+                    <Volume2 className="h-4 w-4 text-pink-500" />
+                  )}
+                </Button>
+              ) : null}
+            </div>
+
             {/* Typing indicator */}
             {isTyping && (
-              <motion.div 
+              <motion.div
                 className="inline-flex items-center gap-1 text-blue-300 h-4 pl-1"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -440,19 +467,19 @@ export default function ChatMessage({
               <div className="flex items-center gap-2">
                 {message.isBot && (
                   <>
-                    <button 
+                    <button
                       onClick={() => message.onRegenerateAnswer && message.onRegenerateAnswer()}
                       className="text-[9px] sm:text-[10px] text-blue-400 hover:text-blue-300 flex items-center gap-1 opacity-60 hover:opacity-100 transition-all hover:scale-105"
                     >
-                      <svg 
-                        xmlns="http://www.w3.org/2000/svg" 
-                        width="12" 
-                        height="12" 
-                        viewBox="0 0 24 24" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        strokeWidth="2" 
-                        strokeLinecap="round" 
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
                         strokeLinejoin="round"
                       >
                         <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
@@ -484,7 +511,7 @@ export default function ChatMessage({
                   </>
                 )}
               </div>
-              
+
               {/* Reaction buttons (new feature) */}
               {message.isBot && (
                 <div className="flex gap-1 mr-1">

@@ -30,6 +30,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { promptCategories } from "@/components/starter-prompts";
 import { Badge } from "@/components/ui/badge";
+import { useRecoilState } from "recoil";
+import { currentAudioUrlAtom, isPlayingAudioAtom, isProcessingVoiceAtom, playingMessageIdAtom } from "@/states/voicePlayerStates";
 
 // Define a type for optimistic messages that uses string IDs instead of numbers
 type OptimisticMessage = {
@@ -268,6 +270,10 @@ export const ChatInterface = ({
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+  const [isProcessingVoice, setIsProcessingVoice] = useRecoilState(isProcessingVoiceAtom);
+  const [isPlayingAudio, setIsPlayingAudio] = useRecoilState(isPlayingAudioAtom);
+  const [playingMessageId, setPlayingMessageId] = useRecoilState(playingMessageIdAtom);
+  const [currentAudioUrl, setCurrentAudioUrl] = useRecoilState(currentAudioUrlAtom);
 
   // Use either the external or internal state and functions
   const setInput = externalSetInput || setInputInternal;
@@ -470,6 +476,113 @@ export const ChatInterface = ({
     </span>
   );
 
+
+  const playMessageAudio = async (messageId: number, text: string) => {
+    // If the same message is already playing, toggle it off
+    if (isPlayingAudio && playingMessageId === messageId) {
+      setIsPlayingAudio(false);
+      setPlayingMessageId(null);
+      if (currentAudioUrl) {
+        URL.revokeObjectURL(currentAudioUrl);
+        setCurrentAudioUrl(null);
+      }
+      return;
+    }
+
+    try {
+      setIsPlayingAudio(true);
+      setPlayingMessageId(messageId);
+
+      // Show a toast to indicate audio is being prepared
+      toast({
+        title: "音声生成中...",
+        description: "音声を準備しています。しばらくお待ちください。",
+        duration: 2000,
+      });
+
+      const res = await fetch('/api/voice/speech', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+        credentials: 'include',
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text().catch(() => "Unknown error");
+        throw new Error(`Failed to fetch TTS stream: ${res.status} ${errorText}`);
+      }
+
+      if (!res.body) {
+        throw new Error("Response body is null");
+      }
+
+      const reader = res.body.getReader();
+      const chunks: Uint8Array[] = [];
+      let totalLength = 0;
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          if (value) {
+            chunks.push(value);
+            totalLength += value.length;
+          }
+        }
+      } catch (readError) {
+        console.error("Error reading stream:", readError);
+        throw new Error("音声データの読み込み中にエラーが発生しました。");
+      }
+
+      // Make sure we got some data
+      if (totalLength === 0) {
+        throw new Error("No audio data received");
+      }
+
+      const audioData = new Uint8Array(totalLength);
+      let offset = 0;
+      for (const chunk of chunks) {
+        audioData.set(chunk, offset);
+        offset += chunk.length;
+      }
+
+      const audioBlob = new Blob([audioData], { type: "audio/wav" });
+      if (audioBlob.size === 0) {
+        throw new Error("Empty audio blob created");
+      }
+
+      // Revoke any previously active audio URL
+      if (currentAudioUrl) {
+        URL.revokeObjectURL(currentAudioUrl);
+      }
+
+      const audioUrl = URL.createObjectURL(audioBlob);
+      setCurrentAudioUrl(audioUrl);
+
+      toast({
+        title: "音声準備完了",
+        description: "音声の再生を開始します。",
+        duration: 1500,
+      });
+    } catch (error) {
+      console.error("TTS Error:", error);
+      toast({
+        title: "音声生成エラー",
+        description: error instanceof Error ?
+          `音声を生成できませんでした: ${error.message}` :
+          "音声を生成できませんでした。",
+        variant: "destructive",
+      });
+      setIsPlayingAudio(false);
+      setPlayingMessageId(null);
+      // Clean up any partial resources
+      if (currentAudioUrl) {
+        URL.revokeObjectURL(currentAudioUrl);
+        setCurrentAudioUrl(null);
+      }
+    }
+  };
+
   return (
     <Card className="w-full h-full md:max-w-[90%] mx-auto flex flex-col overflow-hidden relative border-blue-600/20 shadow-lg shadow-blue-900/10 bg-gradient-to-b from-slate-950 to-slate-900">
       {showTutorial && <Tutorial onClose={() => setShowTutorial(false)} />}
@@ -614,6 +727,9 @@ export const ChatInterface = ({
                             }}
                             isFirstInGroup={isFirstInGroup}
                             isLastInGroup={i === group.messages.length - 1}
+                            isPlayingAudio={isPlayingAudio}
+                            playingMessageId={playingMessageId}
+                            onPlayAudio={playMessageAudio}
                           />
                         </div>
                       );
