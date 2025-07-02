@@ -1,3 +1,5 @@
 node_modules
 dist
 *.tar.gz
+.env
+migrations

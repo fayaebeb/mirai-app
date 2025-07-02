@@ -40,3 +40,15 @@ html {
   -webkit-text-size-adjust: 100%;
   touch-action: manipulation;
 }
+
+.cf-turnstile-scalable-container {
+  width: 100%;
+  overflow: hidden;
+
+}
+
+.cf-turnstile-scalable-container .cf-turnstile {
+  transform-origin: top left;
+
+
+}

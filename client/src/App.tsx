@@ -8,13 +8,16 @@ import AuthPage from "@/pages/auth-page";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ProtectedRoute } from "./lib/protected-route";
 import { TaskReminderService } from "@/components/task-reminder-service";
+import { RecoilRoot } from "recoil";
+import Settings from "./components/Settings";
+import VoiceModePage from "./pages/voice-mode-page";
 
 // Wrapper component that only renders the reminder service when authenticated
 function TaskReminders() {
   const { user } = useAuth();
-  
+
   if (!user) return null;
-  
+
   return <TaskReminderService />;
 }
 
@@ -22,6 +25,7 @@ function Router() {
   return (
     <Switch>
       <ProtectedRoute path="/" component={HomePage} />
+      <ProtectedRoute path="/voice" component={VoiceModePage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>
@@ -30,13 +34,16 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router />
-        <TaskReminders />
-        <Toaster />
-      </AuthProvider>
-    </QueryClientProvider>
+    <RecoilRoot>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <Router />
+          <TaskReminders />
+          <Toaster />
+          <Settings />
+        </AuthProvider>
+      </QueryClientProvider>
+    </RecoilRoot>
   );
 }
 

@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { promptCategories } from "@/components/prompt-categories";
 import debounce from "lodash.debounce";
+import VoiceRecorder from "./voice-recorder";
 
 interface ChatInputProps {
   input: string;
@@ -30,6 +31,9 @@ interface ChatInputProps {
   setUseWeb: React.Dispatch<React.SetStateAction<boolean>>;
   useDb: boolean;
   setUseDb: React.Dispatch<React.SetStateAction<boolean>>;
+  handleVoiceRecording: (audio: Blob) => void;
+  isProcessingVoice: boolean;
+
 }
 
 export const ChatInput = ({
@@ -41,6 +45,9 @@ export const ChatInput = ({
   setUseWeb,
   useDb,
   setUseDb,
+  isProcessingVoice,
+  handleVoiceRecording,
+
 }: ChatInputProps) => {
   const [showPrompts, setShowPrompts] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("出力形式 📄");
@@ -109,7 +116,7 @@ export const ChatInput = ({
   };
 
   return (
-    <div className="fixed bottom-4 left-0 right-0 z-50 flex justify-center px-4">
+    <div className="">
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-3xl flex flex-col gap-2 rounded-2xl border border-border shadow-md bg-slate-800/90 backdrop-blur-md px-4 py-3"
@@ -170,10 +177,9 @@ export const ChatInput = ({
               }}
               className={`h-8 sm:h-9 flex items-center justify-center flex-shrink-0 transition-all font-medium
                 ${isMobile ? "w-8 sm:w-9 rounded-full p-0" : "px-3 py-1.5 rounded-full gap-1"}
-                ${
-                  useWeb
-                    ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white border border-blue-400 shadow-sm"
-                    : "bg-slate-700 text-slate-300 border border-slate-600 hover:border-slate-400"
+                ${useWeb
+                  ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white border border-blue-400 shadow-sm"
+                  : "bg-slate-700 text-slate-300 border border-slate-600 hover:border-slate-400"
                 }
                 hover:ring-1 hover:ring-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/70
               `}
@@ -190,10 +196,9 @@ export const ChatInput = ({
               }}
               className={`h-8 sm:h-9 flex items-center justify-center flex-shrink-0 transition-all font-medium
                 ${isMobile ? "w-8 sm:w-9 rounded-full p-0" : "px-3 py-1.5 rounded-full gap-1"}
-                ${
-                  useDb
-                    ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white border border-purple-500 shadow-sm"
-                    : "bg-slate-700 text-slate-300 border border-slate-600 hover:border-slate-400"
+                ${useDb
+                  ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white border border-purple-500 shadow-sm"
+                  : "bg-slate-700 text-slate-300 border border-slate-600 hover:border-slate-400"
                 }
                 hover:ring-1 hover:ring-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500/70
               `}
@@ -201,6 +206,11 @@ export const ChatInput = ({
               <Database className="h-4 w-4" />
               {!isMobile && <span className="hidden sm:inline">データ</span>}
             </button>
+            
+            <VoiceRecorder
+              onRecordingComplete={handleVoiceRecording}
+              isProcessing={isProcessingVoice}
+            />
           </div>
 
           {/* Send Button */}
@@ -208,10 +218,9 @@ export const ChatInput = ({
             type="submit"
             disabled={sendMessage.isPending || !input.trim()}
             className={`relative px-3 sm:px-4 py-2 h-10 rounded-xl text-white flex items-center gap-1.5 flex-shrink-0 transition-all
-              ${
-                input.trim()
-                  ? "bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 shadow-lg shadow-blue-900/30 hover:shadow-blue-900/50"
-                  : "bg-slate-700/50 text-slate-400 cursor-not-allowed"
+              ${input.trim()
+                ? "bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 shadow-lg shadow-blue-900/30 hover:shadow-blue-900/50"
+                : "bg-slate-700/50 text-slate-400 cursor-not-allowed"
               }`}
             whileHover={input.trim() ? { scale: 1.03 } : {}}
             whileTap={input.trim() ? { scale: 0.97 } : {}}

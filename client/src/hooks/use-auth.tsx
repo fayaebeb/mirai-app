@@ -7,17 +7,25 @@ import {
 import { insertUserSchema, User as SelectUser, InsertUser } from "@shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 
 type AuthContextType = {
   user: SelectUser | null;
   isLoading: boolean;
   error: Error | null;
-  loginMutation: UseMutationResult<SelectUser, Error, LoginData>;
+  loginMutation: UseMutationResult<SelectUser, Error, LoginPayload>;
   logoutMutation: UseMutationResult<void, Error, void>;
-  registerMutation: UseMutationResult<SelectUser, Error, InsertUser>;
+  registerMutation: UseMutationResult<SelectUser, Error, RegisterPayload>;
 };
 
-type LoginData = Pick<InsertUser, "username" | "password">;
+// type LoginData = Pick<InsertUser, "email" | "password">;
+
+type LoginPayload = {
+  email: string;
+  password: string;
+  turnstileToken: string;
+};
+type RegisterPayload = InsertUser & { turnstileToken: string };
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -37,22 +45,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refetchOnReconnect: true,
   });
 
+  const [, setLocation] = useLocation();
+
   // When the component mounts, refetch the user data to validate the session
   useEffect(() => {
     refetch();
-    
+
     // Setup periodic session check every 5 minutes
     const interval = setInterval(() => {
       console.log("Auth - Periodic session refresh");
       refetch();
     }, 5 * 60 * 1000);
-    
+
     return () => clearInterval(interval);
   }, [refetch]);
 
   const loginMutation = useMutation({
-    mutationFn: async (credentials: LoginData) => {
-      console.log("Auth - Login attempt", { username: credentials.username });
+    mutationFn: async (credentials: LoginPayload) => {
+      console.log("Auth - Login attempt", { email: credentials.email });
       const res = await apiRequest("POST", "/api/login", credentials);
       if (!res.ok) {
         const errorData = await res.json();
@@ -79,8 +89,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const registerMutation = useMutation({
-    mutationFn: async (credentials: InsertUser) => {
-      console.log("Auth - Register attempt", { username: credentials.username });
+    mutationFn: async (credentials: RegisterPayload) => {
+      console.log("Auth - Register attempt", { email: credentials.email });
       const res = await apiRequest("POST", "/api/register", credentials);
       return await res.json();
     },
@@ -110,6 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: () => {
       console.log("Auth - Logout successful");
       queryClient.setQueryData(["/api/user"], null);
+      setLocation("/auth");
       toast({
         title: "ログアウト成功",
         description: "またのご利用をお待ちしております。",
