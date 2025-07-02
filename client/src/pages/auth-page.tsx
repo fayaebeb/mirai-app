@@ -19,6 +19,7 @@ import { Loader2, Shield, Network, Zap, Cpu, Server, Globe, Database, Key, EyeOf
 import { motion, AnimatePresence } from "framer-motion";
 import zxcvbn from "zxcvbn";
 import TurnstileWidget, { TurnstileWidgetHandle } from "@/components/TurnstileWidget";
+import { useToast } from "@/hooks/use-toast";
 
 
 // Futuristic tech symbols for the login page
