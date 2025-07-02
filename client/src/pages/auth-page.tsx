@@ -13,12 +13,12 @@ import { useAuth } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
 import { insertUserSchema, loginUserSchema } from "@shared/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { Loader2, Shield, Network, Zap, Cpu, Server, Globe, Database, Key, EyeOff, Eye, Ticket } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import zxcvbn from "zxcvbn";
-import TurnstileWidget from "@/components/TurnstileWidget";
+import TurnstileWidget, { TurnstileWidgetHandle } from "@/components/TurnstileWidget";
 
 
 // Futuristic tech symbols for the login page
@@ -36,7 +36,8 @@ export default function AuthPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [captcha, setCaptcha] = useState<string | null>(null);
-
+  const turnstileRef = useRef<TurnstileWidgetHandle>(null);
+  const { toast } = useToast();
 
   // Periodically change the tech symbol
   useEffect(() => {
@@ -84,16 +85,78 @@ export default function AuthPage() {
     }
   };
 
+  const handleManualReset = () => {
+    console.log("Manual reset - turnstile ref:", turnstileRef.current);
+    if (turnstileRef.current) {
+      turnstileRef.current.reset();
+      setCaptcha(null);
+      console.log("Manual reset completed");
+    } else {
+      console.error("Cannot reset - turnstile ref is null");
+    }
+  };
+
   if (!user) {
-    const onSubmit = form.handleSubmit((data) => {
-      if (!captcha) return alert("Please solve the CAPTCHA");
-      if (isLogin) {
-        const { email, password } = data;
-        loginMutation.mutate({ email, password, turnstileToken: captcha });
-      } else {
-        registerMutation.mutate({ ...data, turnstileToken: captcha });
+    const onSubmit = form.handleSubmit(async (data) => {
+      // if (!captcha) return alert("Please solve the CAPTCHA");
+      // if (isLogin) {
+      //   const { email, password } = data;
+      //   await loginMutation.mutateAsync({ email, password, turnstileToken: captcha });
+      // } else {
+      //   await registerMutation.mutateAsync({ ...data, turnstileToken: captcha });
+      // }
+
+      // turnstileRef.current?.reset();
+      // setCaptcha(null);
+
+      if (!captcha) {
+        toast({
+          title: "ログイン成功",
+          description: "ようこそ！桜AIがあなたをお待ちしていました。",
+        });
+        return;
+      }
+
+      console.log("Before mutation - captcha:", captcha);
+      console.log("Turnstile ref:", turnstileRef.current);
+
+      try {
+        if (isLogin) {
+          const { email, password } = data;
+          await loginMutation.mutateAsync({ email, password, turnstileToken: captcha });
+        } else {
+          await registerMutation.mutateAsync({ ...data, turnstileToken: captcha });
+        }
+
+        console.log("Success - about to reset captcha");
+
+        // Try multiple reset approaches
+        if (turnstileRef.current) {
+          console.log("Calling reset...");
+          turnstileRef.current.reset();
+          setCaptcha(null);
+          console.log("Reset called, captcha cleared");
+        } else {
+          console.error("Turnstile ref is null!");
+        }
+
+      } catch (error) {
+        console.log("Error - about to reset captcha");
+
+        if (turnstileRef.current) {
+          console.log("Calling reset on error...");
+          turnstileRef.current.reset();
+          setCaptcha(null);
+          console.log("Reset called on error, captcha cleared");
+        } else {
+          console.error("Turnstile ref is null on error!");
+        }
+
+        console.error('Authentication failed:', error);
       }
     });
+
+
 
     return (
       <div className="min-h-screen flex flex-col md:grid md:grid-cols-2 overflow-hidden">
@@ -366,7 +429,10 @@ export default function AuthPage() {
                       />
                     </>
                   )}
-                  <TurnstileWidget onToken={setCaptcha} />
+                  <TurnstileWidget ref={turnstileRef} onToken={setCaptcha} />
+                  {/* <button type="button" onClick={handleManualReset}>
+                    Manual Reset (Debug)
+                  </button> */}
 
                   <motion.div
                     initial={{ y: 20, opacity: 0 }}
