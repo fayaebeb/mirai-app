@@ -1,4 +1,4 @@
-import { users, messages, sessions, notes, goals, type User, type InsertUser, type Message, type InsertMessage, type Session, type Note, type InsertNote, type Goal, type InsertGoal, InsertUserSafe, InsertFeedback, Feedback } from "@shared/schema";
+import { users, messages, sessions, notes, goals, type User, type InsertUser, type Message, type InsertMessage, type Session, type Note, type InsertNote, type Goal, type InsertGoal, InsertUserSafe, InsertFeedback, Feedback, inviteTokens } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, not } from "drizzle-orm";
 import session from "express-session";
@@ -30,6 +30,8 @@ export interface IStorage {
   createGoal(userId: number, goal: InsertGoal): Promise<Goal>;
   updateGoal(goalId: number, userId: number, goal: InsertGoal): Promise<Goal | undefined>;
   deleteGoal(goalId: number, userId: number): Promise<boolean>;
+  getInviteToken(tokenString: string): Promise<typeof inviteTokens.$inferSelect | undefined>;
+  useInviteToken(tokenId: number, userId: number): Promise<void>;
   sessionStore: session.Store;
 }
 
@@ -337,6 +339,25 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return newFeedback;
+  }
+
+  async getInviteToken(tokenString: string) {
+    const [token] = await db
+      .select()
+      .from(inviteTokens)
+      .where(eq(inviteTokens.token, tokenString));
+    return token;
+  }
+
+  async useInviteToken(tokenId: number, userId: number) {
+    await db
+      .update(inviteTokens)
+      .set({
+        usedById: userId,
+        usedAt: new Date(),
+        isValid: false,
+      })
+      .where(eq(inviteTokens.id, tokenId));
   }
 }
 

@@ -15,7 +15,7 @@ import { insertUserSchema, loginUserSchema } from "@shared/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { Loader2, Shield, Network, Zap, Cpu, Server, Globe, Database, Key, EyeOff, Eye } from "lucide-react";
+import { Loader2, Shield, Network, Zap, Cpu, Server, Globe, Database, Key, EyeOff, Eye, Ticket } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import zxcvbn from "zxcvbn";
 import TurnstileWidget from "@/components/TurnstileWidget";
@@ -54,7 +54,7 @@ export default function AuthPage() {
       email: "",
       password: "",
       confirmPassword: "",
-
+      inviteToken: "",
     },
   });
 
@@ -235,7 +235,7 @@ export default function AuthPage() {
               </div>
 
               <Form {...form}>
-                <form onSubmit={onSubmit} className="space-y-6">
+                <form onSubmit={onSubmit} className="space-y-4">
                   <motion.div
                     initial={{ x: -20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
@@ -313,58 +313,59 @@ export default function AuthPage() {
                         </FormItem>
                       )}
                     />
-
-                    {!isLogin && (
-                      <>
-                        {/* Confirm Password */}
-                        <FormField
-                          control={form.control}
-                          name="confirmPassword"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-pink-700">パスワード（確認）</FormLabel>
-                              <div className="relative">
-                                <Input
-                                  type={showConfirmPassword ? "text" : "password"}
-                                  {...field}
-                                  className="border-blue-500/30 focus:border-blue-400 bg-slate-900/80 backdrop-blur-sm text-white"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => setShowConfirmPassword(prev => !prev)}
-                                  className="absolute inset-y-0 right-2 flex items-center text-pink-600"
-                                >
-                                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                </button>
-                              </div>
-                              <FormMessage className="text-red-400" />
-                            </FormItem>
-                          )}
-                        />
-
-                        {/* Invite Token
-                  <FormField
-                    control={form.control}
-                    name="inviteToken"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-pink-700 flex items-center gap-1">
-                          <Ticket className="h-3 w-3" /> 招待トークン（任意）
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            type="text"
-                            {...field}
-                            className="border-pink-200 focus:border-pink-400 bg-white/80 backdrop-blur-sm"
-                          />
-                        </FormControl>
-                        <FormMessage className="text-red-400" />
-                      </FormItem>
-                    )}
-                  /> */}
-                      </>
-                    )}
                   </motion.div>
+
+
+                  {!isLogin && (
+                    <>
+                      {/* Confirm Password */}
+                      <FormField
+                        control={form.control}
+                        name="confirmPassword"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-blue-700">パスワード（確認）</FormLabel>
+                            <div className="relative">
+                              <Input
+                                type={showConfirmPassword ? "text" : "password"}
+                                {...field}
+                                className="border-blue-500/30 focus:border-blue-400 bg-slate-900/80 backdrop-blur-sm text-white"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowConfirmPassword(prev => !prev)}
+                                className="absolute inset-y-0 right-2 flex items-center text-blue-600"
+                              >
+                                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              </button>
+                            </div>
+                            <FormMessage className="text-red-400" />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Invite Token */}
+                      <FormField
+                        control={form.control}
+                        name="inviteToken"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-blue-700 flex items-center gap-1">
+                              <Ticket className="h-3 w-3" /> 招待トークン（任意）
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                type="text"
+                                {...field}
+                                className="border-blue-500/30 focus:border-blue-400 bg-slate-900/80 backdrop-blur-sm text-white"
+                              />
+                            </FormControl>
+                            <FormMessage className="text-red-400" />
+                          </FormItem>
+                        )}
+                      />
+                    </>
+                  )}
                   <TurnstileWidget onToken={setCaptcha} />
 
                   <motion.div

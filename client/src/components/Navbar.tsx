@@ -153,6 +153,23 @@ const Navbar = () => {
 
                                         <DropdownMenuItem
                                             className={`text-blue-300 hover:bg-blue-800/30 cursor-pointer flex items-center gap-2 ${activeTab === "mindmap" ? "bg-blue-800/40" : ""}`}
+                                            onClick={() => setShowFeedbackDialog(true)}
+                                        >
+                                            <LucideHandHelping className="h-3.5 w-3.5 text-blue-400" />
+                                            <span className="text-sm">Feedback</span>
+                                        </DropdownMenuItem>
+                                        <Link href="/voice">
+                                            <DropdownMenuItem
+                                                className={`text-blue-300 hover:bg-blue-800/30 cursor-pointer flex items-center gap-2 ${activeTab === "mindmap" ? "bg-blue-800/40" : ""}`}
+
+                                            >
+
+                                                <AudioLines className="h-3.5 w-3.5 text-blue-400" />
+                                                <span className="text-sm">Voice Mode</span>
+                                            </DropdownMenuItem>
+                                        </Link>
+                                        <DropdownMenuItem
+                                            className={`text-blue-300 hover:bg-blue-800/30 cursor-pointer flex items-center gap-2 ${activeTab === "mindmap" ? "bg-blue-800/40" : ""}`}
                                             onClick={() => setActiveTab("mindmap")}
                                         >
                                             <BrainCircuit className="h-3.5 w-3.5 text-blue-400" />
@@ -307,7 +324,7 @@ const Navbar = () => {
                             <AnimatePresence>
                                 {displayName && (
                                     <motion.div
-                                        className="flex items-center gap-1 bg-slate-800/70 px-2 py-1 rounded-md border border-blue-500/20 backdrop-blur-sm"
+                                        className="hidden sm:flex items-center gap-1 bg-slate-800/70 px-2 py-1 rounded-md border border-blue-500/20 backdrop-blur-sm"
                                         initial={{ opacity: 0, x: 10 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         exit={{ opacity: 0, x: 10 }}
@@ -331,7 +348,7 @@ const Navbar = () => {
                             {/* Voice mode page badge */}
                             <AnimatePresence>
                                 <motion.div
-                                    className="flex items-center gap-1 bg-slate-800/70 px-2 py-1 rounded-md border border-blue-500/20 backdrop-blur-sm"
+                                    className="hidden sm:flex items-center gap-1 bg-slate-800/70 px-2 py-1 rounded-md border border-blue-500/20 backdrop-blur-sm"
                                     initial={{ opacity: 0, x: 10 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     exit={{ opacity: 0, x: 10 }}

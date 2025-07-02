@@ -182,15 +182,37 @@ export function setupAuth(app: Express) {
             error: "このユーザー名は既に使用されています。"
           });
         }
-        const email = req.body.email;
+
+        const { email, password, inviteToken } = req.body as {
+          email: string;
+          password: string;
+          inviteToken?: string;
+        };
+
+        if (!inviteToken) {
+          return res.status(400).json({ error: "招待トークンが必要です。" });
+        }
+
+        const tokenRecord = await storage.getInviteToken(inviteToken);
+        if (!tokenRecord || !tokenRecord.isValid || tokenRecord.usedById) {
+          return res.status(400).json({ error: "無効なまたは使用済みの招待トークンです。" });
+        }
+
         const baseUsername = email.split('@')[0];
         const username = await generateUniqueUsername(baseUsername);
 
         const user = await storage.createUser({
           ...req.body,
           username: username,
-          password: await hashPassword(req.body.password),
+          password: await hashPassword(password),
         });
+
+        if (inviteToken && user?.id) {
+          const tokenRecord = await storage.getInviteToken(inviteToken);
+          if (tokenRecord) {
+            await storage.useInviteToken(tokenRecord.id, user.id);
+          }
+        }
 
         console.log(`Auth - User registered: ${user.email}`);
         req.login(user, async (err: any) => {
@@ -215,8 +237,8 @@ export function setupAuth(app: Express) {
 
   app.post("/api/login",
     authRateLimit,
-    verifyTurnstile,
     bruteForce.prevent,
+    verifyTurnstile,
     validateLogin,
     handleValidationErrors,
     (req: Request, res: Response, next: NextFunction) => {

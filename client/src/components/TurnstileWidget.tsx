@@ -63,7 +63,7 @@ export default function TurnstileWidget({ onToken, className = "" }: Props) {
                 sitekey={siteKey}
                 onVerify={onToken}
                 size="normal" // “normal” = 300 px → we down-scale from there
-                className="cf-turnstile origin-top-left"
+                className="cf-turnstile origin-top-left"  
             />
         </div>
     );

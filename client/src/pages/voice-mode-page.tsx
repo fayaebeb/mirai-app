@@ -603,7 +603,7 @@ export default function VoiceModePage() {
         </div>
 
         {/* Voice control panel */}
-        <div className="border-blue-600/20 shadow-lg shadow-blue-900/10 bg-gradient-to-b from-slate-950 to-slate-900 rounded-2xl p-4 border flex flex-col items-center">
+        <div className="border-blue-600/20 shadow-lg shadow-blue-900/10 bg-gradient-to-t from-slate-950 to-slate-900 rounded-2xl p-4 border flex flex-col items-center">
           <div className="flex flex-col items-center gap-2">
             {/* Recording timer */}
             {isRecording && (

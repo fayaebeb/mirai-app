@@ -7,6 +7,7 @@ import {
 import { insertUserSchema, User as SelectUser, InsertUser } from "@shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 
 type AuthContextType = {
   user: SelectUser | null;
@@ -44,16 +45,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refetchOnReconnect: true,
   });
 
+  const [, setLocation] = useLocation();
+
   // When the component mounts, refetch the user data to validate the session
   useEffect(() => {
     refetch();
-    
+
     // Setup periodic session check every 5 minutes
     const interval = setInterval(() => {
       console.log("Auth - Periodic session refresh");
       refetch();
     }, 5 * 60 * 1000);
-    
+
     return () => clearInterval(interval);
   }, [refetch]);
 
@@ -117,6 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: () => {
       console.log("Auth - Logout successful");
       queryClient.setQueryData(["/api/user"], null);
+      setLocation("/auth");
       toast({
         title: "ログアウト成功",
         description: "またのご利用をお待ちしております。",

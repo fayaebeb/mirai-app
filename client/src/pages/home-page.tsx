@@ -524,14 +524,12 @@ export default function HomePage() {
     }
     return null;
   };
-  useEffect(() => {
-    console.log(showTranscriptionConfirmation, transcribedText)
-  })
+  
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-900 to-slate-800 relative overflow-hidden">
       {/* Fixed position chat input for chat tab only */}
       {activeTab === "chat" && (
-        <div className="fixed bottom-0 md:bottom-5  p-5  md:p-0 left-0 right-0 z-[100]">
+        <div className="fixed bottom-0 md:bottom-5  p-5  md:p-0 left-0 right-0 z-40">
           <div className="max-w-3xl mx-auto ">
             {currentAudioUrl && (
               <AudioPlayer

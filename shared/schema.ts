@@ -120,6 +120,16 @@ export const feedback = pgTable("feedback", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const inviteTokens = pgTable("invite_tokens", {
+  id: serial("id").primaryKey(),
+  token: text("token").notNull().unique(),
+  createdById: integer("created_by_moderator_id").references(() => users.id),
+  usedById: integer("used_by_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  usedAt: timestamp("used_at"),
+  isValid: boolean("is_valid").default(true).notNull(),
+});
+
 // Add password validation to the insert schema
 
   export const insertUserSchema = z
@@ -134,6 +144,7 @@ export const feedback = pgTable("feedback", {
         "英大文字・小文字・数字・記号を含めてください"
       ),
     confirmPassword: z.string(),
+    inviteToken: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "パスワードが一致しません",
@@ -226,3 +237,8 @@ export type Goal = typeof goals.$inferSelect;
 export type InsertGoal = z.infer<typeof insertGoalSchema>;
 export type Feedback = typeof feedback.$inferSelect;
 export type InsertFeedback = z.infer<typeof insertFeedbackSchema>;
+export type InviteToken = typeof inviteTokens.$inferSelect;
+export type InsertInviteToken = {
+  token: string;
+  createdById: number;
+};
