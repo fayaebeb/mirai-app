@@ -24,7 +24,7 @@ import Navbar from "@/components/Navbar";
 import TranscriptionConfirmation from "@/components/transcription-confirmation";
 import { currentAudioUrlAtom, isPlayingAudioAtom, isProcessingVoiceAtom, playingMessageIdAtom } from "@/states/voicePlayerStates";
 import { activeChatIdAtom } from "@/states/chatStates";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import FloatingSidebar from "@/components/Sidepanel";
 import { useRenameChat } from "@/hooks/useRenameChat";
 
@@ -77,6 +77,7 @@ export default function HomePage() {
   const [playingMessageId, setPlayingMessageId] = useRecoilState(playingMessageIdAtom);
   const [isProcessingVoice, setIsProcessingVoice] = useRecoilState(isProcessingVoiceAtom);
   const [isPlayingAudio, setIsPlayingAudio] = useRecoilState(isPlayingAudioAtom);
+  const [hasEntered, setHasEntered] = useState(false);
 
   const activeChatId = useRecoilValue(activeChatIdAtom)
 
@@ -287,33 +288,35 @@ export default function HomePage() {
   });
 
   const handleSubmit = (e: React.FormEvent) => {
-  e.preventDefault();
-  const content = input.trim();
-  if (!content || sendMessage.isPending || !activeChatId) return;
+    e.preventDefault();
+    const content = input.trim();
+    if (!content || sendMessage.isPending || !activeChatId) return;
 
-  setInput(""); // clear immediately
+    setInput(""); // clear immediately
 
-  sendMessage.mutate(
-    { content, useWeb, useDb },   // ← only these three props
-    {
-      onSuccess: () => {
-        // 1) rename if this was the very first message
-        if (messages.length === 0 && activeChatId) {
-          renameChat.mutate({
-            chatId: activeChatId,
-            title: content,
+    sendMessage.mutate(
+      { content, useWeb, useDb },   // ← only these three props
+      {
+        onSuccess: () => {
+          // 1) rename if this was the very first message
+          if (messages.length === 0 && activeChatId) {
+            renameChat.mutate({
+              chatId: activeChatId,
+              title: content,
+            });
+          }
+
+          // 2) refetch your messages
+          queryClient.invalidateQueries({
+            queryKey: ["/api/chats", activeChatId, "messages"],
           });
-        }
-
-        // 2) refetch your messages
-        queryClient.invalidateQueries({
-          queryKey: ["/api/chats", activeChatId, "messages"],
-        });
-      },
-    }
-  );
-};
-
+        },
+      }
+    );
+  };
+  const handleEnterComplete = () => {
+    if (!hasEntered) setHasEntered(true);
+  };
 
   // Handle emotion selection from dropdown
   const handleEmotionSelect = (text: string) => {
@@ -340,6 +343,7 @@ export default function HomePage() {
   const handleClearChat = () => {
     setShowClearConfirm(true);
   };
+
 
 
   useEffect(() => {
@@ -402,18 +406,17 @@ export default function HomePage() {
     };
   }, []);
 
-
   // Render main content based on active tab
   const renderMainContent = () => {
     if (activeTab === "chat") {
       return (
         <motion.div
-          className="bg-slate-900/90 backdrop-blur-md rounded-none sm:rounded-xl shadow-xl py-4 sm:py-0 px-0 w-full max-w-full border-0 sm:border border-blue-500/20 min-h-screen relative mb-0"
+          className=""
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
         >
-          <div className="relative z-10 pb-16 sm:pb-24">
+          <div className="">
             <ChatInterface
               input={input}
               setInput={setInput}
@@ -562,11 +565,110 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-900 to-slate-800 relative overflow-hidden">
+    <div className="relative flex flex-col flex-1">
       {/* Fixed position chat input for chat tab only */}
-      {activeTab === "chat" && (
-        <div className="fixed bottom-0 md:bottom-5  p-5  md:p-0 left-0 right-0 z-40">
-          <div className="max-w-3xl mx-auto ">
+      {/* {activeTab === "chat" && (
+
+        <div className=" ">
+          {currentAudioUrl && (
+            <AudioPlayer
+              audioUrl={currentAudioUrl}
+              isPlaying={isPlayingAudio}
+              onPlayComplete={handlePlaybackComplete}
+            />
+          )}
+
+          <AnimatePresence>
+            {showTranscriptionConfirmation && transcribedText && (
+              <div className="w-full">
+                <TranscriptionConfirmation
+                  text={transcribedText}
+                  onConfirm={handleConfirmTranscription}
+                  onCancel={handleCancelTranscription}
+                  onEdit={handleEditTranscription}
+                />
+              </div>
+            )}
+          </AnimatePresence>
+
+          <ChatInput
+            input={input}
+            setInput={setInput}
+            handleSubmit={handleSubmit}
+            sendMessage={sendMessage}
+            useWeb={useWeb}
+            setUseWeb={setUseWeb}
+            useDb={useDb}
+            setUseDb={setUseDb}
+            handleVoiceRecording={handleVoiceRecording}
+            isProcessingVoice={isProcessingVoice}
+          />
+
+        </div>
+
+      )} */}
+      {/* Floating decorative elements */}
+      {/* <div className="">
+
+        <motion.div
+          animate={{
+            y: [0, -10, 0],
+            rotate: 360
+          }}
+          transition={{
+            y: { duration: 3, repeat: Infinity, ease: "easeInOut" },
+            rotate: { duration: 20, repeat: Infinity, ease: "linear" }
+          }}
+        >
+          <Database className="h-16 w-16 text-blue-300" />
+        </motion.div>
+      </div> */}
+
+      {/* <div className="absolute bottom-20 left-10 opacity-10 hidden md:block">
+        <motion.div
+          animate={{
+            y: [0, 10, 0],
+            rotate: -360
+          }}
+          transition={{
+            y: { duration: 4, repeat: Infinity, ease: "easeInOut" },
+            rotate: { duration: 25, repeat: Infinity, ease: "linear" }
+          }}
+        >
+          <Globe className="h-20 w-20 text-blue-400" />
+        </motion.div>
+      </div> */}
+
+      {/* Improved header for mobile */}
+
+
+      {/* Main content section */}
+      <main className="flex-1 overflow-auto p-4">
+        {renderMainContent()}
+      </main>
+
+
+
+      {
+        activeTab === "chat" && (
+
+          <motion.div
+            // animate layout shifts whenever <main>’s width changes
+            layout
+            // only run this “initial” on the *very* first mount
+            initial={!hasEntered ? { opacity: 0, y: 50, scale: 0.8 } : false}
+            // this is the state it settles into
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{
+              // entrance: a snappy spring
+              type: "spring",
+              stiffness: 350,
+              damping: 30,
+            }}
+            // after entrance finishes, don’t ever re-use `initial` again
+            onAnimationComplete={handleEnterComplete}
+            className="absolute bottom-0 md:bottom-4  inset-x-0 flex flex-col justify-center "
+          >
             {currentAudioUrl && (
               <AudioPlayer
                 audioUrl={currentAudioUrl}
@@ -577,7 +679,7 @@ export default function HomePage() {
 
             <AnimatePresence>
               {showTranscriptionConfirmation && transcribedText && (
-                <div className="w-full">
+                <div className="w-fit  md:mx-auto">
                   <TranscriptionConfirmation
                     text={transcribedText}
                     onConfirm={handleConfirmTranscription}
@@ -601,51 +703,12 @@ export default function HomePage() {
               isProcessingVoice={isProcessingVoice}
             />
 
-          </div>
-        </div>
-      )}
-      {/* Floating decorative elements */}
-      <div className="absolute top-20 right-10 opacity-20 hidden md:block">
+          </motion.div>
 
-        <motion.div
-          animate={{
-            y: [0, -10, 0],
-            rotate: 360
-          }}
-          transition={{
-            y: { duration: 3, repeat: Infinity, ease: "easeInOut" },
-            rotate: { duration: 20, repeat: Infinity, ease: "linear" }
-          }}
-        >
-          <Database className="h-16 w-16 text-blue-300" />
-        </motion.div>
-      </div>
-
-      <div className="absolute bottom-20 left-10 opacity-10 hidden md:block">
-        <motion.div
-          animate={{
-            y: [0, 10, 0],
-            rotate: -360
-          }}
-          transition={{
-            y: { duration: 4, repeat: Infinity, ease: "easeInOut" },
-            rotate: { duration: 25, repeat: Infinity, ease: "linear" }
-          }}
-        >
-          <Globe className="h-20 w-20 text-blue-400" />
-        </motion.div>
-      </div>
-
-      {/* Improved header for mobile */}
-      <div className="relative">
-
-        {/* Main content section */}
-        <main className="flex-1 w-full max-w-full px-0 pt-16 sm:pt-18">
-          {renderMainContent()}
-        </main>
-
-      </div>
-
+        )
+      }
     </div>
+
+
   );
 }

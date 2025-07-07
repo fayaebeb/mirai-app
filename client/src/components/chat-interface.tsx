@@ -308,8 +308,8 @@ export const ChatInterface = ({
     }
   }, [user]);
 
-  
-  
+
+
   // Fetch previous messages
   const {
     data: messages = [],
@@ -569,139 +569,137 @@ export const ChatInterface = ({
   };
 
   return (
-    <Card className="w-full h-full md:max-w-[90%] mx-auto flex flex-col overflow-hidden relative border-blue-600/20 shadow-lg shadow-blue-900/10 bg-gradient-to-b from-slate-950 to-slate-900">
-      {showTutorial && <Tutorial onClose={() => setShowTutorial(false)} />}
-
+    <div className="h-full">
       {/* Main chat container with auto-scroll */}
-      <div className="flex-1 overflow-y-auto overscroll-none">
-        <ScrollArea
-          className="h-full px-1 sm:px-4 py-1 w-full overflow-auto -webkit-overflow-scrolling-touch bg-slate-900/90 backdrop-blur-md rounded-none sm:rounded-xl shadow-xl border-0 sm:border border-blue-500/20 pt-1 pb-12"
-          ref={scrollAreaRef}
-        >
-          <div className="space-y-2 w-full max-w-full">
-            {messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center sm:min-h-[300px] text-center py-4">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                  className="p-6 rounded-2xl bg-blue-900/10 border border-blue-500/10 max-w-sm"
-                >
-                  <div className="relative mb-4 mx-auto w-14 h-14 flex items-center justify-center">
-                    <motion.div
-                      className="absolute inset-0 rounded-full border border-blue-400/30"
-                      animate={{
-                        scale: [1, 1.1, 1],
-                        opacity: [0.3, 0.5, 0.3],
-                        rotate: 360,
-                      }}
-                      transition={{
-                        duration: 4,
-                        repeat: Infinity,
-                        ease: "linear",
-                      }}
-                    />
-                    <Sparkles className="h-10 w-10 text-blue-400" />
-                  </div>
 
-                  <h3 className="text-lg font-medium mb-2 text-blue-100">
-                    対話を始めましょう
-                  </h3>
-                  <p className="text-blue-300/80 max-w-xs mx-auto text-sm">
-                    下のテキストボックスにメッセージを入力して、
-                    <br />
-                    ミライと対話を開始してください
+      <ScrollArea
+        className=""
+        ref={scrollAreaRef}
+      >
+        <div className="">
+          {messages.length === 0 ? (
+            <div className="">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className=""
+              >
+                <div className="">
+                  <motion.div
+                    className=""
+                    animate={{
+                      scale: [1, 1.1, 1],
+                      opacity: [0.3, 0.5, 0.3],
+                      rotate: 360,
+                    }}
+                    transition={{
+                      duration: 4,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
+                  />
+                  <Sparkles className="h-10 w-10 text-blue-400" />
+                </div>
+
+                <h3 className="text-lg font-medium mb-2 text-blue-100">
+                  対話を始めましょう
+                </h3>
+                <p className="text-blue-300/80 max-w-xs mx-auto text-sm">
+                  下のテキストボックスにメッセージを入力して、
+                  <br />
+                  ミライと対話を開始してください
+                </p>
+
+                {/* New: Quick start suggestions */}
+                <div className="mt-5 space-y-2">
+                  <p className="text-xs text-blue-400 font-semibold">
+                    試してみる:
                   </p>
-
-                  {/* New: Quick start suggestions */}
-                  <div className="mt-5 space-y-2">
-                    <p className="text-xs text-blue-400 font-semibold">
-                      試してみる:
-                    </p>
-                    <div className="flex flex-wrap gap-2 justify-center">
-                      {promptCategories[0].prompts
-                        .slice(0, 3)
-                        .map((prompt, i) => (
-                          <motion.button
-                            key={i}
-                            onClick={() =>
-                              handleEmotionSelect(prompt.message || prompt.text)
-                            }
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="text-xs px-3 py-1.5 rounded-full bg-blue-900/30 text-blue-300 border border-blue-500/20 hover:bg-blue-800/40 transition-colors"
-                          >
-                            {prompt.text}
-                          </motion.button>
-                        ))}
-                    </div>
-                  </div>
-                </motion.div>
-              </div>
-            ) : (
-              // Enhanced with message grouping
-              groupedMessages.map((group: MessageGroup, groupIndex: number) => (
-                <div key={`group-${groupIndex}`} className="mb-3">
-                  {/* Messages from the same sender grouped together */}
-                  <div
-                    className={`flex flex-col ${group.sender === "user" ? "items-end" : "items-start"}`}
-                  >
-                    {group.messages.map((message: Message, i: number) => {
-                      // Find the corresponding user message for bot messages to enable regeneration
-                      const lastUserMessageIndex = message.isBot
-                        ? messages.findIndex((m) => m.id === message.id) - 1
-                        : -1;
-                      const lastUserMessage =
-                        lastUserMessageIndex >= 0
-                          ? messages[lastUserMessageIndex]
-                          : null;
-
-                      const handleRegenerateAnswer = () => {
-                        if (lastUserMessage?.content) {
-                          externalSendMessageMutation?.mutate({
-                            content: lastUserMessage.content,
-                            useWeb,
-                            useDb,
-                          });
-                        }
-                      };
-
-                      // First message in a group shows the avatar
-                      const isFirstInGroup = i === 0;
-
-                      return (
-                        <div
-                          className={`w-full max-w-full ${i > 0 ? "mt-1" : "mt-0"}`}
-                          key={
-                            typeof message.id === "string"
-                              ? message.id
-                              : `msg-${message.id}`
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    {promptCategories[0].prompts
+                      .slice(0, 3)
+                      .map((prompt, i) => (
+                        <motion.button
+                          key={i}
+                          onClick={() =>
+                            handleEmotionSelect(prompt.message || prompt.text)
                           }
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="text-xs px-3 py-1.5 rounded-full bg-blue-900/30 text-blue-300 border border-blue-500/20 hover:bg-blue-800/40 transition-colors"
                         >
-                          <ChatMessage
-                            message={{
-                              ...message,
-                              onRegenerateAnswer: message.isBot
-                                ? handleRegenerateAnswer
-                                : undefined,
-                            }}
-                            isFirstInGroup={isFirstInGroup}
-                            isLastInGroup={i === group.messages.length - 1}
-                            isPlayingAudio={isPlayingAudio}
-                            playingMessageId={playingMessageId}
-                            onPlayAudio={playMessageAudio}
-                          />
-                        </div>
-                      );
-                    })}
+                          {prompt.text}
+                        </motion.button>
+                      ))}
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          ) : (
+            // Enhanced with message grouping
+            groupedMessages.map((group: MessageGroup, groupIndex: number) => (
+              <div key={`group-${groupIndex}`} className="mb-3">
+                {/* Messages from the same sender grouped together */}
+                <div
+                  className={`flex flex-col ${group.sender === "user" ? "items-end" : "items-start"}`}
+                >
+                  {group.messages.map((message: Message, i: number) => {
+                    // Find the corresponding user message for bot messages to enable regeneration
+                    const lastUserMessageIndex = message.isBot
+                      ? messages.findIndex((m) => m.id === message.id) - 1
+                      : -1;
+                    const lastUserMessage =
+                      lastUserMessageIndex >= 0
+                        ? messages[lastUserMessageIndex]
+                        : null;
 
-                    {/* Timestamp shown once per group at the end */}
-                    {/*<div className={`text-[9px] text-blue-400/50 font-mono mt-1 ${group.sender === 'user' ? 'mr-2' : 'ml-2'}`}>
+                    const handleRegenerateAnswer = () => {
+                      if (lastUserMessage?.content) {
+                        externalSendMessageMutation?.mutate({
+                          content: lastUserMessage.content,
+                          useWeb,
+                          useDb,
+                        });
+                      }
+                    };
+
+                    // First message in a group shows the avatar
+                    const isFirstInGroup = i === 0;
+
+                    return (
+                      <div
+                        className={`w-full max-w-full ${i > 0 ? "mt-1" : "mt-0"}`}
+                        key={
+                          typeof message.id === "string"
+                            ? message.id
+                            : `msg-${message.id}`
+                        }
+                      >
+                        <ChatMessage
+                          message={{
+                            ...message,
+                            onRegenerateAnswer: message.isBot
+                              ? handleRegenerateAnswer
+                              : undefined,
+                          }}
+                          isFirstInGroup={isFirstInGroup}
+                          isLastInGroup={i === group.messages.length - 1}
+                          isPlayingAudio={isPlayingAudio}
+                          playingMessageId={playingMessageId}
+                          onPlayAudio={playMessageAudio}
+                        />
+                      </div>
+                    );
+                  })}
+
+                  {/* Timestamp shown once per group at the end */}
+                  {/*<div className={`text-[9px] text-blue-400/50 font-mono mt-1 ${group.sender === 'user' ? 'mr-2' : 'ml-2'}`}>
                               {group.lastTimestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                             </div>*/}
 
-                    {/* Quick replies after bot messages */}
-                    {/* {group.sender === 'bot' && groupIndex === groupedMessages.length - 1 && (
+                  {/* Quick replies after bot messages */}
+                  {/* {group.sender === 'bot' && groupIndex === groupedMessages.length - 1 && (
                             <motion.div 
                               initial={{ opacity: 0, y: 5 }}
                               animate={{ opacity: 1, y: 0 }}
@@ -722,13 +720,13 @@ export const ChatInterface = ({
                               ))}
                             </motion.div>
                           )}*/}
-                  </div>
                 </div>
-              ))
-            )}
+              </div>
+            ))
+          )}
 
-            {/* Enhanced loading state */}
-            {externalSendMessageMutation?.isPending && (
+          {/* Enhanced loading state */}
+          {/* {externalSendMessageMutation?.isPending && (
               <motion.div
                 className="flex justify-start pt-2 pb-4 pl-2"
                 initial={{ opacity: 0, y: 10 }}
@@ -740,14 +738,13 @@ export const ChatInterface = ({
                   message="ミライが処理中..."
                 />
               </motion.div>
-            )}
-            <div ref={messageEndRef} />
-          </div>
-        </ScrollArea>
-      </div>
+            )} */}
+          <div ref={messageEndRef} />
+        </div>
+      </ScrollArea>
+    </div>
 
-      {/* Input form removed and moved to a separate component */}
-    </Card>
+
   );
 };
 

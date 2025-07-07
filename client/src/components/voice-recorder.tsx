@@ -124,43 +124,43 @@ export default function VoiceRecorder({ onRecordingComplete, isProcessing }: Voi
       {/* Recording timer */}
       {isRecording && (
         <AnimatePresence>
-        {isRecording && (
-          <motion.div
-            key="timer"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.3 }}
-            className="flex items-center space-x-2 text-sm font-mono text-indigo-300"
-          >
-            <motion.span
-              animate={{ scale: [1, 1.4, 1] }}
-              transition={{ duration: 1, repeat: Infinity }}
-              className="text-indigo-400"
+          {isRecording && (
+            <motion.div
+              key="timer"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.3 }}
+              className="flex items-center space-x-2 text-sm font-mono text-indigo-300"
             >
-              ●
-            </motion.span>
-            <motion.span
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              {formatTime(recordingTime)}
-            </motion.span>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              <motion.span
+                animate={{ scale: [1, 1.4, 1] }}
+                transition={{ duration: 1, repeat: Infinity }}
+                className="text-indigo-400"
+              >
+                ●
+              </motion.span>
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                {formatTime(recordingTime)}
+              </motion.span>
+            </motion.div>
+          )}
+        </AnimatePresence>
       )}
 
       {/* Recording button */}
-      <Button
+      <motion.button
         id="voice-mode-button"
         type="button"
-        variant={isRecording ? "destructive" : "outline"}
-        size="icon"
-        className={`h-8 w-8 sm:w-[36px] sm:h-[36px]   rounded-full ${isRecording ? "bg-gradient-to-r from-indigo-500 to-indigo-600 text-white border border-indigo-500 shadow-sm transition-all" : "bg-slate-700 text-slate-300 border border-slate-600 hover:border-slate-400"} hover:bg-gradient-to-r hover:from-indigo-500 hover:to-indigo-600 hover:text-white hover:ring-1 hover:ring-indigo-400 focus:indigo-none focus:ring-2 focus:ring-indigo-500/70`}
+        className={`h-8 w-8 sm:w-[36px] sm:h-[36px]  flex items-center justify-center rounded-full ${isRecording ? "bg-indigo-600/40 text-indigo-400 border border-indigo-500 shadow-sm transition-all" : "bg-noble-black-900 text-noble-black-300 "} hover:bg-indigo-600/40 hover:text-indigo-400`}
         onClick={isRecording ? stopRecording : startRecording}
         disabled={isProcessing}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
       >
         {isProcessing ? (
           <Loader2 className="h-4 w-4 animate-spin  " />
@@ -169,7 +169,7 @@ export default function VoiceRecorder({ onRecordingComplete, isProcessing }: Voi
         ) : (
           <Mic className="h-4 w-4" />
         )}
-      </Button>
+      </motion.button>
     </div>
   );
 }

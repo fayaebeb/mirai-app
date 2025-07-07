@@ -88,7 +88,7 @@ export default function TranscriptionConfirmation({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
-      className="w-full bg-indigo-950/60 backdrop-blur-sm border border-indigo-600 rounded-2xl p-3 mb-3"
+      className="min-w-[340px] md:min-w-[40rem]  border border-noble-black-800 shadow-md bg-black/90 backdrop-blur-md  rounded-2xl p-3 mb-2"
     >
       <div className="flex flex-col gap-2">
         <div className="text-sm font-medium flex items-center justify-between">
@@ -96,7 +96,7 @@ export default function TranscriptionConfirmation({
             音声トランスクリプション
           </span>
           {!isMobile && !isEditing && (
-            <span className="text-xs px-2 py-1 bg-slate-950/90 rounded-md flex items-center gap-1">
+            <span className="text-xs px-2 py-1 rounded-md flex items-center gap-1">
               <kbd className="px-1.5 py-0.5 text-xs bg-indigo-300 text-indigo-900 border border-indigo-900/50  rounded">Enter</kbd>
               <span>キーで送信</span>
             </span>
@@ -116,7 +116,7 @@ export default function TranscriptionConfirmation({
                 ref={textareaRef}
                 value={editedText}
                 onChange={(e) => setEditedText(e.target.value)}
-                className="w-full p-2 text-sm border rounded-md focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none resize-none"
+                className="w-full p-2 text-sm border rounded-md focus:ring-2 focus:ring-noble-black-400 focus:border-noble-black-400 bg-noble-black-900 outline-none active:outline-none resize-none"
                 rows={3}
               />
               <div className="flex justify-end gap-2 mt-2">
@@ -143,12 +143,11 @@ export default function TranscriptionConfirmation({
               exit={{ opacity: 0 }}
               className="w-full"
             >
-              <p className="text-sm p-2 bg-slate-950/90 rounded-md">{editedText}</p>
+              <p className="text-sm p-2 bg-noble-black-900 text-noble-black-100 rounded-md">{editedText}</p>
               <div className="flex justify-between items-center mt-3">
                 <Button
-                  variant="outline"
                   size="sm"
-                  className="flex items-center gap-1 bg-slate-950/90 border-indigo-900/50 "
+                  className="flex items-center gap-1 bg-noble-black-900 text-noble-black-100 "
                   onClick={handleEdit}
                 >
                   <Edit2 className="h-3 w-3" />
@@ -156,9 +155,8 @@ export default function TranscriptionConfirmation({
                 </Button>
                 <div className="flex gap-2">
                   <Button
-                    variant="outline"
                     size="sm"
-                    className="flex items-center gap-1 bg-slate-950/90  border-indigo-900/50 "
+                    className="flex items-center gap-1 bg-noble-black-900 text-noble-black-100  border-indigo-900/50 "
                     onClick={onCancel}
                   >
                     <X className="h-3 w-3" />

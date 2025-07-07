@@ -28,6 +28,7 @@ function Router() {
       <ProtectedRoute path="/" component={AppLayout} />
       <ProtectedRoute path="/voice" component={VoiceModePage} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/test" component={AppLayout} />
       <Route component={NotFound} />
     </Switch>
   );

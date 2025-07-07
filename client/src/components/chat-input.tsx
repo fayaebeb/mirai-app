@@ -116,10 +116,10 @@ export const ChatInput = ({
   };
 
   return (
-    <div className="">
+    <div className="w-full  flex items-center justify-center relative">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-3xl flex flex-col gap-2 rounded-2xl border border-border shadow-md bg-slate-800/90 backdrop-blur-md px-4 py-3"
+        className=" min-w-[340px] md:min-w-[40rem] flex flex-col gap-2 rounded-2xl border border-noble-black-800 shadow-md bg-black/90 backdrop-blur-md px-4 py-3"
       >
         {/* Input Textarea */}
         <TextareaAutosize
@@ -156,11 +156,11 @@ export const ChatInput = ({
                     ref={lightbulbRef}
                     type="button"
                     onClick={() => setShowPrompts((prev) => !prev)}
-                    className="text-muted-foreground hover:text-primary transition-colors flex items-center justify-center rounded-full p-2 hover:bg-accent/40"
+                    className="bg-noble-black-900 text-noble-black-300  border-slate-600 hover:border-slate-400 flex items-center justify-center rounded-full p-2 hover:bg-rose-600/40 hover:text-rose-400"
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    <Lightbulb className="h-5 w-5" />
+                    <Lightbulb className="h-4 w-4" />
                   </motion.button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -178,8 +178,8 @@ export const ChatInput = ({
               className={`h-8 sm:h-9 flex items-center justify-center flex-shrink-0 transition-all font-medium
                 ${isMobile ? "w-8 sm:w-9 rounded-full p-0" : "px-3 py-1.5 rounded-full gap-1"}
                 ${useWeb
-                  ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white border border-blue-400 shadow-sm"
-                  : "bg-slate-700 text-slate-300 border border-slate-600 hover:border-slate-400"
+                  ? "bg-cyan-600/40 text-cyan-400 border border-blue-400 shadow-sm"
+                  : "bg-noble-black-900 text-noble-black-300  hover:border-slate-400"
                 }
                 hover:ring-1 hover:ring-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/70
               `}
@@ -197,8 +197,8 @@ export const ChatInput = ({
               className={`h-8 sm:h-9 flex items-center justify-center flex-shrink-0 transition-all font-medium
                 ${isMobile ? "w-8 sm:w-9 rounded-full p-0" : "px-3 py-1.5 rounded-full gap-1"}
                 ${useDb
-                  ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white border border-purple-500 shadow-sm"
-                  : "bg-slate-700 text-slate-300 border border-slate-600 hover:border-slate-400"
+                  ? "bg-fuchsia-600/40 text-fuchsia-400 border border-purple-500 shadow-sm"
+                  : "bg-noble-black-900 text-noble-black-300 "
                 }
                 hover:ring-1 hover:ring-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500/70
               `}
@@ -206,7 +206,7 @@ export const ChatInput = ({
               <Database className="h-4 w-4" />
               {!isMobile && <span className="hidden sm:inline">データ</span>}
             </button>
-            
+
             <VoiceRecorder
               onRecordingComplete={handleVoiceRecording}
               isProcessing={isProcessingVoice}
@@ -217,7 +217,7 @@ export const ChatInput = ({
           <motion.button
             type="submit"
             disabled={sendMessage.isPending || !input.trim()}
-            className={`relative px-3 sm:px-4 py-2 h-10 rounded-xl text-white flex items-center gap-1.5 flex-shrink-0 transition-all
+            className={`relative disabled:text-noble-black-100  disabled:bg-noble-black-900 px-3 sm:px-4 py-2 h-10 rounded-xl text-noble-black-100 flex items-center gap-1.5 flex-shrink-0 transition-all
               ${input.trim()
                 ? "bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 shadow-lg shadow-blue-900/30 hover:shadow-blue-900/50"
                 : "bg-slate-700/50 text-slate-400 cursor-not-allowed"
@@ -248,59 +248,61 @@ export const ChatInput = ({
             )}
           </motion.button>
         </div>
+            
+
+        {/* Prompt Dropdown */}
+        <AnimatePresence>
+          {showPrompts && (
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.9 }}
+              transition={{ duration: 0.2 }}
+              className="absolute bottom-[125px] w-full md:w-fit left-0 flex justify-center border border-noble-black-800 shadow-md bg-black/90 backdrop-blur-md rounded-2xl overflow-hidden"
+            >
+              <div
+                ref={promptRef}
+                onClick={(e) => e.stopPropagation()}
+                className=" shadow-lg bg-black/90 backdrop-blur-md overflow-hidden w-full max-w-md"
+              >
+                <div className="flex  p-2 gap-1 overflow-x-auto scrollbar-hide border-b border-noble-black-800">
+                  {promptCategories.map((category) => (
+                    <Button
+                      key={category.name}
+                      type="button"
+                      variant={selectedCategory === category.name ? "default" : "ghost"}
+                      size="sm"
+                      className={`whitespace-nowrap text-xs flex items-center gap-1.5  w-1/2 ${selectedCategory === category.name  ? "bg-noble-black-900" : "" }`}
+                      onClick={() => setSelectedCategory(category.name)}
+                    >
+                      {category.icon}
+                      <span>{category.name}</span>
+                    </Button>
+                  ))}
+                </div>
+                <div className="grid grid-cols-1 gap-1 p-2 max-h-60 overflow-y-auto">
+                  {selectedCategoryData.prompts.map((prompt, index) => (
+                    <motion.button
+                      key={index}
+                      type="button"
+                      className="flex flex-col items-start rounded-lg px-3 py-2 text-left hover:bg-accent transition-colors"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => handlePromptInsert(prompt.message || prompt.text)}
+                    >
+                      <span className="font-medium text-sm text-noble-black-100">{prompt.text}</span>
+                      <span className="text-xs text-muted-foreground mt-0.5">
+                        {prompt.description}
+                      </span>
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </form>
 
-      {/* Prompt Dropdown */}
-      <AnimatePresence>
-        {showPrompts && (
-          <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.9 }}
-            transition={{ duration: 0.2 }}
-            className="absolute bottom-[110px] w-full flex justify-center px-4"
-          >
-            <div
-              ref={promptRef}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-card shadow-lg rounded-xl border overflow-hidden w-full max-w-md"
-            >
-              <div className="flex gap-1 p-2 bg-muted/40 overflow-x-auto scrollbar-hide">
-                {promptCategories.map((category) => (
-                  <Button
-                    key={category.name}
-                    type="button"
-                    variant={selectedCategory === category.name ? "default" : "ghost"}
-                    size="sm"
-                    className="whitespace-nowrap text-xs flex items-center gap-1.5"
-                    onClick={() => setSelectedCategory(category.name)}
-                  >
-                    {category.icon}
-                    <span>{category.name}</span>
-                  </Button>
-                ))}
-              </div>
-              <div className="grid grid-cols-1 gap-1 p-2 max-h-60 overflow-y-auto">
-                {selectedCategoryData.prompts.map((prompt, index) => (
-                  <motion.button
-                    key={index}
-                    type="button"
-                    className="flex flex-col items-start rounded-lg px-3 py-2 text-left hover:bg-accent transition-colors"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => handlePromptInsert(prompt.message || prompt.text)}
-                  >
-                    <span className="font-medium text-sm">{prompt.text}</span>
-                    <span className="text-xs text-muted-foreground mt-0.5">
-                      {prompt.description}
-                    </span>
-                  </motion.button>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };
