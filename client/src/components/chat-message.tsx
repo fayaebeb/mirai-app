@@ -428,7 +428,18 @@ export default function ChatMessage({
 
             <div id="highlighted-component-1" className="mt-2 flex items-center justify-between">
               <div className="text-[9px] sm:text-[10px] text-gray-400">
-                {message.timestamp && new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                {/* {message.timestamp && new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} */}
+
+                {message.createdAt &&
+                  new Date(
+                    message.createdAt instanceof Date
+                      ? message.createdAt
+                      : (message.createdAt as string)
+                  ).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+
               </div>
               {message.isBot ? (
                 <Button

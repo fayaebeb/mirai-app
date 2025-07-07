@@ -18,11 +18,15 @@ import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { nanoid } from "nanoid";
 import Footer from "@/components/Footer";
-import { useRecoilState } from "recoil";
+import { useRecoilState, useRecoilValue } from "recoil";
 import { ActiveTab, activeTabState } from "@/states/activeTabState";
 import Navbar from "@/components/Navbar";
 import TranscriptionConfirmation from "@/components/transcription-confirmation";
 import { currentAudioUrlAtom, isPlayingAudioAtom, isProcessingVoiceAtom, playingMessageIdAtom } from "@/states/voicePlayerStates";
+import { activeChatIdAtom } from "@/states/chatStates";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import FloatingSidebar from "@/components/Sidepanel";
+import { useRenameChat } from "@/hooks/useRenameChat";
 
 // Audio player for bot responses
 const AudioPlayer = ({ audioUrl, isPlaying, onPlayComplete }: { audioUrl: string, isPlaying: boolean, onPlayComplete: () => void }) => {
@@ -74,11 +78,11 @@ export default function HomePage() {
   const [isProcessingVoice, setIsProcessingVoice] = useRecoilState(isProcessingVoiceAtom);
   const [isPlayingAudio, setIsPlayingAudio] = useRecoilState(isPlayingAudioAtom);
 
-
+  const activeChatId = useRecoilValue(activeChatIdAtom)
 
 
   const CHAT_SESSION_KEY_PREFIX = "chat_session_id_user_";
-
+  const chatKey = ["/api/chats", activeChatId, "messages"] as const;
   // Get messages for PDF export
 
 
@@ -89,56 +93,47 @@ export default function HomePage() {
     { content: string; useWeb: boolean; useDb: boolean },
     { previousMessages?: Message[] }
   >({
-    mutationFn: async ({ content, useWeb, useDb }: { content: string; useWeb: boolean; useDb: boolean }) => {
-
-      if (!sessionId) {
-        throw new Error("セッションIDが見つかりません。再ログインしてください。");
-      }
-
-      const response = await apiRequest('POST', '/api/messages', {
-        content,
-        useWeb,
-        useDb,
-        isBot: false,
-        sessionId
-      });
+    mutationFn: async ({ content, useWeb, useDb }) => {
+      if (!activeChatId) throw new Error("チャットが選択されていません。");
+      const response = await apiRequest(
+        "POST",
+        `/api/messages`,
+        { content, useWeb, useDb, isBot: false, chatId: activeChatId }
+      );
       return response.json();
     },
-    onMutate: async ({ content }: { content: string; useWeb: boolean; useDb: boolean }) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['/api/messages'] });
 
-      // Snapshot the previous value
-      const previousMessages = queryClient.getQueryData<Message[]>(['/api/messages']);
+    onMutate: async ({ content }) => {
+      if (!activeChatId) throw new Error("チャットが選択されていません。");
 
-      // Optimistically add user message
+      await queryClient.cancelQueries({ queryKey: chatKey });
+      const previousMessages = queryClient.getQueryData<Message[]>(chatKey);
+
       const tempUserMessage: Message = {
-        id: -Date.now(), // Temporary ID
+        id: -Date.now(),
         userId: user!.id,
+        chatId: activeChatId,
         content,
         isBot: false,
-        sessionId: `user_${user!.id}_${user!.email}`,
-        timestamp: new Date(),
+        createdAt: new Date(),
       };
 
-      queryClient.setQueryData<Message[]>(['/api/messages'], (old = []) => [
+      queryClient.setQueryData<Message[]>(chatKey, (old = []) => [
         ...old,
         tempUserMessage
       ]);
 
-      // Return a context object with the snapshotted value
       return { previousMessages };
     },
-    onSuccess: (newBotMessage: Message) => {
-      // Clear input field
-      setInput('');
 
-      // Add the bot message to the existing messages without invalidating
-      queryClient.setQueryData<Message[]>(['/api/messages'], (old = []) => [
+    onSuccess: (newBotMessage: Message) => {
+      setInput("");
+      queryClient.setQueryData<Message[]>(chatKey, (old = []) => [
         ...old,
         newBotMessage
       ]);
     },
+
     onError: (error, content, context) => {
       console.error("Error sending message:", error);
 
@@ -153,9 +148,10 @@ export default function HomePage() {
         variant: "destructive"
       });
     },
+
     onSettled: () => {
       // Always refetch after error or success to ensure consistency
-      queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+      queryClient.invalidateQueries({ queryKey: chatKey });
     }
   });
 
@@ -264,16 +260,59 @@ export default function HomePage() {
 
 
   // Handle form submission
+  // const handleSubmit = (e: React.FormEvent) => {
+  //   e.preventDefault();
+
+  //   if (!input.trim() || sendMessage.isPending || !activeChatId) return;
+
+  //   // Clear immediately
+  //   setInput("");
+
+  //   sendMessage.mutate({ content: input, useWeb, useDb });
+  // };
+  const renameChat = useRenameChat();
+  const {
+    data: messages = [],
+    isLoading: loadingMsgs,
+    error: msgsError,
+  } = useQuery<Message[]>({
+    queryKey: ["/api/chats", activeChatId, "messages"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/chats/${activeChatId}/messages`);
+      if (!res.ok) throw new Error("メッセージの取得に失敗しました。");
+      return res.json() as Promise<Message[]>;
+    },
+    enabled: !!activeChatId,
+    staleTime: 5 * 60_000,   // 5 minutes in cache so you aren’t refetching constantly
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
+  const content = input.trim();
+  if (!content || sendMessage.isPending || !activeChatId) return;
 
-    if (!input.trim() || sendMessage.isPending) return;
+  setInput(""); // clear immediately
 
-    // Clear immediately
-    setInput("");
+  sendMessage.mutate(
+    { content, useWeb, useDb },   // ← only these three props
+    {
+      onSuccess: () => {
+        // 1) rename if this was the very first message
+        if (messages.length === 0 && activeChatId) {
+          renameChat.mutate({
+            chatId: activeChatId,
+            title: content,
+          });
+        }
 
-    sendMessage.mutate({ content: input, useWeb, useDb });
-  };
+        // 2) refetch your messages
+        queryClient.invalidateQueries({
+          queryKey: ["/api/chats", activeChatId, "messages"],
+        });
+      },
+    }
+  );
+};
 
 
   // Handle emotion selection from dropdown
@@ -471,9 +510,6 @@ export default function HomePage() {
           transition={{ delay: 0.2, duration: 0.5 }}
         >
 
-
-
-
           <div className="relative z-10 h-full">
             <div className="h-full flex flex-col md:flex-row gap-4">
               {/* Mobile tabs to switch between goal tracker and chat */}
@@ -524,7 +560,7 @@ export default function HomePage() {
     }
     return null;
   };
-  
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-900 to-slate-800 relative overflow-hidden">
       {/* Fixed position chat input for chat tab only */}
@@ -570,6 +606,7 @@ export default function HomePage() {
       )}
       {/* Floating decorative elements */}
       <div className="absolute top-20 right-10 opacity-20 hidden md:block">
+
         <motion.div
           animate={{
             y: [0, -10, 0],
@@ -600,14 +637,14 @@ export default function HomePage() {
       </div>
 
       {/* Improved header for mobile */}
-      <Navbar />
+      <div className="relative">
 
-      {/* Main content section */}
-      <main className="flex-1 w-full max-w-full px-0 pt-16 sm:pt-18">
-        {renderMainContent()}
-      </main>
-      <Footer />
+        {/* Main content section */}
+        <main className="flex-1 w-full max-w-full px-0 pt-16 sm:pt-18">
+          {renderMainContent()}
+        </main>
 
+      </div>
 
     </div>
   );

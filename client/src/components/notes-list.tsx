@@ -29,7 +29,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { 
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -369,8 +369,8 @@ export function NotesList() {
         userId: user?.id || 0,
         content,
         isBot: false,
-        timestamp: new Date(),
-        sessionId: `notes_${user?.id}_${user?.email}`,
+        createdAt: new Date(),
+        chatId: -1,
       };
 
       // Add optimistic message to local state
@@ -534,7 +534,7 @@ export function NotesList() {
       ];
 
       await exportChatToPDF(
-        messages as any, 
+        messages as any,
         `note-${note.id}-${note.title.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
         {
           title: note.title,
@@ -563,9 +563,9 @@ export function NotesList() {
       const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
       if (scrollContainer) {
         scrollContainer.scrollTo({
-  top: scrollContainer.scrollHeight,
-  behavior: 'smooth',
-});
+          top: scrollContainer.scrollHeight,
+          behavior: 'smooth',
+        });
 
       }
     }
@@ -576,7 +576,7 @@ export function NotesList() {
     const textarea = inputRef.current;
     if (!textarea) {
       setChatInput(prev => prev + text);
-      setShowEmotions(false); 
+      setShowEmotions(false);
       return;
     }
 
@@ -627,9 +627,20 @@ export function NotesList() {
   const allChatMessages = [
     ...notesChatMessages,
     ...optimisticMessages
+    // ].sort((a, b) => {
+    //   // Sort by timestamp
+    //   return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+    // });
   ].sort((a, b) => {
-    // Sort by timestamp
-    return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+    const aDate =
+      a.createdAt instanceof Date
+        ? a.createdAt
+        : new Date(a.createdAt ?? 0);
+    const bDate =
+      b.createdAt instanceof Date
+        ? b.createdAt
+        : new Date(b.createdAt ?? 0);
+    return aDate.getTime() - bDate.getTime();
   });
 
   // Filter and sort notes
@@ -648,18 +659,18 @@ export function NotesList() {
     // Then sort
     result = [...result].sort((a, b) => {
       if (sortBy === "title") {
-        return sortDirection === "asc" 
-          ? a.title.localeCompare(b.title) 
+        return sortDirection === "asc"
+          ? a.title.localeCompare(b.title)
           : b.title.localeCompare(a.title);
-      } 
+      }
       else if (sortBy === "created") {
-        return sortDirection === "asc" 
+        return sortDirection === "asc"
           ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
           : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      } 
+      }
       else {
         // Default: sort by updated date
-        return sortDirection === "asc" 
+        return sortDirection === "asc"
           ? new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()
           : new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
       }
@@ -679,25 +690,25 @@ export function NotesList() {
   // Toggle note pinning
   const toggleNotePinned = useCallback((noteId: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    setPinnedNotes(prev => 
-      prev.includes(noteId) 
+    setPinnedNotes(prev =>
+      prev.includes(noteId)
         ? prev.filter(id => id !== noteId)
         : [...prev, noteId]
     );
   }, []);
 
   return (
-          <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-              <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                ノート
-              </h2>           
-              <div className="flex flex-wrap gap-2">
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+        <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+          <FileText className="h-5 w-5" />
+          ノート
+        </h2>
+        <div className="flex flex-wrap gap-2">
           <Button
             size="sm"
             variant="outline"
-            className="flex items-center gap-1" 
+            className="flex items-center gap-1"
             onClick={() => setIsNoteChatOpen(true)}
             disabled={notes.length === 0}
           >
@@ -744,7 +755,7 @@ export function NotesList() {
                   />
                 </div>
               </div>
-                <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
+              <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
                 <Button
                   onClick={() => setIsAddNoteOpen(false)}
                   variant="outline"
@@ -752,7 +763,7 @@ export function NotesList() {
                 >
                   キャンセル
                 </Button>
-                <Button 
+                <Button
                   onClick={handleAddNote}
                   disabled={createNoteMutation.isPending}
                   className="w-full sm:w-auto"
@@ -784,9 +795,9 @@ export function NotesList() {
 
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <div className="flex items-center gap-1 border rounded-md overflow-hidden p-1 bg-background">
-            <Button 
-              size="sm" 
-              variant={viewMode === "list" ? "default" : "ghost"} 
+            <Button
+              size="sm"
+              variant={viewMode === "list" ? "default" : "ghost"}
               className="h-7 px-2"
               onClick={() => setViewMode("list")}
             >
@@ -800,9 +811,9 @@ export function NotesList() {
               </svg>
               リスト
             </Button>
-            <Button 
-              size="sm" 
-              variant={viewMode === "grid" ? "default" : "ghost"} 
+            <Button
+              size="sm"
+              variant={viewMode === "grid" ? "default" : "ghost"}
               className="h-7 px-2"
               onClick={() => setViewMode("grid")}
             >
@@ -835,9 +846,9 @@ export function NotesList() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button 
-              size="sm" 
-              variant="ghost" 
+            <Button
+              size="sm"
+              variant="ghost"
               className="h-7 w-7 p-0"
               onClick={() => setSortDirection(prev => prev === "asc" ? "desc" : "asc")}
               title={sortDirection === "asc" ? "Ascending" : "Descending"}
@@ -860,7 +871,7 @@ export function NotesList() {
 
       <Separator />
 
-                          <Card className="p-0 overflow-auto mb-4 
+      <Card className="p-0 overflow-auto mb-4 
                             h-[calc(100vh-12rem)]
                             max-h-[calc(100vh-25rem)] 
                             sm:max-h-[calc(100vh-12rem)] 
@@ -883,13 +894,13 @@ export function NotesList() {
                 </svg>
                 <p className="text-lg font-medium">No matching notes</p>
                 <p className="text-muted-foreground">
-  「<span className="font-medium text-blue-400">{searchQuery}</span>」に一致するメモは見つかりませんでした。
+                  「<span className="font-medium text-blue-400">{searchQuery}</span>」に一致するメモは見つかりませんでした。
                   <br />
-                  <button 
+                  <button
                     className="text-blue-400 hover:underline mt-2"
                     onClick={() => setSearchQuery("")}
                   >
-    検索をクリア
+                    検索をクリア
                   </button>
                 </p>
               </>
@@ -918,9 +929,8 @@ export function NotesList() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
-                    className={`cursor-pointer hover:bg-muted/50 transition-colors ${
-                      pinnedNotes.includes(note.id) ? 'bg-blue-950/30' : ''
-                    }`}
+                    className={`cursor-pointer hover:bg-muted/50 transition-colors ${pinnedNotes.includes(note.id) ? 'bg-blue-950/30' : ''
+                      }`}
                     onClick={() => handleViewNote(note)}
                   >
                     <TableCell className="font-medium">
@@ -997,8 +1007,8 @@ export function NotesList() {
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              {selectedNotes.some(n => n.id === note.id) 
-                                ? "Remove from chat selection" 
+                              {selectedNotes.some(n => n.id === note.id)
+                                ? "Remove from chat selection"
                                 : "Add to chat selection"}
                             </TooltipContent>
                           </Tooltip>
@@ -1081,9 +1091,8 @@ export function NotesList() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
-                    className={`relative border rounded-lg overflow-hidden cursor-pointer group ${
-                      pinnedNotes.includes(note.id) ? 'border-blue-500/50 bg-blue-950/30' : 'border-slate-700 hover:border-slate-600'
-                    }`}
+                    className={`relative border rounded-lg overflow-hidden cursor-pointer group ${pinnedNotes.includes(note.id) ? 'border-blue-500/50 bg-blue-950/30' : 'border-slate-700 hover:border-slate-600'
+                      }`}
                     onClick={() => handleViewNote(note)}
                   >
                     {/* Pin badge */}
@@ -1211,36 +1220,36 @@ export function NotesList() {
               </p>
             </div>
           </div>
-            <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
-              <Button
-                onClick={() => setIsEditNoteOpen(false)}
-                variant="outline"
-                className="w-full sm:w-auto"
-              >
-                キャンセル
-              </Button>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
+            <Button
+              onClick={() => setIsEditNoteOpen(false)}
+              variant="outline"
+              className="w-full sm:w-auto"
+            >
+              キャンセル
+            </Button>
 
-              <Button 
-                onClick={handleUpdateNote}
-                disabled={updateNoteMutation.isPending}
-                className="w-full sm:w-auto"
-              >
-                {updateNoteMutation.isPending ? (
-                  <span className="hidden sm:inline">更新中...</span>
-                ) : (
-                  <>
-                    <span className="hidden sm:inline">ノートを更新</span>
-                    <span className="sm:hidden">更新</span>
-                  </>
-                )}
-              </Button>
+            <Button
+              onClick={handleUpdateNote}
+              disabled={updateNoteMutation.isPending}
+              className="w-full sm:w-auto"
+            >
+              {updateNoteMutation.isPending ? (
+                <span className="hidden sm:inline">更新中...</span>
+              ) : (
+                <>
+                  <span className="hidden sm:inline">ノートを更新</span>
+                  <span className="sm:hidden">更新</span>
+                </>
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Delete Note Confirmation Dialog */}
       <AlertDialog open={noteToDelete !== null} onOpenChange={(open) => !open && setNoteToDelete(null)}>
-          <AlertDialogContent className="mx-auto max-w-[90%] sm:max-w-md md:max-w-lg lg:max-w-xl rounded-xl p-6">
+        <AlertDialogContent className="mx-auto max-w-[90%] sm:max-w-md md:max-w-lg lg:max-w-xl rounded-xl p-6">
           <AlertDialogHeader>
             <AlertDialogTitle>ノートを削除しますか？</AlertDialogTitle>
             <AlertDialogDescription>
@@ -1249,7 +1258,7 @@ export function NotesList() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={handleCancelDelete}>キャンセル</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleConfirmDelete}
               className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
             >
@@ -1286,7 +1295,7 @@ export function NotesList() {
           </DialogHeader>
           <ScrollArea className="flex-1 overflow-auto">
             <div className="py-4 px-1 prose prose-sm prose-invert max-w-none">
-              <ReactMarkdown 
+              <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
                   table: ({ node, ...props }) => (
@@ -1335,93 +1344,93 @@ export function NotesList() {
       </Dialog>
 
       {/* Notes Chat Dialog */}
-          <Dialog open={isNoteChatOpen} onOpenChange={setIsNoteChatOpen}>
-            <DialogContent className="sm:pr-8 sm:max-w-[700px] max-h-[90vh] h-[80vh] overflow-hidden flex flex-col p-0">
-              <DialogHeader className="px-4 py-2 border-b flex flex-col gap-2">
-                <div className="flex flex-col sm:flex-row justify-between gap-2">
+      <Dialog open={isNoteChatOpen} onOpenChange={setIsNoteChatOpen}>
+        <DialogContent className="sm:pr-8 sm:max-w-[700px] max-h-[90vh] h-[80vh] overflow-hidden flex flex-col p-0">
+          <DialogHeader className="px-4 py-2 border-b flex flex-col gap-2">
+            <div className="flex flex-col sm:flex-row justify-between gap-2">
 
-                  {/* Left Section */}
-                  <DialogTitle className="flex items-center">
-                    <div className="flex items-center gap-2">
-                      <Brain className="h-5 w-5 text-blue-500" />
-                      <span className="text-lg whitespace-nowrap">ノートアシスタント</span>
+              {/* Left Section */}
+              <DialogTitle className="flex items-center">
+                <div className="flex items-center gap-2">
+                  <Brain className="h-5 w-5 text-blue-500" />
+                  <span className="text-lg whitespace-nowrap">ノートアシスタント</span>
 
-                      {/* Responsive flex container for badges */}
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1 ml-1">
-                        <Badge variant="outline" className="bg-blue-500/10 text-xs py-0 whitespace-nowrap">
-                          ミライAI
-                        </Badge>
+                  {/* Responsive flex container for badges */}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1 ml-1">
+                    <Badge variant="outline" className="bg-blue-500/10 text-xs py-0 whitespace-nowrap">
+                      ミライAI
+                    </Badge>
 
-                        {selectedNotes && selectedNotes.length > 0 && (
-                          <Badge
-                            variant="outline"
-                            className="ml-1 whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px] px-3 py-1 rounded-full text-xs flex items-center justify-center"
-                          >
-                            {selectedNotes.length}件のノートを選択中
-                          </Badge>
-                        )}
+                    {selectedNotes && selectedNotes.length > 0 && (
+                      <Badge
+                        variant="outline"
+                        className="ml-1 whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px] px-3 py-1 rounded-full text-xs flex items-center justify-center"
+                      >
+                        {selectedNotes.length}件のノートを選択中
+                      </Badge>
+                    )}
 
-
-                      </div>
-
-                    </div>
-                  </DialogTitle>
-
-
-
-
-                  {/* Right Section */}
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => setSelectedNotes([])}
-                      disabled={selectedNotes.length === 0}
-                      className="text-xs flex items-center gap-1"
-                    >
-                      <SquareMinus className="h-3.5 w-3.5" />
-                      選択を解除
-                    </Button>
-
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          className="text-xs flex items-center gap-1"
-                          disabled={!notesChatMessages.length && !optimisticMessages.length}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                          履歴削除
-                        </Button>
-                      </AlertDialogTrigger>
-
-                        <AlertDialogContent className="mx-auto max-w-[90%] sm:max-w-md md:max-w-lg lg:max-w-xl rounded-xl p-6">
-
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>チャット履歴を削除しますか？</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            この操作は取り消せません。本当に削除しますか？
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => {
-                              clearChatHistoryMutation.mutate();
-                            }}
-                            className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
-                          >
-                            削除する
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-
-                    </AlertDialog>
 
                   </div>
+
                 </div>
-              </DialogHeader>
+              </DialogTitle>
+
+
+
+
+              {/* Right Section */}
+              <div className="flex items-center gap-2 sm:gap-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedNotes([])}
+                  disabled={selectedNotes.length === 0}
+                  className="text-xs flex items-center gap-1"
+                >
+                  <SquareMinus className="h-3.5 w-3.5" />
+                  選択を解除
+                </Button>
+
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs flex items-center gap-1"
+                      disabled={!notesChatMessages.length && !optimisticMessages.length}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      履歴削除
+                    </Button>
+                  </AlertDialogTrigger>
+
+                  <AlertDialogContent className="mx-auto max-w-[90%] sm:max-w-md md:max-w-lg lg:max-w-xl rounded-xl p-6">
+
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>チャット履歴を削除しますか？</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        この操作は取り消せません。本当に削除しますか？
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => {
+                          clearChatHistoryMutation.mutate();
+                        }}
+                        className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                      >
+                        削除する
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+
+                </AlertDialog>
+
+              </div>
+            </div>
+          </DialogHeader>
 
 
 
@@ -1435,12 +1444,11 @@ export function NotesList() {
                   {notes.map((note) => (
                     <div
                       key={`select-${note.id}`}
-                      className={`flex items-center p-2 text-sm rounded cursor-pointer ${
-                        selectedNotes.some(n => n.id === note.id)
-                          ? 'bg-blue-900/30 border border-blue-400/30'
-                          : 'hover:bg-muted'
-                      }`}
-                      onClick={() => toggleNoteSelection(note, { stopPropagation: () => {} } as any)}
+                      className={`flex items-center p-2 text-sm rounded cursor-pointer ${selectedNotes.some(n => n.id === note.id)
+                        ? 'bg-blue-900/30 border border-blue-400/30'
+                        : 'hover:bg-muted'
+                        }`}
+                      onClick={() => toggleNoteSelection(note, { stopPropagation: () => { } } as any)}
                     >
                       <div className="flex-1 truncate">
                         <div className="font-medium truncate">{note.title}</div>
@@ -1461,15 +1469,14 @@ export function NotesList() {
                     {notes.map((note) => (
                       <div
                         key={`mobile-select-${note.id}`}
-                        className={`flex-shrink-0 p-2 text-sm rounded cursor-pointer ${
-                          selectedNotes.some(n => n.id === note.id)
-                            ? 'bg-blue-900/30 border border-blue-400/30'
-                            : 'border border-muted hover:bg-muted'
-                        }`}
+                        className={`flex-shrink-0 p-2 text-sm rounded cursor-pointer ${selectedNotes.some(n => n.id === note.id)
+                          ? 'bg-blue-900/30 border border-blue-400/30'
+                          : 'border border-muted hover:bg-muted'
+                          }`}
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          toggleNoteSelection(note, { stopPropagation: () => {} } as any);
+                          toggleNoteSelection(note, { stopPropagation: () => { } } as any);
                         }}
                       >
                         <div className="flex-1 whitespace-nowrap">
@@ -1489,19 +1496,19 @@ export function NotesList() {
                 ) : allChatMessages.length === 0 ? (
                   <div className="flex flex-col h-full items-center justify-center text-center text-muted-foreground p-4">
                     <img
-                src="/images/mirai.png"
-                alt="Chat Icon"
-                className="h-20 w-20 mb-4 opacity-80"
-              />
+                      src="/images/mirai.png"
+                      alt="Chat Icon"
+                      className="h-20 w-20 mb-4 opacity-80"
+                    />
                     <h3 className="text-lg font-medium">自分のノートとチャットする</h3>
                     <p className="max-w-sm">
                       {notes.length > 0 ? (
                         selectedNotes.length > 0 ? (
                           "選択したノートについて質問してください。"
                         ) : (
-                          isMobile ? 
-                          "上でノートを選択するか、すべてのノートについて質問してください。" :
-                          "サイドバーからノートを選択するか、すべてのノートについて質問してください。"
+                          isMobile ?
+                            "上でノートを選択するか、すべてのノートについて質問してください。" :
+                            "サイドバーからノートを選択するか、すべてのノートについて質問してください。"
                         )
                       ) : (
                         "チャットするには、まずノートを作成してください。"
@@ -1510,10 +1517,15 @@ export function NotesList() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {allChatMessages.map((message) => (
-                      <ChatMessage 
-                        key={message.id} 
+                    {allChatMessages.map((message, idx) => (
+                      <ChatMessage
+                        key={message.id}
                         message={message}
+                        isFirstInGroup={idx === 0}
+                        isLastInGroup={idx === allChatMessages.length - 1}
+                        isPlayingAudio={false}
+                        playingMessageId={null}
+                        onPlayAudio={() => { }}
                       />
                     ))}
                     {sendNotesChatMessage.isPending && (
@@ -1561,7 +1573,7 @@ export function NotesList() {
                             className="absolute right-2 top-2 text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 px-1.5 py-1 rounded-md hover:bg-accent/50"
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
-                            onMouseDown={(e) => e.stopPropagation()}   
+                            onMouseDown={(e) => e.stopPropagation()}
                             onClick={() => setShowEmotions(prev => !prev)}
                           >
                             <Lightbulb className="h-4 w-4" />
@@ -1575,8 +1587,8 @@ export function NotesList() {
                     </TooltipProvider>
                   </div>
 
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     size="icon"
                     disabled={!chatInput.trim() || sendNotesChatMessage.isPending}
                   >

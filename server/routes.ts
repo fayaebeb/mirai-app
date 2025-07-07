@@ -13,6 +13,7 @@ import { getPersistentSessionId, sendError } from "./utils/errorResponse";
 import { WebSocketServer, WebSocket } from "ws";
 import { transcribeAudio } from "./apis/openai";
 import { textToSpeechStream } from "./apis/textToSpeechStream";
+import { z } from "zod";
 dotenv.config();
 
 const createUserAwareRateLimiter = (options: { windowMs: number; max: number; message?: string }) =>
@@ -67,6 +68,11 @@ const upload = multer({
 });
 
 const SKAPI = process.env.SKAPI!;
+const chatTitleSchema = z.object({ title: z.string().min(1).max(80) });
+const chatMessageSchema = insertMessageSchema.pick({ content: true, isBot: true });
+
+const getOrCreateVoiceChat = async (userId: number) =>
+  await storage.getOrCreateSystemChat(userId, "Voice Assistant", "voice");
 
 async function sendMessageToLangchain(
   message: string,
@@ -118,96 +124,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/goal-chat", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
-    // Use a different session ID pattern for goal chat to ensure separation from regular chat
-    const goalSessionId = `goal_${req.user!.id}_${req.user!.email}`;
-    const userContent = req.body.content;
+    const userId = req.user!.id;
+    const userContent = req.body.content as string;
 
     try {
-      // Check if the session with the specific ID exists first
-      const existingGoalSession = await storage.getSessionBySessionId(goalSessionId);
-      if (!existingGoalSession) {
-        console.log(`Creating new goal session for user ${req.user!.id} with sessionId ${goalSessionId}`);
-        await storage.createUserSession(req.user!.id, goalSessionId);
-      }
+      /* 1️⃣  Get (or lazily create) the dedicated Goal-assistant chat */
+      const goalChat = await storage.getOrCreateSystemChat(
+        userId,
+        "Goal Tracker",
+        "goal"                 // type column in chats table
+      );
 
-      // Save the user message with the goal-specific session ID
-      const userMessage = await storage.createMessage(req.user!.id, {
+      /* 2️⃣  Save the USER message */
+      await storage.createMessage(userId, {
+        chatId: goalChat.id,
         content: userContent,
         isBot: false,
-        sessionId: goalSessionId,
       });
 
       console.log(`Sending request to Goal Tracker API: ${userContent}`);
 
-      // Get ALL goals for this user (both active and completed)
-      const allGoals = await storage.getGoalsByUserId(req.user!.id);
+      /* 3️⃣  Build goal context */
+      const allGoals = await storage.getGoalsByUserId(userId);
+      const goalsText = allGoals.length
+        ? allGoals.map(g => `• ${g.title} (${g.completed ? "✅" : "❌"})`).join("\n")
+        : "No goals found.";
 
-      // Format goals with completion status and dates for better context
-      const formattedGoals = allGoals.map(goal => {
-        const createdDate = new Date(goal.createdAt).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric'
-        });
-
-        const updatedDate = new Date(goal.updatedAt).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric'
-        });
-
-        // Format due date if it exists
-        let dueDateStr = "";
-        if (goal.dueDate) {
-          const dueDate = new Date(goal.dueDate).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-          });
-          dueDateStr = `, Due: ${dueDate}`;
-        }
-
-        return JSON.stringify({ id: goal.id, title: goal.title, description: goal.description, completed: goal.completed, createdAt: createdDate, updatedAt: updatedDate, dueDate: goal.dueDate ? new Date(goal.dueDate).toISOString() : null, priority: goal.priority, category: goal.category, tags: goal.tags, reminderTime: goal.reminderTime ? new Date(goal.reminderTime).toISOString() : null, isRecurring: goal.isRecurring, recurringType: goal.recurringType, recurringInterval: goal.recurringInterval, recurringEndDate: goal.recurringEndDate ? new Date(goal.recurringEndDate).toISOString() : null, });
-      }).join("\n- ");
-
-      const goalsText = formattedGoals ? `- ${formattedGoals}` : "No goals found.";
-
-      let botResponse;
-
+      /* 4️⃣  Ask OpenAI */
+      let botResponse: string;
       try {
         const fullPrompt = `Here are user's goals:\n${goalsText}\n\nUser Message:\n${userContent}`;
-
-        const chatResponse = await openai.chat.completions.create({
+        const chatResp = await openai.chat.completions.create({
           model: "gpt-4o",
           messages: [
             { role: "system", content: "You are ミライ Goal Assistant" },
-            { role: "user", content: fullPrompt },
+            { role: "user", content: fullPrompt }
           ],
           temperature: 1.0,
         });
-
-        const aiMessage = chatResponse.choices[0].message.content?.trim();
-
-        if (!aiMessage) {
-          console.error("No message returned from OpenAI");
-          botResponse = `I am ミライ Goal Assistant. I've received your message but I'm having trouble formulating a response right now.`;
-        } else {
-          botResponse = formatBotResponse(aiMessage);
-        }
-      } catch (error) {
-        console.error("OpenAI API error:", error);
-        botResponse = `I am ミライ, but I'm having trouble connecting to my brain right now. Please try again later.`;
+        botResponse =
+          chatResp.choices[0].message.content?.trim() ??
+          "I am ミライ Goal Assistant, but I'm having trouble responding right now.";
+      } catch (err) {
+        console.error("OpenAI API error:", err);
+        botResponse =
+          "I am ミライ Goal Assistant, but I'm having trouble connecting to my brain right now.";
       }
 
-      // Save the bot response to the database
-      const botMessage = await storage.createMessage(req.user!.id, {
+      /* 5️⃣  Save the BOT reply */
+      const botMsg = await storage.createMessage(userId, {
+        chatId: goalChat.id,
         content: botResponse,
         isBot: true,
-        sessionId: goalSessionId,
       });
 
-      // Return the bot message
-      res.json(botMessage);
+      /* 6️⃣  Return the bot message */
+      res.json(botMsg);
     } catch (error) {
       console.error("Error processing goal message:", error);
       res.status(500).json({
@@ -218,83 +190,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add a direct messages endpoint for the client
-  app.post("/api/messages",
+  app.post(
+    "/api/messages",
     granularChatLimiter,
     validateMessage,
     handleValidationErrors,
     async (req: Request, res: Response) => {
       if (!req.isAuthenticated()) return sendError(res, 401, "Unauthorized");
 
-      // Use the full email as the session ID to ensure uniqueness across users
-      const persistentSessionId = getPersistentSessionId(req.user!.email);
-      const result = chatRequestSchema.safeParse(req.body);
-
-      if (!result.success) {
-        console.error("Invalid request body:", result.error);
-        return sendError(res, 400, "Invalid request data", result.error);
+      /* validate body */
+      const parse = chatRequestSchema.safeParse(req.body);
+      if (!parse.success) {
+        console.error("Invalid request body:", parse.error);
+        return sendError(res, 400, "Invalid request data", parse.error);
       }
+      const { chatId, content, useWeb = false, useDb = false } = parse.data;
 
-      const body = result.data;
+      const userId = req.user!.id;
 
       try {
-        // Check if the session with the specific ID exists first
-        const existingUserSession = await storage.getUserLastSession(req.user!.id);
-        if (!existingUserSession) {
-          console.log(`Creating new session for user ${req.user!.id} with sessionId ${persistentSessionId}`);
-          await storage.createUserSession(req.user!.id, persistentSessionId);
+        /* 1️⃣  Get (or lazily create) a single “Main Chat” for this user */
+        const chat = await storage.getChatById(chatId);
+        if (!chat || chat.userId !== userId) {
+          return sendError(res, 403, "Forbidden: chat not found");
         }
 
-        // Save the user message
-        await storage.createMessage(req.user!.id, {
-          ...body,
+        /* 2️⃣  Save USER message */
+        await storage.createMessage(userId, {
+          chatId,
+          content,
           isBot: false,
-          sessionId: persistentSessionId,
         });
 
-
-        // Get response from langchain
+        /* 3️⃣  Ask LangChain / FastAPI */
         const formattedResponse = await sendMessageToLangchain(
-          body.content,
-          body.useWeb ?? false,
-          body.useDb ?? false,
+          content,
+          useWeb,
+          useDb
         );
 
-        // Bot message should inherit the same category as the user message
-        const botMessage = await storage.createMessage(req.user!.id, {
+        /* 4️⃣  Save BOT reply */
+        const botMsg = await storage.createMessage(userId, {
+          chatId,
           content: formattedResponse,
           isBot: true,
-          sessionId: persistentSessionId,
         });
 
-        res.json(botMessage);
-
+        /* 5️⃣  Return bot message */
+        res.json(botMsg);
       } catch (error) {
         console.error("Error in chat processing:", error);
-        return sendError(res, 500, "Failed to process message", error instanceof Error ? error.message : "Unknown error");
+        return sendError(
+          res,
+          500,
+          "Failed to process message",
+          error instanceof Error ? error.message : "Unknown error"
+        );
       }
-    });
+    }
+  );
 
   // Get messages for the main chat interface
   app.get("/api/messages", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
     try {
-      const persistentSessionId = getPersistentSessionId(req.user!.email);
-      console.log(persistentSessionId)
+      const userId = req.user!.id;
 
-      // Check if the session exists, if not, create it
-      const existingSession = await storage.getUserLastSession(req.user!.id);
+      /* 1️⃣  Find or create the Main Chat for this user */
+      let mainChat =
+        (await storage.getChatsByUser(userId)).find(
+          (c) => c.type === "regular" && c.title === "Main Chat"
+        );
 
-      if (!existingSession || existingSession.sessionId !== persistentSessionId) {
-        console.log(`Creating new session for user ${req.user!.id} with sessionId ${persistentSessionId}`);
-        await storage.createUserSession(req.user!.id, persistentSessionId);
+      if (!mainChat) {
+        console.log(`Creating Main Chat for user ${userId}`);
+        mainChat = await storage.createChat(userId, "Main Chat", "regular");
       }
 
-      const messages = await storage.getMessagesByUserAndSession(
-        req.user!.id,
-        persistentSessionId
+      /* 2️⃣  Fetch all messages in that chat */
+      const messages = await storage.getMessagesByChat(userId, mainChat.id);
+
+      console.log(
+        `Retrieved ${messages.length} messages for user ${userId} (chatId ${mainChat.id})`
       );
-      console.log(`Retrieved ${messages.length} messages for user ${req.user!.id} with sessionId ${persistentSessionId}`);
       res.json(messages);
     } catch (error) {
       console.error("Error retrieving messages:", error);
@@ -306,54 +285,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // DELETE endpoint to clear regular chat history
-  app.delete("/api/messages",
-    apiRateLimit,
-    async (req: Request, res: Response) => {
-      if (!req.isAuthenticated()) return sendError(res, 401, "Unauthorized");
+  // app.delete(
+  //   "/api/messages",
+  //   apiRateLimit,
+  //   async (req: Request, res: Response) => {
+  //     if (!req.isAuthenticated()) return sendError(res, 401, "Unauthorized");
 
-      try {
-        // Use the same session ID pattern as other regular chat endpoints
-        const persistentSessionId = getPersistentSessionId(req.user!.email);
+  //     try {
+  //       const userId = req.user!.id;
 
+  //       /* 1️⃣  Find—or lazily create—the user’s “Main Chat” */
+  //       let mainChat =
+  //         (await storage.getChatsByUser(userId)).find(
+  //           (c) => c.type === "regular" && c.title === "Main Chat"
+  //         );
 
-        // Delete all messages with this session ID
-        await storage.deleteMessagesByUserAndSession(
-          req.user!.id,
-          persistentSessionId
-        );
+  //       if (!mainChat) {
+  //         console.log(`Creating Main Chat for user ${userId}`);
+  //         mainChat = await storage.createChat(userId, "Main Chat", "regular");
+  //       }
 
-        console.log(`Deleted all messages for user ${req.user!.id} with sessionId ${persistentSessionId}`);
+  //       /* 2️⃣  Delete every message in that chat */
+  //       await storage.deleteMessagesInChat(userId, mainChat.id);
 
-        res.status(200).json({ message: "Chat history deleted successfully" });
+  //       console.log(
+  //         `Deleted all messages for user ${userId} in chatId ${mainChat.id}`
+  //       );
 
-      } catch (error) {
-        console.error("Error deleting messages:", error);
-        return sendError(
-          res,
-          500,
-          "Failed to delete messages",
-          error instanceof Error ? error.message : "Unknown error"
-        );
-      }
-    });
+  //       res.status(200).json({ message: "Chat history deleted successfully" });
+  //     } catch (error) {
+  //       console.error("Error deleting messages:", error);
+  //       return sendError(
+  //         res,
+  //         500,
+  //         "Failed to delete messages",
+  //         error instanceof Error ? error.message : "Unknown error"
+  //       );
+  //     }
+  //   }
+  // );
 
   app.get("/api/goal-messages", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
     try {
-      const goalSessionId = `goal_${req.user!.id}_${req.user!.email}`;
-
-      const existingGoalSession = await storage.getSessionBySessionId(goalSessionId);
-      if (!existingGoalSession) {
-        console.log(`Creating new goal session for user ${req.user!.id} with sessionId ${goalSessionId}`);
-        await storage.createUserSession(req.user!.id, goalSessionId);
-      }
-
-      const messages = await storage.getMessagesByUserAndSession(
+      /* 1️⃣  Locate (or lazily create) the Goal-assistant chat */
+      const goalChat = await storage.getOrCreateSystemChat(
         req.user!.id,
-        goalSessionId
+        "Goal Tracker",
+        "goal"                 // chats.type
       );
-      console.log(`Retrieved ${messages.length} goal messages for user ${req.user!.id} with sessionId ${goalSessionId}`);
+
+      /* 2️⃣  Fetch every message in that chat */
+      const messages = await storage.getMessagesByChat(
+        req.user!.id,
+        goalChat.id
+      );
+
+      console.log(
+        `Retrieved ${messages.length} goal messages for user ${req.user!.id} (chatId ${goalChat.id})`
+      );
       res.json(messages);
     } catch (error) {
       console.error("Error retrieving goal messages:", error);
@@ -369,15 +360,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
     try {
-      // Use the same session ID pattern as other goal chat endpoints
-      const goalSessionId = `goal_${req.user!.id}_${req.user!.email}`;
+      /* 1️⃣  Find—or create—the Goal-assistant chat for this user */
+      const goalChat = await storage.getOrCreateSystemChat(
+        req.user!.id,
+        "Goal Tracker",
+        "goal"               // chats.type
+      );
 
-      // Delete all messages with this session ID
-      const result = await storage.deleteMessagesBySessionId(req.user!.id, goalSessionId);
+      /* 2️⃣  Remove every message in that chat */
+      const success = await storage.deleteMessagesInChat(
+        req.user!.id,
+        goalChat.id
+      );
 
-      console.log(`Deleted goal chat messages for user ${req.user!.id} with sessionId ${goalSessionId}, success: ${result}`);
+      console.log(
+        `Deleted goal chat messages for user ${req.user!.id} (chatId ${goalChat.id}), success: ${success}`
+      );
 
-      res.json({ success: result });
+      res.json({ success });
     } catch (error) {
       console.error("Error deleting goal chat messages:", error);
       res.status(500).json({
@@ -432,21 +432,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
     try {
-      // Use a different session ID pattern for notes chat to ensure separation from regular chat
-      const notesSessionId = `notes_${req.user!.id}_${req.user!.email}`;
-
-      // Check if the session with the specific ID exists first
-      const existingNotesSession = await storage.getSessionBySessionId(notesSessionId);
-      if (!existingNotesSession) {
-        console.log(`Creating new notes session for user ${req.user!.id} with sessionId ${notesSessionId}`);
-        await storage.createUserSession(req.user!.id, notesSessionId);
-      }
-
-      const messages = await storage.getMessagesByUserAndSession(
+      /* 1️⃣  Locate (or lazily create) the Notes-assistant chat */
+      const notesChat = await storage.getOrCreateSystemChat(
         req.user!.id,
-        notesSessionId
+        "Notes Assistant",   // title
+        "notes"              // chats.type
       );
-      console.log(`Retrieved ${messages.length} notes chat messages for user ${req.user!.id} with sessionId ${notesSessionId}`);
+
+      /* 2️⃣  Pull every message in that chat */
+      const messages = await storage.getMessagesByChat(
+        req.user!.id,
+        notesChat.id
+      );
+
+      console.log(
+        `Retrieved ${messages.length} notes chat messages for user ${req.user!.id} (chatId ${notesChat.id})`
+      );
       res.json(messages);
     } catch (error) {
       console.error("Error retrieving notes chat messages:", error);
@@ -462,15 +463,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
     try {
-      // Use the same session ID pattern as other notes chat endpoints
-      const notesSessionId = `notes_${req.user!.id}_${req.user!.email}`;
+      /* 1️⃣  Locate (or lazily create) the Notes-assistant chat */
+      const notesChat = await storage.getOrCreateSystemChat(
+        req.user!.id,
+        "Notes Assistant",   // title
+        "notes"              // chats.type
+      );
 
-      // Delete all messages with this session ID
-      const result = await storage.deleteMessagesBySessionId(req.user!.id, notesSessionId);
+      /* 2️⃣  Remove every message in that chat */
+      const success = await storage.deleteMessagesInChat(
+        req.user!.id,
+        notesChat.id
+      );
 
-      console.log(`Deleted notes chat messages for user ${req.user!.id} with sessionId ${notesSessionId}, success: ${result}`);
-
-      res.json({ success: result });
+      console.log(
+        `Deleted notes chat messages for user ${req.user!.id} (chatId ${notesChat.id}), success: ${success}`
+      );
+      res.json({ success });
     } catch (error) {
       console.error("Error deleting notes chat messages:", error);
       res.status(500).json({
@@ -484,101 +493,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/notes-chat", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
-    // Use a different session ID pattern for notes chat to ensure separation from regular chat
-    const notesSessionId = `notes_${req.user!.id}_${req.user!.email}`;
-    const userContent = req.body.content;
-    const selectedNotes = req.body.notes || [];
+    const userId = req.user!.id;
+    const userContent = req.body.content as string;
+    const selectedNotes = (req.body.notes || []) as Array<any>; // same shape as before
 
     try {
-      // Check if the session with the specific ID exists first
-      const existingNotesSession = await storage.getSessionBySessionId(notesSessionId);
-      if (!existingNotesSession) {
-        console.log(`Creating new notes session for user ${req.user!.id} with sessionId ${notesSessionId}`);
-        await storage.createUserSession(req.user!.id, notesSessionId);
-      }
+      /* 1️⃣  Get (or lazily create) the Notes-assistant chat */
+      const notesChat = await storage.getOrCreateSystemChat(
+        userId,
+        "Notes Assistant",
+        "notes"                         // chats.type
+      );
 
-      // Save the user message with the notes-specific session ID
-      const userMessage = await storage.createMessage(req.user!.id, {
+      /* 2️⃣  Save the user message */
+      await storage.createMessage(userId, {
+        chatId: notesChat.id,
         content: userContent,
         isBot: false,
-        sessionId: notesSessionId,
       });
 
       console.log(`Sending request to Notes Chat API: ${userContent}`);
 
-      // Format the selected notes for context
+      /* 3️⃣  Build notes context */
       let formattedNotes = "";
-      if (selectedNotes && selectedNotes.length > 0) {
-        formattedNotes = selectedNotes.map((note: any) => {
-          const createdDate = new Date(note.createdAt).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-          });
 
-          return `Title: ${note.title}\nContent: ${note.content}\nCreated: ${createdDate}\n---`;
-        }).join("\n");
-      } else {
-        // If no notes were explicitly selected, try to get all user notes
-        const allNotes = await storage.getNotesByUserId(req.user!.id);
-        if (allNotes && allNotes.length > 0) {
-          formattedNotes = allNotes.map(note => {
-            const createdDate = new Date(note.createdAt).toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric'
+      if (selectedNotes.length) {
+        formattedNotes = selectedNotes
+          .map((n) => {
+            const created = new Date(n.createdAt).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
             });
-
-            return `Title: ${note.title}\nContent: ${note.content}\nCreated: ${createdDate}\n---`;
-          }).join("\n");
-        } else {
-          formattedNotes = "No notes found.";
-        }
+            return `Title: ${n.title}\nContent: ${n.content}\nCreated: ${created}\n---`;
+          })
+          .join("\n");
+      } else {
+        const allNotes = await storage.getNotesByUserId(userId);
+        formattedNotes = allNotes.length
+          ? allNotes
+            .map((n) => {
+              const created = new Date(n.createdAt).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              });
+              return `Title: ${n.title}\nContent: ${n.content}\nCreated: ${created}\n---`;
+            })
+            .join("\n")
+          : "No notes found.";
       }
 
-      let botResponse;
-
+      /* 4️⃣  Call OpenAI */
+      let botResponse: string;
       try {
-        // Combine notes and user query into a single prompt
-        const fullPrompt = `The following are the user's notes:\n\n${formattedNotes}\n\nUser's message:\n${userContent}`;
-
-        const chatResponse = await openai.chat.completions.create({
+        const prompt = `The following are the user's notes:\n\n${formattedNotes}\n\nUser's message:\n${userContent}`;
+        const chatResp = await openai.chat.completions.create({
           model: "gpt-4o",
           messages: [
-            {
-              role: "system",
-              content: "You are ミライ notes assistant.",
-            },
-            {
-              role: "user",
-              content: fullPrompt,
-            },
+            { role: "system", content: "You are ミライ notes assistant." },
+            { role: "user", content: prompt },
           ],
           temperature: 1.0,
         });
-
-        const aiMessage = chatResponse.choices[0].message.content?.trim();
-
-        if (!aiMessage) {
-          console.error("No message returned from OpenAI");
-          botResponse = `I am ミライ ノートアシスタント. I've received your message but I'm having trouble formulating a response right now.`;
-        } else {
-          botResponse = formatBotResponse(aiMessage);
-        }
-      } catch (error) {
-        console.error("OpenAI API error:", error);
-        botResponse = `I am ミライ, but I'm having trouble connecting to my brain right now. Please try again later.`;
+        botResponse =
+          chatResp.choices[0].message.content?.trim() ??
+          "I am ミライ ノートアシスタント. I've received your message but I'm having trouble formulating a response right now.";
+      } catch (err) {
+        console.error("OpenAI API error:", err);
+        botResponse =
+          "I am ミライ, but I'm having trouble connecting to my brain right now. Please try again later.";
       }
 
-
-      // Save the bot response to the database
-      const botMessage = await storage.createMessage(req.user!.id, {
+      /* 5️⃣  Save the bot reply */
+      const botMessage = await storage.createMessage(userId, {
+        chatId: notesChat.id,
         content: botResponse,
         isBot: true,
-        sessionId: notesSessionId,
       });
 
-      // Return the bot message
+      /* 6️⃣  Return reply */
       res.json(botMessage);
     } catch (error) {
       console.error("Error processing notes chat message:", error);
@@ -1033,6 +1027,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   );
 
+  app.post("/api/chats", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const { title } = chatTitleSchema.partial().parse(req.body);
+    const chat = await storage.createChat(req.user!.id, title || "New chat");
+    res.status(201).json(chat);
+  });
+
+  app.get("/api/chats", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const chats = await storage.getChatsByUser(req.user!.id);
+    res.json(chats);
+  });
+
+  app.patch("/api/chats/:chatId", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const chatId = Number(req.params.chatId);
+    const { title } = chatTitleSchema.parse(req.body);
+    const updated = await storage.renameChat(req.user!.id, chatId, title);
+    if (!updated) return res.sendStatus(404);
+    res.json(updated);
+  });
+
+  app.delete("/api/chats/:chatId", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const chatId = Number(req.params.chatId);
+    const ok = await storage.deleteChat(req.user!.id, chatId);
+    console.log("deleted chatid :", chatId)
+    res.sendStatus(ok ? 204 : 404);
+  });
+
+  app.get("/api/chats/:chatId/messages", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const chatId = Number(req.params.chatId);
+    const msgs = await storage.getMessagesByChat(req.user!.id, chatId);
+    res.json(msgs);
+  });
+
+  app.post(
+    "/api/chats/:chatId/messages",
+    granularChatLimiter,          // you already have this rate-limiter defined
+    async (req, res) => {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const chatId = Number(req.params.chatId);
+      const { content, isBot } = chatMessageSchema.parse(req.body);
+
+      /* save message */
+      const msg = await storage.createMessage(req.user!.id, {
+        chatId,
+        content,
+        isBot,
+      });
+
+      res.status(201).json(msg);
+    }
+  );
+
+  app.delete("/api/chats/:chatId/messages", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const chatId = Number(req.params.chatId);
+    const ok = await storage.deleteMessagesInChat(req.user!.id, chatId);
+    res.sendStatus(ok ? 204 : 404);
+  });
+
+  app.patch(
+    "/api/chats/:chatId/rename",
+    apiRateLimit,
+    async (req: Request, res: Response) => {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      // parse & validate chatId
+      const chatId = Number(req.params.chatId);
+      if (isNaN(chatId)) {
+        return res.status(400).json({ error: "Invalid chat ID" });
+      }
+
+      // validate new title
+      const parsed = chatTitleSchema.safeParse(req.body);
+      if (!parsed.success) {
+        console.error("Invalid title:", parsed.error);
+        return res.status(400).json({ error: "Title must be 1–80 characters" });
+      }
+      const { title } = parsed.data;
+
+      try {
+        // attempt the rename
+        const updatedChat = await storage.renameChat(req.user!.id, chatId, title);
+        if (!updatedChat) {
+          return res.sendStatus(404);
+        }
+        res.json(updatedChat);
+      } catch (err) {
+        console.error("Error renaming chat:", err);
+        res.status(500).json({
+          error: "Failed to rename chat",
+          detail: err instanceof Error ? err.message : undefined,
+        });
+      }
+    }
+  );
+
 
   const httpServer = createServer(app);
 
@@ -1056,7 +1157,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     userId: number;
     email: string;
     ws: WebSocket;
-    sessionId: string;
+    chatId: number;
     lastActivity: number;
   }
 
@@ -1094,7 +1195,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         if (data.type === 'auth') {
           // Authenticate user and store connection info
-          if (data.userId && data.email && data.sessionId) {
+          if (data.userId && data.email && Number.isInteger(data.chatId)) {
             const existingClientIndex = voiceModeClients.findIndex(
               client => client.userId === data.userId
             );
@@ -1103,23 +1204,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
               userId: data.userId,
               email: data.email,
               ws,
-              sessionId: data.sessionId,
+              chatId: data.chatId,
               lastActivity: Date.now()
             };
 
             if (existingClientIndex !== -1) {
               // Update existing client
-              voiceModeClients[existingClientIndex].ws = ws;
+              voiceModeClients[existingClientIndex] = clientData;
               console.log(`Updated WebSocket connection for user ${data.email}`);
             } else {
               // Add new client
-              voiceModeClients.push({
-                userId: data.userId,
-                email: data.email,
-                ws,
-                sessionId: data.sessionId,
-                lastActivity: Date.now()
-              });
+              voiceModeClients.push(clientData);
               console.log(`Registered WebSocket connection for user ${data.email}`);
             }
 
@@ -1162,7 +1257,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const userMessage = await storage.createMessage(client.userId, {
               content: transcribedText,
               isBot: false,
-              sessionId: persistentSessionId,
+              chatId: client.chatId
             });
 
             console.log("Processing voice mode message with AI...");
@@ -1175,7 +1270,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const botMessage = await storage.createMessage(client.userId, {
               content: formattedResponse,
               isBot: true,
-              sessionId: persistentSessionId,
+              chatId: client.chatId
             });
 
             ws.send(JSON.stringify({

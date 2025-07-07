@@ -47,25 +47,36 @@ export const sessions = pgTable("sessions", {
   unique("sessions_session_id_unique").on(table.sessionId),
 ]);
 
+// export const messages = pgTable("messages", {
+//   id: serial().primaryKey().notNull(),
+//   userId: integer("user_id").notNull(),
+//   content: text("content").notNull(),
+//   isBot: boolean("is_bot").notNull(),
+//   timestamp: timestamp().defaultNow().notNull(),
+//   sessionId: text("session_id").notNull(),
+// }, (table) => [
+//   foreignKey({
+//     columns: [table.sessionId],
+//     foreignColumns: [sessions.sessionId],
+//     name: "messages_session_id_fkey"
+//   }),
+//   foreignKey({
+//     columns: [table.userId],
+//     foreignColumns: [users.id],
+//     name: "messages_user_id_fkey"
+//   }).onDelete("cascade"),
+// ]);
+
 export const messages = pgTable("messages", {
-  id: serial().primaryKey().notNull(),
-  userId: integer("user_id").notNull(),
+  id: serial("id").primaryKey(),
+  chatId: integer("chat_id").notNull()
+    .references(() => chats.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   content: text("content").notNull(),
   isBot: boolean("is_bot").notNull(),
-  timestamp: timestamp().defaultNow().notNull(),
-  sessionId: text("session_id").notNull(),
-}, (table) => [
-  foreignKey({
-    columns: [table.sessionId],
-    foreignColumns: [sessions.sessionId],
-    name: "messages_session_id_fkey"
-  }),
-  foreignKey({
-    columns: [table.userId],
-    foreignColumns: [users.id],
-    name: "messages_user_id_fkey"
-  }).onDelete("cascade"),
-]);
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
 
 export const notes = pgTable("notes", {
   id: serial().primaryKey().notNull(),
@@ -130,9 +141,19 @@ export const inviteTokens = pgTable("invite_tokens", {
   isValid: boolean("is_valid").default(true).notNull(),
 });
 
+export const chats = pgTable("chats", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  title: text("title").notNull().default("New chat"),
+  type: text("type").notNull().default("regular"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+});
+
 // Add password validation to the insert schema
 
-  export const insertUserSchema = z
+export const insertUserSchema = z
   .object({
     email: z.string().email("有効なメールアドレスを入力してください"),
     password: z
@@ -151,7 +172,7 @@ export const inviteTokens = pgTable("invite_tokens", {
     path: ["confirmPassword"],
   });
 
-  export const insertUserSafeSchema = createInsertSchema(users).pick({
+export const insertUserSafeSchema = createInsertSchema(users).pick({
   email: true,
   password: true,
   username: true,
@@ -170,9 +191,9 @@ export const insertSessionSchema = createInsertSchema(sessions).pick({
 });
 
 export const insertMessageSchema = createInsertSchema(messages).pick({
+  chatId: true,
   content: true,
   isBot: true,
-  sessionId: true,
 });
 
 export const chatRequestSchema = insertMessageSchema.extend({
@@ -228,6 +249,7 @@ export const insertFeedbackSchema = createInsertSchema(feedback).pick({
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertUserSafe = z.infer<typeof insertUserSafeSchema>;
 export type User = typeof users.$inferSelect;
+export type Chat = typeof chats.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type Message = typeof messages.$inferSelect;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;

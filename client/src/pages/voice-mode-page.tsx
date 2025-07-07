@@ -18,6 +18,8 @@ import {
 import { createPortal } from "react-dom";
 import DbButton from "@/components/dbbutton";
 import ChatMessage from "@/components/chat-message";
+import { useRecoilValue } from "recoil";
+import { activeChatIdAtom } from "@/states/chatStates";
 
 
 export default function VoiceModePage() {
@@ -47,6 +49,9 @@ export default function VoiceModePage() {
   const [isDbDropdownOpen, setIsDbDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const dbButtonRef = useRef<HTMLButtonElement>(null);
+
+  const activeChatId = useRecoilValue(activeChatIdAtom)
+  
   const [dropdownCoords, setDropdownCoords] = useState<{
     top: number;
     left: number;
@@ -75,11 +80,11 @@ export default function VoiceModePage() {
 
 
   // Get session ID from local storage
-  const getSessionId = () => {
-    if (!user?.id) return "";
-    const storageKey = `chat_session_id_user_${user.id}`;
-    return localStorage.getItem(storageKey) || "";
-  };
+  // const getSessionId = () => {
+  //   if (!user?.id) return "";
+  //   const storageKey = `chat_session_id_user_${user.id}`;
+  //   return localStorage.getItem(storageKey) || "";
+  // };
 
   // Setup WebSocket connection
   useEffect(() => {
@@ -99,12 +104,12 @@ export default function VoiceModePage() {
       setIsConnected(true);
 
       // Send auth data to register client
-      const sessionId = getSessionId() || user.email.split('@')[0];
+      // const sessionId = getSessionId() || user.email.split('@')[0];
       ws.send(JSON.stringify({
         type: "auth",
         userId: user.id,
         email: user.email,
-        sessionId
+        chatId: activeChatId
       }));
     });
 

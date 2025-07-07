@@ -19,7 +19,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { 
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -44,7 +44,8 @@ type OptimisticMessage = {
   content: string;
   isBot: boolean;
   timestamp: Date;
-  sessionId: string;
+  chatId: number;
+  createdAt: Date;
 }
 
 // Array of prompts that users can quickly select
@@ -241,7 +242,7 @@ export function GoalChatInterface() {
 
   // Fetch goal-specific messages
   const { data: messages = [], isLoading: isLoadingMessages } = useQuery<Message[]>({
-    queryKey: ['/api/goal-messages'],
+    queryKey: ['/api/chats/goal', 'messages'],
     enabled: !!user,
   });
 
@@ -289,7 +290,8 @@ export function GoalChatInterface() {
         content,
         isBot: false,
         timestamp: new Date(),
-        sessionId: "optimistic",
+        chatId: -1,
+        createdAt: new Date(),
       };
 
       setOptimisticMessages(prev => [...prev, optimisticUserMessage]);
@@ -302,28 +304,34 @@ export function GoalChatInterface() {
         userId: user?.id || 0,
         content: content,
         isBot: false,
-        timestamp: new Date(new Date(newBotMessage.timestamp).getTime() - 1000), // 1 second before bot response
-        sessionId: newBotMessage.sessionId,
+        createdAt: new Date(new Date(newBotMessage.createdAt!).getTime() - 1000),
+        chatId: newBotMessage.chatId,
       };
 
       // Remove our optimistic responses
       setOptimisticMessages([]);
 
       // Update the messages in the cache with both the user message and bot response
-      queryClient.setQueryData<Message[]>(['/api/goal-messages'], (oldMessages = []) => {
-        // Check if the user message already exists to avoid duplicates
-        const userMessageExists = oldMessages.some(m => 
-          !m.isBot && m.content === content && 
-          // Check if timestamps are close (within 5 seconds)
-          Math.abs(new Date(m.timestamp).getTime() - new Date().getTime()) < 5000
-        );
+      queryClient.setQueryData<Message[]>(
+        ['/api/chats/goal', 'messages'],                               // new query-key
+        (oldMessages = []) => {
+          // Avoid duplicate user messages (same content within 5 s)
+          const userMessageExists = oldMessages.some(m =>
+            !m.isBot &&
+            m.content === content &&
+            (() => {
+              const t = m.createdAt;
+              if (!t) return false;
+              const ms = t instanceof Date ? t.getTime() : new Date(t).getTime();
+              return Math.abs(ms - Date.now()) < 5000;
+            })()
+          );
 
-        if (userMessageExists) {
-          return [...oldMessages, newBotMessage];
-        } else {
-          return [...oldMessages, userMessage, newBotMessage];
+          return userMessageExists
+            ? [...oldMessages, newBotMessage]
+            : [...oldMessages, userMessage, newBotMessage];
         }
-      });
+      );
     },
     onError: (error) => {
       console.error("Failed to send message:", error);
@@ -337,19 +345,19 @@ export function GoalChatInterface() {
   });
 
   // Auto-scroll to the bottom when new messages arrive
-useEffect(() => {
-  if (scrollAreaRef.current) {
-    const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-    if (scrollContainer) {
-      setTimeout(() => {
-        scrollContainer.scrollTo({
-          top: scrollContainer.scrollHeight,
-          behavior: 'smooth',
-        });
-      }, 50); // short delay for new content layout
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollContainer) {
+        setTimeout(() => {
+          scrollContainer.scrollTo({
+            top: scrollContainer.scrollHeight,
+            behavior: 'smooth',
+          });
+        }, 50); // short delay for new content layout
+      }
     }
-  }
-}, [messages, optimisticMessages, sendMessage.isPending]);
+  }, [messages, optimisticMessages, sendMessage.isPending]);
 
   // Handle the insertion of prompt text
   const handleEmotionSelect = (text: string) => {
@@ -394,15 +402,15 @@ useEffect(() => {
 
   // All messages including optimistic ones
   const allMessages = [
-    ...(messages || []), 
+    ...(messages || []),
     ...optimisticMessages
   ].sort((a, b) => {
     // Sort by timestamp
-    return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+    return new Date(a.createdAt ?? 0).getTime() - new Date(b.createdAt ?? 0).getTime();
   });
 
   return (
-        <Card className="flex flex-col h-[calc(100vh-10rem)] md:h-full">
+    <Card className="flex flex-col h-[calc(100vh-10rem)] md:h-full">
 
 
       <CardHeader className="py-2 px-4 flex-shrink-0">
@@ -422,9 +430,9 @@ useEffect(() => {
             </div>
 
             <div className="flex items-center gap-1">
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="text-xs h-6 w-6 sm:h-7 sm:w-auto px-0 sm:px-2 rounded-full sm:rounded-md"
                 onClick={() => setShowEmotions(true)}
               >
@@ -434,9 +442,9 @@ useEffect(() => {
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     className="text-xs h-6 w-6 sm:h-7 sm:w-auto px-0 sm:px-2 rounded-full sm:rounded-md"
                     disabled={!allMessages.length}
                   >
@@ -444,7 +452,7 @@ useEffect(() => {
                     <span className="hidden sm:inline ml-1">履歴削除</span>
                   </Button>
                 </AlertDialogTrigger>
-                  <AlertDialogContent className="mx-auto max-w-[90%] sm:max-w-md md:max-w-lg lg:max-w-xl rounded-xl p-6">
+                <AlertDialogContent className="mx-auto max-w-[90%] sm:max-w-md md:max-w-lg lg:max-w-xl rounded-xl p-6">
 
                   <AlertDialogHeader>
                     <AlertDialogTitle className="flex items-center gap-2">
@@ -457,7 +465,7 @@ useEffect(() => {
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                    <AlertDialogAction 
+                    <AlertDialogAction
                       onClick={() => clearChatHistoryMutation.mutate()}
                       className="bg-destructive hover:bg-destructive/90"
                       disabled={clearChatHistoryMutation.isPending}
@@ -473,9 +481,9 @@ useEffect(() => {
         </div>
       </CardHeader>
 
-        <CardContent className="flex flex-col flex-grow min-h-0">
+      <CardContent className="flex flex-col flex-grow min-h-0">
 
-          <ScrollArea ref={scrollAreaRef} className="flex-grow min-h-0 overflow-y-auto">
+        <ScrollArea ref={scrollAreaRef} className="flex-grow min-h-0 overflow-y-auto">
           {isLoadingMessages ? (
             <div className="flex h-full min-h-[200px] items-center justify-center">
               <ChatLoadingIndicator message="チャット履歴を読み込んでいます..." />
@@ -485,7 +493,7 @@ useEffect(() => {
               <div className="relative">
                 <motion.div
                   className="absolute inset-0 rounded-full border-2 border-blue-500/30"
-                  animate={{ 
+                  animate={{
                     scale: [1, 1.2, 1],
                     opacity: [0.7, 0.2, 0.7],
                     borderColor: ["rgba(59, 130, 246, 0.3)", "rgba(59, 130, 246, 0.1)", "rgba(59, 130, 246, 0.3)"]
@@ -505,8 +513,8 @@ useEffect(() => {
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-lg w-full mb-4">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="text-left h-auto py-2 sm:py-3 justify-start border-blue-500/20 hover:bg-blue-500/5"
                   onClick={() => handleEmotionSelect("タスク達成のためのベストなアクションプランを教えてください。")}
                 >
@@ -519,8 +527,8 @@ useEffect(() => {
                   </div>
                 </Button>
 
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="text-left h-auto py-2 sm:py-3 justify-start border-blue-500/20 hover:bg-blue-500/5"
                   onClick={() => handleEmotionSelect("タスク達成のモチベーションを維持する方法を教えてください。")}
                 >
@@ -533,8 +541,8 @@ useEffect(() => {
                   </div>
                 </Button>
 
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="text-left h-auto py-2 sm:py-3 justify-start border-blue-500/20 hover:bg-blue-500/5"
                   onClick={() => handleEmotionSelect("SMARTタスクの設定方法について教えてください。")}
                 >
@@ -547,8 +555,8 @@ useEffect(() => {
                   </div>
                 </Button>
 
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="text-left h-auto py-2 sm:py-3 justify-start border-blue-500/20 hover:bg-blue-500/5"
                   onClick={() => handleEmotionSelect("タスク達成を妨げる障害を克服する方法を教えてください。")}
                 >
@@ -568,13 +576,13 @@ useEffect(() => {
             </div>
           ) : (
             <div className="space-y-3 sm:space-y-4 pb-4 min-h-[200px]">
-              {allMessages.map((message) => {
+              {allMessages.map((message, idx) => {
                 // Ensure id is treated as a number for the ChatMessage component
                 const messageForChat = {
                   ...message,
                   // Convert string id to number for optimistic messages
                   id: typeof message.id === 'string' ? parseInt(message.id.replace(/\D/g, '')) || -1 : message.id,
-                  onRegenerateAnswer: message.isBot 
+                  onRegenerateAnswer: message.isBot
                     ? () => { /* Implement regenerate functionality if needed */ }
                     : undefined
                 };
@@ -582,6 +590,11 @@ useEffect(() => {
                   <ChatMessage
                     key={message.id}
                     message={messageForChat}
+                    isFirstInGroup={idx === 0}
+                    isLastInGroup={idx === allMessages.length - 1}
+                    isPlayingAudio={false}
+                    playingMessageId={null}
+                    onPlayAudio={() => { }}
                   />
                 );
               })}
@@ -647,9 +660,9 @@ useEffect(() => {
             </TooltipProvider>
           </div>
 
-          <Button 
-            type="submit" 
-            size="icon" 
+          <Button
+            type="submit"
+            size="icon"
             disabled={!messageText.trim() || sendMessage.isPending}
           >
             <Send className="h-4 w-4" />

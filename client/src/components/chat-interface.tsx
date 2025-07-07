@@ -30,8 +30,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { promptCategories } from "@/components/starter-prompts";
 import { Badge } from "@/components/ui/badge";
-import { useRecoilState } from "recoil";
+import { useRecoilState, useRecoilValue } from "recoil";
 import { currentAudioUrlAtom, isPlayingAudioAtom, isProcessingVoiceAtom, playingMessageIdAtom } from "@/states/voicePlayerStates";
+import { activeChatIdAtom } from "@/states/chatStates";
 
 // Define a type for optimistic messages that uses string IDs instead of numbers
 type OptimisticMessage = {
@@ -274,6 +275,7 @@ export const ChatInterface = ({
   const [isPlayingAudio, setIsPlayingAudio] = useRecoilState(isPlayingAudioAtom);
   const [playingMessageId, setPlayingMessageId] = useRecoilState(playingMessageIdAtom);
   const [currentAudioUrl, setCurrentAudioUrl] = useRecoilState(currentAudioUrlAtom);
+  const activeChatId = useRecoilValue(activeChatIdAtom)
 
   // Use either the external or internal state and functions
   const setInput = externalSetInput || setInputInternal;
@@ -306,47 +308,24 @@ export const ChatInterface = ({
     }
   }, [user]);
 
+  
+  
   // Fetch previous messages
-  const { data: messages = [] } = useQuery<Message[]>({
-    queryKey: ["/api/messages"],
-    enabled: !!user,
+  const {
+    data: messages = [],
+    isLoading: isLoadingMsgs,
+    error: msgsError,
+  } = useQuery<Message[]>({
+    queryKey: ["/api/chats", activeChatId, "messages"],          // 👈 unique per chat
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/chats/${activeChatId}/messages`);
+      if (!res.ok) throw new Error("メッセージの取得に失敗しました。");
+      return res.json() as Promise<Message[]>;
+    },
+    enabled: !!activeChatId,                                     // run only when a chat is selected
+    staleTime: 0,                                                // always refetch on focus
   });
 
-  // Clear chat history mutation
-  const clearChatHistory = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest("DELETE", "/api/messages");
-      return response.json();
-    },
-    onSuccess: () => {
-      // Clear the messages in the query cache
-      queryClient.setQueryData<Message[]>(["/api/messages"], []);
-
-      // Close the confirmation dialog
-      setShowClearConfirm(false);
-
-      // Show success toast
-      toast({
-        title: "チャット履歴をクリアしました",
-        description: "すべてのメッセージが削除されました。",
-      });
-
-      // Ensure UI refreshes and scrolls to empty state properly
-      setTimeout(() => {
-        if (messageEndRef.current) {
-          messageEndRef.current.scrollIntoView({ behavior: "smooth" });
-        }
-      }, 100);
-    },
-    onError: (error) => {
-      console.error("Error clearing chat history:", error);
-      toast({
-        title: "エラーが発生しました",
-        description: "チャット履歴のクリアに失敗しました。",
-        variant: "destructive",
-      });
-    },
-  });
 
   // Handle clear chat button click
   const handleClearChat = () => {
@@ -415,26 +394,32 @@ export const ChatInterface = ({
     lastTimestamp: Date;
   };
 
-  // Group messages by sender to enable better visualization and collapsing
+  // Group messages by sender for better visualization / collapsing
   const groupedMessages = useMemo(() => {
     if (!messages.length) return [];
 
     return messages.reduce((groups: MessageGroup[], message) => {
       const lastGroup = groups[groups.length - 1];
 
+      // make sure we have a Date object (API may return ISO string)
+      const msgTime = message.createdAt
+        ? message.createdAt instanceof Date
+          ? message.createdAt
+          : new Date(message.createdAt)
+        : new Date(); // fallback for optimistic rows
+
       if (lastGroup && (lastGroup.sender === "bot") === message.isBot) {
-        // Same sender as previous message group - add to existing group
+        // Same sender → append
         lastGroup.messages.push(message);
-        lastGroup.lastTimestamp = new Date(message.timestamp);
+        lastGroup.lastTimestamp = msgTime;
       } else {
-        // Different sender - create a new group
+        // New sender → start new group
         groups.push({
           sender: message.isBot ? "bot" : "user",
           messages: [message],
-          lastTimestamp: new Date(message.timestamp),
+          lastTimestamp: msgTime,
         });
       }
-
       return groups;
     }, []);
   }, [messages]);
@@ -586,31 +571,6 @@ export const ChatInterface = ({
   return (
     <Card className="w-full h-full md:max-w-[90%] mx-auto flex flex-col overflow-hidden relative border-blue-600/20 shadow-lg shadow-blue-900/10 bg-gradient-to-b from-slate-950 to-slate-900">
       {showTutorial && <Tutorial onClose={() => setShowTutorial(false)} />}
-
-      {/* Confirmation Dialog for clearing chat history */}
-      <AlertDialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
-        <AlertDialogContent className="bg-slate-900 border border-blue-500/30">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-blue-100">
-              チャット履歴をクリアしますか？
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-blue-300/70">
-              この操作は取り消せません。すべてのチャットメッセージがデータベースから削除されます。
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="border-blue-500/30 hover:bg-blue-950/50 text-blue-300">
-              キャンセル
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => clearChatHistory.mutate()}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              クリア
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Main chat container with auto-scroll */}
       <div className="flex-1 overflow-y-auto overscroll-none">
