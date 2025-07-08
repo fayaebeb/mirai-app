@@ -411,12 +411,11 @@ export default function HomePage() {
     if (activeTab === "chat") {
       return (
         <motion.div
-          className=""
+          className="h-full"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
         >
-          <div className="">
             <ChatInterface
               input={input}
               setInput={setInput}
@@ -426,7 +425,6 @@ export default function HomePage() {
               useWeb={useWeb}
               useDb={useDb}
             />
-          </div>
         </motion.div>
 
       );
@@ -565,7 +563,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="relative flex flex-col flex-1">
+    <div className="relative flex flex-col h-full">
       {/* Fixed position chat input for chat tab only */}
       {/* {activeTab === "chat" && (
 
@@ -643,7 +641,7 @@ export default function HomePage() {
 
 
       {/* Main content section */}
-      <main className="flex-1 overflow-auto p-4">
+      <main className="h-full  overflow-y-auto ">
         {renderMainContent()}
       </main>
 
@@ -667,7 +665,7 @@ export default function HomePage() {
             }}
             // after entrance finishes, don’t ever re-use `initial` again
             onAnimationComplete={handleEnterComplete}
-            className="absolute bottom-0 md:bottom-4  inset-x-0 flex flex-col justify-center "
+            className="w-full h-fit flex items-center justify-center md:pb-2"
           >
             {currentAudioUrl && (
               <AudioPlayer

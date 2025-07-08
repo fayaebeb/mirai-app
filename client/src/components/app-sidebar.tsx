@@ -90,6 +90,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
   const [chatIdToDelete, setChatIdToDelete] = React.useState<number | null>(null);
   const [chatIdBeingDeleted, setChatIdBeingDeleted] = React.useState<number | null>(null);
+  const CHAT_ACTIVE_KEY_PREFIX = "chat_active_";
+
+  const storageKey = `${CHAT_ACTIVE_KEY_PREFIX}${user?.id}`;
 
   const confirmDelete = () => {
     if (chatIdToDelete !== null) {
@@ -105,11 +108,41 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       }, 200);
     }
   };
+
+  React.useEffect(() => {
+    if (user?.id && activeChatId !== null) {
+      const expiration = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+      const data = JSON.stringify({ id: activeChatId, expiresAt: expiration });
+      localStorage.setItem(storageKey, data);
+    }
+  }, [user, activeChatId]);
+
+  React.useEffect(() => {
+    if (user?.id) {
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          const isExpired = Date.now() > parsed.expiresAt;
+
+          if (!isExpired) {
+            setActiveChatId(parsed.id);
+            return;
+          }
+        } catch {
+          // corrupted or invalid format
+          setActiveChatId(null)
+        }
+      }
+      setActiveChatId(null);
+    }
+  }, [user, chats, storageKey]);
+
   return (
     <>
       <Sidebar
         collapsible="icon"
-        className="bg-black border-black hover:border-noble-black-900 text-noble-black-100 "
+        className="bg-black border-black hover:border-noble-black-900 text-noble-black-100 z-50"
         {...props}
       >
         {/* Outer wrapper: full-height flex column */}

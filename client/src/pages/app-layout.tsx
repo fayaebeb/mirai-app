@@ -9,7 +9,7 @@ import { useRecoilValue, useRecoilState } from "recoil";
 import { activeChatIdAtom } from "@/states/chatStates";
 import { sidePanelStateAtom } from "@/states/settingsState";
 import { motion } from "framer-motion";
-import { Home, MessageSquare, PlusIcon } from "lucide-react";
+import { Home, MessageSquare, PlusIcon, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCreateChat } from "@/hooks/use-chat";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -84,13 +84,14 @@ export default function AppLayout() {
         <SidebarProvider >
             <AppSidebar />
             <SidebarInset>
-                <div className="flex flex-1 flex-col gap-4 p-4 bg-black relative  min-h-screen">
-                    <div className="flex flex-col h-full bg-noble-black-900 rounded-2xl relative">
+                <div className="flex flex-1 flex-col gap-4 p-4 bg-black relative  max-h-screen h-screen">
+                    <div className="flex flex-col min-h-full max-h-full bg-noble-black-900 rounded-2xl relative overflow-hidden">
+                        <SidebarTrigger className="rounded-full p-5 bg-black text-noble-black-100 absolute left-2 top-2 md:hidden z-50" />
+
                         {activeChatId ?
                             <HomePage />
                             :
                             <div className="h-full w-full rounded-md flex md:items-center md:justify-center  antialiased  overflow-hidden relative">
-                                <SidebarTrigger className="rounded-full p-5 bg-black text-noble-black-100 absolute left-2 top-2 md:hidden z-20"/>
                                 <Spotlight />
                                 <div className=" p-4 max-w-7xl  mx-auto relative z-10  w-full pt-20 md:pt-0 space-y-4">
                                     {/* <h1 className="text-4xl md:text-7xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400 bg-opacity-50">
@@ -140,6 +141,117 @@ export default function AppLayout() {
                                     </div>
                                 </div>
                             </div>
+                            // <div className=" flex flex-col items-center justify-center h-full px-40">
+                            //     <Spotlight />
+                            //     <motion.div
+                            //         initial={{ opacity: 0, y: 20 }}
+                            //         animate={{ opacity: 1, y: 0 }}
+                            //         transition={{ duration: 0.5 }}
+                            //         className="flex flex-col space-y-4 items-center justify-center"
+                            //     >
+                            //         <div className="">
+                            //             <motion.div
+                            //                 className=""
+                            //                 animate={{
+                            //                     scale: [1, 1.1, 1],
+                            //                     opacity: [0.3, 0.5, 0.3],
+                            //                     rotate: 360,
+                            //                 }}
+                            //                 transition={{
+                            //                     duration: 4,
+                            //                     repeat: Infinity,
+                            //                     ease: "linear",
+                            //                 }}
+                            //             />
+                            //             <Sparkles className="h-10 w-10 text-black" />
+                            //         </div>
+
+                            //         <h3 className="text-2xl md:text-5xl font-medium mb-2 text-noble-black-100">
+                            //             対話を始めましょう
+                            //         </h3>
+                            //         <p className="text-noble-black-300/80 max-w-xs mx-auto text-sm text-center">
+                            //             下のテキストボックスにメッセージを入力して、
+                            //             <br />
+                            //             ミライと対話を開始してください
+                            //         </p>
+
+                            //         {/* New: Quick start suggestions */}
+                            //         <div className="mt-5 space-y-2">
+                            //             <p className="text-xs text-black font-semibold text-center">
+                            //                 試してみる:
+                            //             </p>
+                            //             <div className="grid md:grid-cols-4 gap-5">
+
+                            //                 <motion.button
+
+                            //                     whileHover={{ scale: 1.05 }}
+                            //                     whileTap={{ scale: 0.95 }}
+                            //                     className="w-full bg-black border z-20 border-noble-black-100/20 hover:bg-gradient-to-br   text-noble-black-400 rounded-lg shadow-md text-sm p-5"
+                            //                 >
+                            //                     ボイスモッド
+                            //                 </motion.button>
+                            //                 <motion.button
+
+                            //                     whileHover={{ scale: 1.05 }}
+                            //                     whileTap={{ scale: 0.95 }}
+                            //                     className="w-full bg-black border z-20 border-noble-black-100/20 hover:bg-gradient-to-br   text-noble-black-400 rounded-lg shadow-md text-sm p-5"
+                            //                 >
+                            //                     メモ
+                            //                 </motion.button>
+                            //                 <motion.button  
+
+                            //                     whileHover={{ scale: 1.05 }}
+                            //                     whileTap={{ scale: 0.95 }}
+                            //                     className="w-full bg-black border z-20 border-noble-black-100/20 hover:bg-gradient-to-br   text-noble-black-400 rounded-lg shadow-md text-sm p-5"
+                            //                 >
+                            //                     マインドマップ
+                            //                 </motion.button>
+                            //                 <motion.button  
+
+                            //                     whileHover={{ scale: 1.05 }}
+                            //                     whileTap={{ scale: 0.95 }}
+                            //                     className="w-full bg-black border z-20 border-noble-black-100/20 hover:bg-gradient-to-br   text-noble-black-400 rounded-lg shadow-md text-sm p-5"
+                            //                 >
+                            //                     ゴール
+                            //                 </motion.button>
+
+                            //             </div>
+                            //         </div>
+                            //         <div className="mt-5 space-y-2">
+                            //             <p className="text-xs text-black font-semibold text-center">
+                            //                 試してみる:
+                            //             </p>
+                            //             <div className="grid md:grid-cols-3 gap-5">
+
+                            //                 <motion.button
+
+                            //                     whileHover={{ scale: 1.05 }}
+                            //                     whileTap={{ scale: 0.95 }}
+                            //                     className="w-full bg-black border z-20 border-noble-black-100/20 hover:bg-gradient-to-br   text-noble-black-400 rounded-lg shadow-md text-sm p-5"
+                            //                 >
+                            //                     Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, corporis ut laboriosam, distinctio suscipit cum autem sint eveniet doloremque corrupti harum placeat rem, sed repudiandae nostrum nemo sequi modi incidunt!
+                            //                 </motion.button>
+                            //                 <motion.button
+
+                            //                     whileHover={{ scale: 1.05 }}
+                            //                     whileTap={{ scale: 0.95 }}
+                            //                     className="w-full bg-black border z-20 border-noble-black-100/20 hover:bg-gradient-to-br   text-noble-black-400 rounded-lg shadow-md text-sm p-5"
+                            //                 >
+                            //                     Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, corporis ut laboriosam, distinctio suscipit cum autem sint eveniet doloremque corrupti harum placeat rem, sed repudiandae nostrum nemo sequi modi incidunt!
+                            //                 </motion.button>
+                            //                 <motion.button
+
+                            //                     whileHover={{ scale: 1.05 }}
+                            //                     whileTap={{ scale: 0.95 }}
+                            //                     className="w-full bg-black border z-20 border-noble-black-100/20 hover:bg-gradient-to-br   text-noble-black-400 rounded-lg shadow-md text-sm p-5"
+                            //                 >
+                            //                     Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, corporis ut laboriosam, distinctio suscipit cum autem sint eveniet doloremque corrupti harum placeat rem, sed repudiandae nostrum nemo sequi modi incidunt!
+                            //                 </motion.button>
+
+                            //             </div>
+                            //         </div>
+                            //     </motion.div>
+                            // </div>
                         }
                     </div>
                 </div>

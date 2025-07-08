@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Heart, Lightbulb, FileText } from "lucide-react";
+import { Sparkles, Heart, Lightbulb, FileText, Trash2, Download } from "lucide-react";
 import { Message } from "@shared/schema";
 import { nanoid } from "nanoid";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -33,6 +33,9 @@ import { Badge } from "@/components/ui/badge";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { currentAudioUrlAtom, isPlayingAudioAtom, isProcessingVoiceAtom, playingMessageIdAtom } from "@/states/voicePlayerStates";
 import { activeChatIdAtom } from "@/states/chatStates";
+import { Spotlight } from "./ui/spotlight";
+import { useSidebar } from "./ui/sidebar";
+import { ChatPDFExport } from "./chat-pdf-export";
 
 // Define a type for optimistic messages that uses string IDs instead of numbers
 type OptimisticMessage = {
@@ -374,7 +377,7 @@ export const ChatInterface = ({
 
   // Scroll to bottom when messages change
   useEffect(() => {
-    if (messageEndRef.current) {
+    if (messageEndRef.current && messages.length !== 0) {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages, messageEndRef]);
@@ -568,182 +571,269 @@ export const ChatInterface = ({
     }
   };
 
+  const { open } = useSidebar()
+
   return (
-    <div className="h-full">
-      {/* Main chat container with auto-scroll */}
 
-      <ScrollArea
-        className=""
-        ref={scrollAreaRef}
-      >
-        <div className="">
-          {messages.length === 0 ? (
-            <div className="">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className=""
-              >
-                <div className="">
-                  <motion.div
-                    className=""
-                    animate={{
-                      scale: [1, 1.1, 1],
-                      opacity: [0.3, 0.5, 0.3],
-                      rotate: 360,
-                    }}
-                    transition={{
-                      duration: 4,
-                      repeat: Infinity,
-                      ease: "linear",
-                    }}
-                  />
-                  <Sparkles className="h-10 w-10 text-blue-400" />
-                </div>
 
-                <h3 className="text-lg font-medium mb-2 text-blue-100">
-                  対話を始めましょう
-                </h3>
-                <p className="text-blue-300/80 max-w-xs mx-auto text-sm">
-                  下のテキストボックスにメッセージを入力して、
-                  <br />
-                  ミライと対話を開始してください
+    <div
+      style={{
+        "--scroll-area-track-bg": "transparent",
+        "--scroll-area-thumb-bg": "transparent",
+        "--scroll-area-thumb-hover-bg": "transparent",
+      } as React.CSSProperties}
+      className="h-full" >
+      {
+        messages.length === 0 ? (
+
+          <div className=" flex flex-col items-center justify-center h-full px-4   md:py-0 md:px-40">
+            <Spotlight />
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="flex flex-col space-y-4 items-center justify-center h-full "
+            >
+              <div className="">
+                <motion.div
+                  className=""
+                  animate={{
+                    scale: [1, 1.1, 1],
+                    opacity: [0.3, 0.5, 0.3],
+                    rotate: 360,
+                  }}
+                  transition={{
+                    duration: 4,
+                    repeat: Infinity,
+                    ease: "linear",
+                  }}
+                />
+                <Sparkles className="h-10 w-10 text-black" />
+              </div>
+
+              <h3 className="text-2xl md:text-5xl font-medium mb-2 text-noble-black-100">
+                対話を始めましょう
+              </h3>
+              <p className="text-noble-black-300/80 max-w-xs mx-auto text-sm text-center">
+                下のテキストボックスにメッセージを入力して、
+                <br />
+                ミライと対話を開始してください
+              </p>
+
+              {/* New: Quick start suggestions */}
+              <div className="mt-5 space-y-2">
+                <p className="text-xs text-black font-semibold text-center">
+                  プロジェクト:
                 </p>
+                <div className="hidden md:grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-5">
 
-                {/* New: Quick start suggestions */}
-                <div className="mt-5 space-y-2">
-                  <p className="text-xs text-blue-400 font-semibold">
-                    試してみる:
-                  </p>
-                  <div className="flex flex-wrap gap-2 justify-center">
-                    {promptCategories[0].prompts
-                      .slice(0, 3)
-                      .map((prompt, i) => (
-                        <motion.button
-                          key={i}
-                          onClick={() =>
-                            handleEmotionSelect(prompt.message || prompt.text)
-                          }
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="text-xs px-3 py-1.5 rounded-full bg-blue-900/30 text-blue-300 border border-blue-500/20 hover:bg-blue-800/40 transition-colors"
-                        >
-                          {prompt.text}
-                        </motion.button>
-                      ))}
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-          ) : (
-            // Enhanced with message grouping
-            groupedMessages.map((group: MessageGroup, groupIndex: number) => (
-              <div key={`group-${groupIndex}`} className="mb-3">
-                {/* Messages from the same sender grouped together */}
-                <div
-                  className={`flex flex-col ${group.sender === "user" ? "items-end" : "items-start"}`}
-                >
-                  {group.messages.map((message: Message, i: number) => {
-                    // Find the corresponding user message for bot messages to enable regeneration
-                    const lastUserMessageIndex = message.isBot
-                      ? messages.findIndex((m) => m.id === message.id) - 1
-                      : -1;
-                    const lastUserMessage =
-                      lastUserMessageIndex >= 0
-                        ? messages[lastUserMessageIndex]
-                        : null;
+                  <motion.button
 
-                    const handleRegenerateAnswer = () => {
-                      if (lastUserMessage?.content) {
-                        externalSendMessageMutation?.mutate({
-                          content: lastUserMessage.content,
-                          useWeb,
-                          useDb,
-                        });
-                      }
-                    };
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="w-full bg-black border  z-20 border-noble-black-100/20 hover:bg-gradient-to-br   text-noble-black-400 rounded-lg shadow-md text-sm  p-5"
+                  >
+                    ボイスモッド
+                  </motion.button>
+                  <motion.button
 
-                    // First message in a group shows the avatar
-                    const isFirstInGroup = i === 0;
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="w-full bg-black border z-20 border-noble-black-100/20 hover:bg-gradient-to-br   text-noble-black-400 rounded-lg shadow-md text-sm p-5"
+                  >
+                    メモ
+                  </motion.button>
+                  <motion.button
 
-                    return (
-                      <div
-                        className={`w-full max-w-full ${i > 0 ? "mt-1" : "mt-0"}`}
-                        key={
-                          typeof message.id === "string"
-                            ? message.id
-                            : `msg-${message.id}`
-                        }
-                      >
-                        <ChatMessage
-                          message={{
-                            ...message,
-                            onRegenerateAnswer: message.isBot
-                              ? handleRegenerateAnswer
-                              : undefined,
-                          }}
-                          isFirstInGroup={isFirstInGroup}
-                          isLastInGroup={i === group.messages.length - 1}
-                          isPlayingAudio={isPlayingAudio}
-                          playingMessageId={playingMessageId}
-                          onPlayAudio={playMessageAudio}
-                        />
-                      </div>
-                    );
-                  })}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="w-full bg-black border z-20 border-noble-black-100/20 hover:bg-gradient-to-br   text-noble-black-400 rounded-lg shadow-md text-sm p-5"
+                  >
+                    マインドマップ
+                  </motion.button>
+                  <motion.button
 
-                  {/* Timestamp shown once per group at the end */}
-                  {/*<div className={`text-[9px] text-blue-400/50 font-mono mt-1 ${group.sender === 'user' ? 'mr-2' : 'ml-2'}`}>
-                              {group.lastTimestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                            </div>*/}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="w-full bg-black border z-20 border-noble-black-100/20 hover:bg-gradient-to-br   text-noble-black-400 rounded-lg shadow-md text-sm p-5"
+                  >
+                    ゴール
+                  </motion.button>
 
-                  {/* Quick replies after bot messages */}
-                  {/* {group.sender === 'bot' && groupIndex === groupedMessages.length - 1 && (
-                            <motion.div 
-                              initial={{ opacity: 0, y: 5 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: 0.3, duration: 0.3 }}
-                              className="ml-10 mt-2 flex flex-wrap gap-2"
-                            >
-                              {quickReplies.map((reply, i) => (
-                                <motion.button
-                                  key={i}
-                                  onClick={() => handleQuickReplySelect(reply.text)}
-                                  whileHover={{ scale: 1.05 }}
-                                  whileTap={{ scale: 0.95 }}
-                                  className="text-xs px-2 py-1 rounded-full bg-blue-900/20 text-blue-400 border border-blue-500/20 hover:bg-blue-900/40 transition-colors flex items-center gap-1.5"
-                                >
-                                  {reply.icon}
-                                  <span>{reply.text}</span>
-                                </motion.button>
-                              ))}
-                            </motion.div>
-                          )}*/}
                 </div>
               </div>
-            ))
-          )}
-
-          {/* Enhanced loading state */}
-          {/* {externalSendMessageMutation?.isPending && (
-              <motion.div
-                className="flex justify-start pt-2 pb-4 pl-2"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2 }}
+              <div className="mt-5 space-y-2 w-full">
+                <p className="text-xs text-black font-semibold text-center">
+                  試してみる:
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-y-2 md:gap-y-0 md:gap-x-5">
+                  {promptCategories[0].prompts.slice(0, 3).map((prompt, i) => (
+                    <motion.button
+                      key={i}
+                      onClick={() => handleEmotionSelect(prompt.message || prompt.text)}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="
+        box-border        
+        min-w-0           
+        w-full            
+        bg-black border z-20 border-noble-black-100/20
+        hover:bg-gradient-to-br text-noble-black-400
+        rounded-lg shadow-md text-sm
+        p-2 md:p-5        
+        break-words      
+      "
+                    >
+                      {prompt.text}
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        ) : (
+          // Enhanced with message grouping
+          groupedMessages.map((group: MessageGroup, groupIndex: number) => (
+            <div key={`group-${groupIndex}`} className="mb-3 overflow-y-auto">
+              {/* Messages from the same sender grouped together */}
+              <div
+                className={`flex flex-col ${group.sender === "user" ? "items-end" : "items-start"}`}
               >
-                <ChatLoadingIndicator
-                  variant="character"
-                  message="ミライが処理中..."
-                />
-              </motion.div>
-            )} */}
-          <div ref={messageEndRef} />
-        </div>
-      </ScrollArea>
-    </div>
+                {group.messages.map((message: Message, i: number) => {
+                  // Find the corresponding user message for bot messages to enable regeneration
+                  const lastUserMessageIndex = message.isBot
+                    ? messages.findIndex((m) => m.id === message.id) - 1
+                    : -1;
+                  const lastUserMessage =
+                    lastUserMessageIndex >= 0
+                      ? messages[lastUserMessageIndex]
+                      : null;
 
+                  const handleRegenerateAnswer = () => {
+                    if (lastUserMessage?.content) {
+                      externalSendMessageMutation?.mutate({
+                        content: lastUserMessage.content,
+                        useWeb,
+                        useDb,
+                      });
+                    }
+                  };
+
+                  // First message in a group shows the avatar
+                  const isFirstInGroup = i === 0;
+
+                  return (
+                    <div
+                      className={`w-full max-w-full ${i > 0 ? "mt-1" : "mt-10"}`}
+                      key={
+                        typeof message.id === "string"
+                          ? message.id
+                          : `msg-${message.id}`
+                      }
+                    >
+                      <ChatMessage
+                        message={{
+                          ...message,
+                          onRegenerateAnswer: message.isBot
+                            ? handleRegenerateAnswer
+                            : undefined,
+                        }}
+                        isFirstInGroup={isFirstInGroup}
+                        isLastInGroup={i === group.messages.length - 1}
+                        isPlayingAudio={isPlayingAudio}
+                        playingMessageId={playingMessageId}
+                        onPlayAudio={playMessageAudio}
+                      />
+                    </div>
+                  );
+                })}
+
+                {/* Timestamp shown once per group at the end */}
+                {/* <div className={`text-[9px] text-noble-black-100 font-mono mt-1 ${group.sender === 'user' ? 'mr-2' : 'ml-2'}`}>
+                  {group.lastTimestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </div> */}
+
+                {/* Quick replies after bot messages */}
+                <div className="relative">
+                  {group.sender === "bot" &&
+                    groupIndex === groupedMessages.length - 1 && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 5, x: open ? 72 : 16 }}
+                        animate={{ opacity: 1, y: 0, x: open ? 72 : 16 }}
+                        exit={{ opacity: 0, y: 5, x: open ? 72 : 16 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                        className="fixed top-6 left-0 right-0 z-50 flex justify-center px-4 space-x-2 "
+                      >
+
+                        {messages.length > 0 && (
+                          <Button
+                            variant="ghost"
+                            onClick={handleClearChat}
+                            className="text-noble-black-100 hover:text-noble-black-100 bg-black border border-noble-black-900 shadow-black shadow-2xl hover:bg-black/30 flex items-center gap-1 px-2 py-0.5 sm:px-3 sm:py-0.5 rounded-full"
+                          >
+                            <Trash2 className="h-4 w-4 text-noble-black-100" />
+                            <span className="hidden sm:inline">チャット履歴をクリア</span>
+                          </Button>
+                        )}
+
+
+                        {quickReplies.map((reply, i) => (
+                          <motion.button
+                            key={i}
+                            onClick={() => handleQuickReplySelect(reply.text)}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="flex items-center shadow-black shadow-2xl space-x-1.5 rounded-full border border-noble-black-900 bg-white px-3 py-0.5 text-xs font-medium text-noble-black-900 hover:bg-black hover:text-white transition-colors"
+                          >
+                            {reply.icon}
+                            <span className="hidden md:flex">{reply.text}</span>
+                          </motion.button>
+                        ))}
+
+
+                        {messages.length > 0 && (
+                          <ChatPDFExport
+                            messages={messages}
+                            triggerContent={
+                              <>
+                                <Download className="h-2 w-2 sm:h-3 sm:w-3" />
+                                <span className="hidden sm:flex">エクスポート</span>
+                              </>
+                            }
+                            triggerClassName="
+                      
+                    "
+                          />
+                        )}
+
+                      </motion.div>
+                    )}
+                </div>
+
+
+
+              </div>
+            </div>
+          ))
+        )
+      }
+
+      {/* Enhanced loading state */}
+      {externalSendMessageMutation?.isPending && (
+        <motion.div
+          className="flex justify-start pt-2 pb-4 pl-2"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <ChatLoadingIndicator
+            variant="character"
+            message="ミライが処理中..."
+          />
+        </motion.div>
+      )}
+      <div ref={messageEndRef} />
+    </div>
 
   );
 };

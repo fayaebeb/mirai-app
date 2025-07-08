@@ -66,22 +66,22 @@ const MessageSection = ({
     <Collapsible
       open={isOpen}
       onOpenChange={setIsOpen}
-      className="mt-2 rounded-md border border-blue-400/20 overflow-hidden transition-all duration-200"
+      className="mt-2 rounded-md border border-noble-black-400/20 overflow-hidden transition-all duration-200"
     >
       <CollapsibleTrigger asChild>
         <Button
           variant="ghost"
-          className="w-full flex items-center justify-between py-1 px-1.5 hover:bg-slate-800/50 transition-colors"
+          className="w-full flex items-center justify-between py-1 px-1.5 hover:bg-noble-black-900/50 transition-colors border bg-black border-noble-black-900"
         >
           <div className="flex items-center gap-2">
-            <Icon className="h-3 w-3 text-blue-400" />
-            <span className="text-xs font-mono text-blue-300">{title}</span>
+            <Icon className="h-3 w-3 text-noble-black-400" />
+            <span className="text-xs font-mono text-noble-black-300">{title}</span>
           </div>
           <motion.div
             animate={{ rotate: isOpen ? 180 : 0 }}
             transition={{ duration: 0.2 }}
           >
-            <ChevronDown className="h-3 w-3 text-blue-400" />
+            <ChevronDown className="h-3 w-3 text-noble-black-400" />
           </motion.div>
         </Button>
       </CollapsibleTrigger>
@@ -90,27 +90,27 @@ const MessageSection = ({
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
-          className="p-2 bg-slate-900/50 backdrop-blur-sm"
+          className="p-2 bg-black backdrop-blur-sm "
         >
-          <div className="prose prose-xs prose-invert max-w-none w-full text-[10px] sm:text-xs">
+          <div className="prose prose-xs prose-invert max-w-none w-full text-[10px] sm:text-xs text-noble-black-100">
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={{
                 p: ({ node, ...props }) => (
-                  <p className="text-white my-1.5" {...props} />
+                  <p className="text-noble-black-100 my-1.5" {...props} />
                 ),
                 table: ({ node, ...props }) => (
-                  <div className="overflow-x-auto w-full mx-auto pb-1 relative">
+                  <div className="overflow-x-auto w-full mx-auto pb-1 relative text-noble-black-100">
                     <div>
-                      <table className="text-[10px] sm:text-[11px] border-collapse table-auto border-spacing-0" {...props} />
+                      <table className="text-[10px] sm:text-[11px] border-collapse table-auto border-spacing-0 text-noble-black-100" {...props} />
                     </div>
                   </div>
                 ),
                 td: ({ node, ...props }) => (
-                  <td className="border border-blue-400/30 px-1 py-0.5 sm:px-2 sm:py-1 break-words whitespace-normal min-w-[50px] max-w-[150px]" {...props} />
+                  <td className="border border-noble-black-400/30 px-1 py-0.5 sm:px-2 sm:py-1 break-words whitespace-normal min-w-[50px] max-w-[150px] text-noble-black-100" {...props} />
                 ),
                 th: ({ node, ...props }) => (
-                  <th className="border border-blue-400/50 bg-slate-800 px-1 py-0.5 sm:px-2 sm:py-1 break-words whitespace-normal min-w-[50px] max-w-[150px]" {...props} />
+                  <th className="border border-noble-black-400/50 bg-noble-black-900 px-1 py-0.5 sm:px-2 sm:py-1 break-words whitespace-normal min-w-[50px] max-w-[150px] text-noble-black-100" {...props} />
                 ),
               }}
             >
@@ -234,7 +234,7 @@ export default function ChatMessage({
     >
       {showEmoji && message.isBot && (
         <motion.div
-          className="absolute text-blue-300 z-10"
+          className="absolute text-noble-black-300 z-10"
           style={{
             left: message.isBot ? "2.5rem" : "auto",
             right: message.isBot ? "auto" : "2.5rem",
@@ -256,7 +256,7 @@ export default function ChatMessage({
 
       {message.isBot && decoration && isFirstInGroup && (
         <motion.div
-          className="absolute -top-2 sm:-top-3 -left-1 text-xs sm:text-sm text-blue-400"
+          className="absolute -top-2 sm:-top-3 -left-1 text-xs sm:text-sm text-noble-black-400"
           animate={{
             y: [0, -3, 0],
             opacity: [0.5, 1, 0.5],
@@ -274,12 +274,12 @@ export default function ChatMessage({
 
       {/* Only show avatar for bot messages at the start of a group */}
       {message.isBot && isFirstInGroup ? (
-        <Avatar className="hidden sm:flex flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 border border-blue-500/30 shadow-md bg-slate-950 mr-0.5">
+        <Avatar className="hidden sm:flex flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 border border-noble-black-500/30 shadow-md bg-black mr-0.5">
           <motion.div
             whileHover={{ scale: 1.05, rotate: [0, -5, 5, 0] }}
             transition={{ rotate: { duration: 0.5 } }}
           >
-            <div className="w-full h-full rounded-full flex items-center justify-center bg-gradient-to-br from-blue-900 to-slate-950 border border-blue-500/20">
+            <div className="w-full h-full rounded-full flex items-center justify-center bg-black border border-noble-black-500/20">
               <img
                 src="/images/mirai.png"
                 alt="AI Assistant"
@@ -301,19 +301,19 @@ export default function ChatMessage({
         onHoverStart={handleBotMessageHover}
         className={cn({
           // Bot message bubble takes full width on mobile, max 85% on sm+
-          "w-full sm:max-w-[85%] flex justify-start md:pl-4": message.isBot,
+          "px-2 w-full sm:max-w-[85%] flex justify-start  md:pb-0 md:pt-1 md:pr-0 md:pl-4 ": message.isBot,
 
           // User message stays constrained at all sizes
-          "w-auto max-w-[85%] ml-auto flex justify-end md:pr-4": !message.isBot,
+          "w-auto max-w-[85%] ml-auto flex justify-end p-2 md:pb-0 md:pt-1 md:pl-0 md:pr-4 ": !message.isBot,
         })}
       >
 
         <Card
           className={cn(
-            "px-3 py-1.5 sm:px-3.5 sm:py-2 text-[11px] sm:text-xs overflow-hidden",
+            "px-3 py-1.5 sm:px-3.5 sm:py-2 text-[11px] sm:text-xs overflow-hidden border-0",
             {
-              "bg-gradient-to-r from-blue-600 to-blue-700 text-white border border-blue-500/50 shadow-md hover:shadow-lg w-auto inline-block": !message.isBot,
-              "bg-slate-900/90 backdrop-blur-md text-white border border-blue-400/20 shadow-md hover:shadow-lg w-auto flex flex-col": message.isBot,
+              "bg-noble-black-100  text-noble-black-900  shadow-md hover:shadow-lg w-auto inline-block": !message.isBot,
+              "bg-black backdrop-blur-md text-noble-black-100  shadow-md hover:shadow-lg w-auto flex flex-col": message.isBot,
             }
           )}
           style={bubbleStyles}
@@ -333,7 +333,7 @@ export default function ChatMessage({
               />
               {/* Animated gradient line */}
               <motion.div
-                className="absolute h-[1px] bg-gradient-to-r from-transparent via-blue-400/40 to-transparent"
+                className="absolute h-[1px] bg-gradient-to-r from-transparent via-noble-black-400/40 to-transparent"
                 style={{ width: '150%', left: '-25%' }}
                 animate={{
                   top: ['0%', '100%', '0%'],
@@ -361,7 +361,7 @@ export default function ChatMessage({
                   remarkPlugins={[remarkGfm]}
                   components={{
                     p: ({ node, ...props }) => (
-                      <p className="text-white my-1.5" {...props} />
+                      <p className="text-noble-black-100 my-1.5" {...props} />
                     ),
                     table: ({ node, ...props }) => (
                       <div className="overflow-x-auto w-full mx-auto pb-1 relative">
@@ -371,10 +371,10 @@ export default function ChatMessage({
                       </div>
                     ),
                     td: ({ node, ...props }) => (
-                      <td className="border border-blue-400/30 px-1 py-0.5 sm:px-2 sm:py-1 break-words whitespace-normal min-w-[50px] max-w-[150px]" {...props} />
+                      <td className="border border-noble-black-400/30 px-1 py-0.5 sm:px-2 sm:py-1 break-words whitespace-normal min-w-[50px] max-w-[150px]" {...props} />
                     ),
                     th: ({ node, ...props }) => (
-                      <th className="border border-blue-400/50 bg-slate-800 px-1 py-0.5 sm:px-2 sm:py-1 break-words whitespace-normal min-w-[50px] max-w-[150px]" {...props} />
+                      <th className="border border-noble-black-400/50 bg-noble-black-900 px-1 py-0.5 sm:px-2 sm:py-1 break-words whitespace-normal min-w-[50px] max-w-[150px]" {...props} />
                     ),
                   }}
                 >
@@ -405,7 +405,7 @@ export default function ChatMessage({
                 remarkPlugins={[remarkGfm]}
                 components={{
                   p: ({ node, ...props }) => (
-                    <p className="text-white my-1.5" {...props} />
+                    <p className="text-noble-black-900 my-1.5" {...props} />
                   ),
                   table: ({ node, ...props }) => (
                     <div className="overflow-x-auto w-full mx-auto pb-1 relative">
@@ -415,10 +415,10 @@ export default function ChatMessage({
                     </div>
                   ),
                   td: ({ node, ...props }) => (
-                    <td className="border border-blue-400/30 px-1 py-0.5 sm:px-2 sm:py-1 break-words whitespace-normal min-w-[50px] max-w-[150px]" {...props} />
+                    <td className="border border-noble-black-400/30 px-1 py-0.5 sm:px-2 sm:py-1 break-words whitespace-normal min-w-[50px] max-w-[150px]" {...props} />
                   ),
                   th: ({ node, ...props }) => (
-                    <th className="border border-blue-400/50 bg-slate-800 px-1 py-0.5 sm:px-2 sm:py-1 break-words whitespace-normal min-w-[50px] max-w-[150px]" {...props} />
+                    <th className="border border-noble-black-400/50 bg-noble-black-900 px-1 py-0.5 sm:px-2 sm:py-1 break-words whitespace-normal min-w-[50px] max-w-[150px]" {...props} />
                   ),
                 }}
               >
@@ -427,7 +427,7 @@ export default function ChatMessage({
             )}
 
             <div id="highlighted-component-1" className="mt-2 flex items-center justify-between">
-              <div className="text-[9px] sm:text-[10px] text-gray-400">
+              <div className="text-[9px] sm:text-[10px] text-noble-black-400">
                 {/* {message.timestamp && new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} */}
 
                 {message.createdAt &&
@@ -452,7 +452,7 @@ export default function ChatMessage({
                   {isPlayingAudio && playingMessageId === message.id ? (
                     <span className="animate-pulse text-xs">■</span>
                   ) : (
-                    <Volume2 className="h-4 w-4 text-pink-500" />
+                    <Volume2 className="h-4 w-4 text-noble-black-100 hover:text-noble-black-900" />
                   )}
                 </Button>
               ) : null}
@@ -461,13 +461,13 @@ export default function ChatMessage({
             {/* Typing indicator */}
             {isTyping && (
               <motion.div
-                className="inline-flex items-center gap-1 text-blue-300 h-4 pl-1"
+                className="inline-flex items-center gap-1 text-noble-black-300 h-4 pl-1"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
               >
-                <div className="w-1 h-1 rounded-full bg-blue-400 animate-pulse" style={{ animationDelay: "0ms" }}></div>
-                <div className="w-1 h-1 rounded-full bg-blue-400 animate-pulse" style={{ animationDelay: "150ms" }}></div>
-                <div className="w-1 h-1 rounded-full bg-blue-400 animate-pulse" style={{ animationDelay: "300ms" }}></div>
+                <div className="w-1 h-1 rounded-full bg-noble-black-400 animate-pulse" style={{ animationDelay: "0ms" }}></div>
+                <div className="w-1 h-1 rounded-full bg-noble-black-400 animate-pulse" style={{ animationDelay: "150ms" }}></div>
+                <div className="w-1 h-1 rounded-full bg-noble-black-400 animate-pulse" style={{ animationDelay: "300ms" }}></div>
               </motion.div>
             )}
           </div>
@@ -480,7 +480,7 @@ export default function ChatMessage({
                   <>
                     <button
                       onClick={() => message.onRegenerateAnswer && message.onRegenerateAnswer()}
-                      className="text-[9px] sm:text-[10px] text-blue-400 hover:text-blue-300 flex items-center gap-1 opacity-60 hover:opacity-100 transition-all hover:scale-105"
+                      className="text-[9px] sm:text-[10px] text-noble-black-400 hover:text-blue-300 flex items-center gap-1 opacity-60 hover:opacity-100 transition-all hover:scale-105"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -503,7 +503,7 @@ export default function ChatMessage({
 
                     <button
                       onClick={handleCopy}
-                      className="text-[9px] sm:text-[10px] text-blue-400 hover:text-blue-300 flex items-center gap-1 opacity-60 hover:opacity-100 transition-all hover:scale-105"
+                      className="text-[9px] sm:text-[10px] text-noble-black-100 hover:text-blue-500 flex items-center gap-1 opacity-60 hover:opacity-100 transition-all hover:scale-105"
                     >
                       {copied ? (
                         <>
@@ -527,14 +527,14 @@ export default function ChatMessage({
               {message.isBot && (
                 <div className="flex gap-1 mr-1">
                   <motion.button
-                    className="text-blue-400/50 hover:text-blue-300 transition-colors text-[10px]"
+                    className="text-noble-black-100 hover:text-blue-500 transition-colors text-[10px]"
                     whileHover={{ scale: 1.2 }}
                     whileTap={{ scale: 0.9 }}
                   >
                     👍
                   </motion.button>
                   <motion.button
-                    className="text-blue-400/50 hover:text-blue-300 transition-colors text-[10px]"
+                    className="text-noble-black-100 hover:text-blue-500 transition-colors text-[10px]"
                     whileHover={{ scale: 1.2 }}
                     whileTap={{ scale: 0.9 }}
                   >

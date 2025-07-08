@@ -116,10 +116,10 @@ export const ChatInput = ({
   };
 
   return (
-    <div className="w-full  flex items-center justify-center relative">
+    <div className="w-full px-0.5 pb-0.5 md:pb-0 md:px-0 md:w-fit  flex items-center justify-center relative">
       <form
         onSubmit={handleSubmit}
-        className=" min-w-[340px] md:min-w-[40rem] flex flex-col gap-2 rounded-2xl border border-noble-black-800 shadow-md bg-black/90 backdrop-blur-md px-4 py-3"
+        className="  w-full md:min-w-[40rem] flex flex-col gap-2 rounded-2xl border border-noble-black-800 shadow-md bg-black/90 backdrop-blur-md px-4 py-3"
       >
         {/* Input Textarea */}
         <TextareaAutosize
