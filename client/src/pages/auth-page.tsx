@@ -160,7 +160,7 @@ export default function AuthPage() {
 
 
     return (
-      <div className="min-h-screen flex flex-col md:grid md:grid-cols-2 overflow-hidden">
+      <div className="min-h-screen flex flex-col md:grid md:grid-cols-2 overflow-hidden bg-noble-black-900">
         {/* Floating tech particles */}
         <AnimatePresence>
           {Array.from({ length: particleCount }).map((_, index) => (
@@ -197,7 +197,7 @@ export default function AuthPage() {
 
         {/* Bot Logo in Mobile View */}
         <motion.div
-          className="flex-1 md:flex-none flex flex-col items-center justify-center p-8 bg-gradient-to-b from-slate-900 to-blue-900 md:hidden"
+          className="flex-1 md:flex-none flex flex-col items-center justify-center p-8 bg-noble-black-900  md:hidden"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
@@ -210,7 +210,7 @@ export default function AuthPage() {
           <div className="relative flex items-center justify-center">
             {/* Your main text with shimmer */}
             <motion.span
-              className="text-3xl font-bold text-blue-300 font-mono relative z-10"
+              className="text-3xl font-bold text-noble-black-100 font-mono relative z-10"
               animate={{
                 textShadow: [
                   "0 0 3px rgba(59, 130, 246, 0.5)",
@@ -225,7 +225,7 @@ export default function AuthPage() {
 
             {/* Decorative rotating ring */}
             <motion.div
-              className="absolute inset-0 rounded-full border-2 border-blue-500/30 border-t-blue-500/80 shadow-lg shadow-blue-500/20"
+              className="absolute inset-0 rounded-full border-2 border-noble-black-900 border-t-black shadow-lg shadow-black"
               animate={{ rotate: 360 }}
               transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
             />
@@ -234,7 +234,7 @@ export default function AuthPage() {
 
         {/* Authentication Card */}
         <motion.div
-          className="flex-1 md:flex-none flex flex-col items-center justify-center p-8 bg-gradient-to-b from-slate-900 to-blue-900"
+          className="flex-1 md:flex-none flex flex-col items-center justify-center p-8 bg-black rounded-t-2xl md:rounded-r-2xl"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.2 }}
@@ -253,16 +253,16 @@ export default function AuthPage() {
                 transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
               >
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="absolute w-full h-full rounded-full border-2 border-blue-400/30 border-t-blue-400" />
+                  <div className="absolute w-full h-full rounded-full border-2 border-noble-black-400 border-t-noble-black-800" />
                 </div>
                 <div className="absolute inset-2 flex items-center justify-center">
-                  <div className="absolute w-full h-full rounded-full border-2 border-blue-500/30 border-l-blue-500" />
+                  <div className="absolute w-full h-full rounded-full border-2 border-noble-black-900 border-t-noble-black-300" />
                 </div>
                 <div className="absolute inset-4 flex items-center justify-center">
-                  <div className="absolute w-full h-full rounded-full border-2 border-blue-600/30 border-r-blue-600" />
+                  <div className="absolute w-full h-full rounded-full border-2 border-noble-black-400 border-b-noble-black-900" />
                 </div>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <Server size={30} className="text-blue-400" />
+                  <Server size={30} className="text-noble-black-100" />
                 </div>
               </motion.div>
             </motion.div>
@@ -280,17 +280,17 @@ export default function AuthPage() {
             }}
             className="w-full max-w-md"
           >
-            <Card className="p-8 bg-slate-800/90 backdrop-blur-sm border border-blue-500/20 shadow-lg rounded-xl">
+            <Card className="p-8 bg-noble-black-900 backdrop-blur-sm border border-noble-black-900 shadow-lg rounded-xl">
               <div className="flex items-center justify-between mb-6">
                 <motion.h1
-                  className="text-2xl font-bold text-blue-400 font-mono"
+                  className="text-2xl font-bold text-noble-black-100 font-mono"
                   animate={{ scale: [1, 1.03, 1] }}
                   transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
                 >
                   {isLogin ? "ログイン" : "新規アカウント"}
                 </motion.h1>
                 <motion.div
-                  className="text-2xl text-blue-300"
+                  className="text-2xl text-noble-black-100"
                   animate={{ rotate: [0, 10, -10, 0] }}
                   transition={{ duration: 5, repeat: Infinity, repeatType: "reverse" }}
                 >
@@ -310,14 +310,14 @@ export default function AuthPage() {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-blue-300 flex items-center gap-1">
+                          <FormLabel className="text-noble-black-100 flex items-center gap-1">
                             <Database className="h-3 w-3" /> メールアドレス
                           </FormLabel>
                           <FormControl>
                             <Input
                               type="email"
                               {...field}
-                              className="border-blue-500/30 focus:border-blue-400 bg-slate-900/80 backdrop-blur-sm text-white"
+                              className="border-noble-black-900 focus:border-black bg-black backdrop-blur-sm text-noble-black-100 outline-none active:outline-none focus:outline-none border-transparent focus:border-transparent focus:ring-0"
                             />
                           </FormControl>
                           <FormMessage className="text-red-400" />
@@ -336,7 +336,7 @@ export default function AuthPage() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-blue-300 flex items-center gap-1">
+                          <FormLabel className="text-noble-black-100 flex items-center gap-1">
                             <Key className="h-3 w-3" /> パスワード
                           </FormLabel>
                           <FormControl>
@@ -345,7 +345,7 @@ export default function AuthPage() {
                               <Input
                                 type={showPassword ? "text" : "password"}
                                 {...field}
-                                className="border-blue-500/30 focus:border-blue-400 bg-slate-900/80 backdrop-blur-sm text-white"
+                                className="border-noble-black-900 focus:border-black bg-black backdrop-blur-sm text-noble-black-100 outline-none active:outline-none focus:outline-none border-transparent focus:border-transparent focus:ring-0"
                               />
                               <button
                                 type="button"
@@ -388,17 +388,17 @@ export default function AuthPage() {
                         name="confirmPassword"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-blue-700">パスワード（確認）</FormLabel>
+                            <FormLabel className="text-noble-black-100">パスワード（確認）</FormLabel>
                             <div className="relative">
                               <Input
                                 type={showConfirmPassword ? "text" : "password"}
                                 {...field}
-                                className="border-blue-500/30 focus:border-blue-400 bg-slate-900/80 backdrop-blur-sm text-white"
+                                className="border-noble-black-900 focus:border-black bg-black backdrop-blur-sm text-noble-black-100 outline-none active:outline-none focus:outline-none border-transparent focus:border-transparent focus:ring-0"
                               />
                               <button
                                 type="button"
                                 onClick={() => setShowConfirmPassword(prev => !prev)}
-                                className="absolute inset-y-0 right-2 flex items-center text-blue-600"
+                                className="absolute inset-y-0 right-2 flex items-center text-noble-black-100"
                               >
                                 {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                               </button>
@@ -414,14 +414,14 @@ export default function AuthPage() {
                         name="inviteToken"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-blue-700 flex items-center gap-1">
+                            <FormLabel className="text-noble-black-100 flex items-center gap-1">
                               <Ticket className="h-3 w-3" /> 招待トークン（任意）
                             </FormLabel>
                             <FormControl>
                               <Input
                                 type="text"
                                 {...field}
-                                className="border-blue-500/30 focus:border-blue-400 bg-slate-900/80 backdrop-blur-sm text-white"
+                                className="border-noble-black-900 focus:border-black bg-black backdrop-blur-sm text-noble-black-100 outline-none active:outline-none focus:outline-none border-transparent focus:border-transparent focus:ring-0"
                               />
                             </FormControl>
                             <FormMessage className="text-red-400" />
@@ -443,7 +443,7 @@ export default function AuthPage() {
                   >
                     <Button
                       type="submit"
-                      className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-md shadow-lg shadow-blue-700/30 relative"
+                      className="w-full bg-black  text-white font-medium rounded-md shadow-lg shadow-black relative"
                       disabled={loginMutation.isPending || registerMutation.isPending || !captcha}
                     >
                       {loginMutation.isPending || registerMutation.isPending ? (
@@ -456,14 +456,14 @@ export default function AuthPage() {
 
                       {/* Decorative elements on button */}
                       <motion.span
-                        className="absolute -top-1 -right-1 text-blue-300 pointer-events-none"
+                        className="absolute -top-1 -right-1 text-noble-black-100 pointer-events-none"
                         animate={{ rotate: 360, scale: [1, 1.2, 1] }}
                         transition={{ duration: 3, repeat: Infinity }}
                       >
                         <Zap size={14} />
                       </motion.span>
                       <motion.span
-                        className="absolute -bottom-1 -left-1 text-blue-300 pointer-events-none"
+                        className="absolute -bottom-1 -left-1 text-noble-black-100 pointer-events-none"
                         animate={{ rotate: -360, scale: [1, 1.2, 1] }}
                         transition={{ duration: 3, repeat: Infinity }}
                       >
@@ -483,7 +483,7 @@ export default function AuthPage() {
                 <Button
                   variant="link"
                   onClick={() => setIsLogin(!isLogin)}
-                  className="w-full text-sm text-blue-400 hover:text-blue-300"
+                  className="w-full text-sm text-noble-black-100 hover:text-noble-black-500"
                 >
                   {isLogin ? "アカウントが必要ですか？ サインアップ" : "すでにアカウントをお持ちですか？ ログイン"}
                 </Button>
@@ -495,7 +495,7 @@ export default function AuthPage() {
 
         {/* Branding Section (Hidden in Mobile) */}
         <motion.div
-          className="hidden md:flex flex-col justify-center items-center p-8 bg-gradient-to-b from-blue-900 to-slate-900 relative overflow-hidden"
+          className="hidden md:flex flex-col justify-center items-center p-8 bg-noble-black-900 relative overflow-hidden"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1 }}
@@ -504,7 +504,7 @@ export default function AuthPage() {
           {Array.from({ length: 6 }).map((_, index) => (
             <motion.div
               key={`deco-${index}`}
-              className="absolute text-blue-400/20 opacity-20 pointer-events-none"
+              className="absolute text-noble-black-100/30 opacity-20 pointer-events-none"
               style={{
                 top: `${Math.random() * 100}%`,
                 left: `${Math.random() * 100}%`,
@@ -539,30 +539,26 @@ export default function AuthPage() {
             {/* Animated tech logo */}
             <div className="absolute inset-0 flex items-center justify-center">
               <motion.div
-                className="absolute w-full h-full rounded-full border-4 border-blue-400/20 border-t-blue-500"
+                className="absolute w-full h-full rounded-full border-4 border-black/20 border-t-black"
                 animate={{ rotate: [0, 360] }}
                 transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
               />
               <motion.div
-                className="absolute w-3/4 h-3/4 rounded-full border-4 border-blue-500/20 border-l-blue-400"
+                className="absolute w-3/4 h-3/4 rounded-full border-4 border-noble-black-500/50 border-l-black"
                 animate={{ rotate: [360, 0] }}
                 transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
               />
               <motion.div
-                className="absolute w-1/2 h-1/2 rounded-full border-4 border-blue-600/20 border-r-blue-600"
+                className="absolute w-1/2 h-1/2 rounded-full border-4 border-noble-black-600/20 border-r-noble-black-600"
                 animate={{ rotate: [0, 360] }}
                 transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
               />
               <motion.div
-                className="text-6xl font-mono text-blue-400"
+                className="text-6xl font-mono text-noble-black-100"
                 animate={{
                   scale: [1, 1.1, 1],
                   opacity: [0.8, 1, 0.8],
-                  textShadow: [
-                    "0 0 5px rgba(59, 130, 246, 0.5)",
-                    "0 0 20px rgba(59, 130, 246, 0.8)",
-                    "0 0 5px rgba(59, 130, 246, 0.5)"
-                  ]
+                  
                 }}
                 transition={{ duration: 3, repeat: Infinity }}
               >
@@ -576,7 +572,7 @@ export default function AuthPage() {
           </motion.div>
 
           <motion.div
-            className="max-w-md text-center bg-slate-800/40 backdrop-blur-md p-6 rounded-xl border border-blue-500/20 shadow-lg z-10"
+            className="max-w-md text-center bg-black backdrop-blur-md p-6 rounded-xl border border-noble-black-800 shadow-lg z-10"
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.5, duration: 0.8 }}
@@ -587,10 +583,10 @@ export default function AuthPage() {
               transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
             >
 
-              <span className="text-2xl font-bold text-blue-300 font-mono">ミライ</span>
+              <span className="text-2xl font-bold text-noble-black-100 font-mono">ミライ</span>
             </motion.div>
             <motion.p
-              className="text-lg text-blue-200"
+              className="text-lg text-noble-black-500"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.8 }}
@@ -598,7 +594,7 @@ export default function AuthPage() {
               FSDのAIアシスタント
             </motion.p>
             <motion.p
-              className="text-sm text-blue-300 mt-2"
+              className="text-sm text-noble-black-500"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 1 }}
@@ -609,19 +605,19 @@ export default function AuthPage() {
 
           {/* Circuit-like pattern background */}
           <div className="absolute inset-0 z-0 opacity-10">
-            <div className="absolute top-1/4 left-1/4 w-1/2 h-px bg-blue-400" />
-            <div className="absolute top-1/2 left-1/6 w-2/3 h-px bg-blue-400" />
-            <div className="absolute top-3/4 left-1/3 w-1/3 h-px bg-blue-400" />
-            <div className="absolute top-1/6 left-1/2 w-px h-2/3 bg-blue-400" />
-            <div className="absolute top-1/4 left-2/3 w-px h-1/2 bg-blue-400" />
-            <div className="absolute top-1/3 left-1/3 w-px h-1/3 bg-blue-400" />
+            <div className="absolute top-1/4 left-1/4 w-1/2 h-px bg-black" />
+            <div className="absolute top-1/2 left-1/6 w-2/3 h-px bg-black" />
+            <div className="absolute top-3/4 left-1/3 w-1/3 h-px bg-black" />
+            <div className="absolute top-1/6 left-1/2 w-px h-2/3 bg-black" />
+            <div className="absolute top-1/4 left-2/3 w-px h-1/2 bg-black" />
+            <div className="absolute top-1/3 left-1/3 w-px h-1/3 bg-black" />
 
-            <div className="absolute top-1/4 left-1/4 w-2 h-2 rounded-full bg-blue-400" />
-            <div className="absolute top-1/2 left-1/6 w-2 h-2 rounded-full bg-blue-400" />
-            <div className="absolute top-3/4 left-1/3 w-2 h-2 rounded-full bg-blue-400" />
-            <div className="absolute top-1/6 left-1/2 w-2 h-2 rounded-full bg-blue-400" />
-            <div className="absolute top-1/4 left-2/3 w-2 h-2 rounded-full bg-blue-400" />
-            <div className="absolute top-1/3 left-1/3 w-2 h-2 rounded-full bg-blue-400" />
+            <div className="absolute top-1/4 left-1/4 w-2 h-2 rounded-full bg-black" />
+            <div className="absolute top-1/2 left-1/6 w-2 h-2 rounded-full bg-black" />
+            <div className="absolute top-3/4 left-1/3 w-2 h-2 rounded-full bg-black" />
+            <div className="absolute top-1/6 left-1/2 w-2 h-2 rounded-full bg-black" />
+            <div className="absolute top-1/4 left-2/3 w-2 h-2 rounded-full bg-black" />
+            <div className="absolute top-1/3 left-1/3 w-2 h-2 rounded-full bg-black" />
           </div>
         </motion.div>
       </div>

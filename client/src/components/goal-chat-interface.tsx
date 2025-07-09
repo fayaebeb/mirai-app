@@ -19,7 +19,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { 
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -44,7 +44,8 @@ type OptimisticMessage = {
   content: string;
   isBot: boolean;
   timestamp: Date;
-  sessionId: string;
+  chatId: number;
+  createdAt: Date;
 }
 
 // Array of prompts that users can quickly select
@@ -182,14 +183,14 @@ const EmotionButtons = ({ onSelect, onClose }: EmotionButtonsProps) => {
   return (
     <motion.div
       ref={containerRef}
-      className="bg-card shadow-lg rounded-xl border overflow-hidden w-full max-w-md"
+      className="bg-noble-black-900 border-noble-black-800 text-noble-black-100 shadow-lg rounded-xl border overflow-hidden w-full max-w-md"
       initial={{ y: 20, opacity: 0, scale: 0.95 }}
       animate={{ y: 0, opacity: 1, scale: 1 }}
       exit={{ y: 20, opacity: 0, scale: 0.9 }}
       transition={{ duration: 0.2 }}
     >
       {/* Category selector */}
-      <div className="flex gap-1 p-2 bg-muted/40 overflow-x-auto scrollbar-hide">
+      <div className="flex gap-1 p-2 bg-black border border-noble-black-800 overflow-x-auto scrollbar-hide">
         {promptCategories.map((category) => (
           <Button
             key={category.name}
@@ -206,12 +207,12 @@ const EmotionButtons = ({ onSelect, onClose }: EmotionButtonsProps) => {
       </div>
 
       {/* Prompt buttons */}
-      <div className="grid grid-cols-1 gap-1 p-2 max-h-60 overflow-y-auto">
+      <div className="grid grid-cols-1 gap-1 p-2 max-h-60 overflow-y-auto ">
         {selectedCategoryData.prompts.map((prompt, index) => (
           <motion.button
             type="button" // Prevents default submit behavior
             key={index}
-            className="flex flex-col items-start rounded-lg px-3 py-2 text-left hover:bg-accent transition-colors"
+            className="flex flex-col items-start rounded-lg px-3 py-2 text-left hover:bg-black transition-colors"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => {
@@ -241,7 +242,7 @@ export function GoalChatInterface() {
 
   // Fetch goal-specific messages
   const { data: messages = [], isLoading: isLoadingMessages } = useQuery<Message[]>({
-    queryKey: ['/api/goal-messages'],
+    queryKey: ['/api/goal-messages', 'messages'],
     enabled: !!user,
   });
 
@@ -289,7 +290,8 @@ export function GoalChatInterface() {
         content,
         isBot: false,
         timestamp: new Date(),
-        sessionId: "optimistic",
+        chatId: -1,
+        createdAt: new Date(),
       };
 
       setOptimisticMessages(prev => [...prev, optimisticUserMessage]);
@@ -302,28 +304,34 @@ export function GoalChatInterface() {
         userId: user?.id || 0,
         content: content,
         isBot: false,
-        timestamp: new Date(new Date(newBotMessage.timestamp).getTime() - 1000), // 1 second before bot response
-        sessionId: newBotMessage.sessionId,
+        createdAt: new Date(new Date(newBotMessage.createdAt!).getTime() - 1000),
+        chatId: newBotMessage.chatId,
       };
 
       // Remove our optimistic responses
       setOptimisticMessages([]);
 
       // Update the messages in the cache with both the user message and bot response
-      queryClient.setQueryData<Message[]>(['/api/goal-messages'], (oldMessages = []) => {
-        // Check if the user message already exists to avoid duplicates
-        const userMessageExists = oldMessages.some(m => 
-          !m.isBot && m.content === content && 
-          // Check if timestamps are close (within 5 seconds)
-          Math.abs(new Date(m.timestamp).getTime() - new Date().getTime()) < 5000
-        );
+      queryClient.setQueryData<Message[]>(
+        ['/api/goal-messages', 'messages'],                               // new query-key
+        (oldMessages = []) => {
+          // Avoid duplicate user messages (same content within 5 s)
+          const userMessageExists = oldMessages.some(m =>
+            !m.isBot &&
+            m.content === content &&
+            (() => {
+              const t = m.createdAt;
+              if (!t) return false;
+              const ms = t instanceof Date ? t.getTime() : new Date(t).getTime();
+              return Math.abs(ms - Date.now()) < 5000;
+            })()
+          );
 
-        if (userMessageExists) {
-          return [...oldMessages, newBotMessage];
-        } else {
-          return [...oldMessages, userMessage, newBotMessage];
+          return userMessageExists
+            ? [...oldMessages, newBotMessage]
+            : [...oldMessages, userMessage, newBotMessage];
         }
-      });
+      );
     },
     onError: (error) => {
       console.error("Failed to send message:", error);
@@ -337,19 +345,19 @@ export function GoalChatInterface() {
   });
 
   // Auto-scroll to the bottom when new messages arrive
-useEffect(() => {
-  if (scrollAreaRef.current) {
-    const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-    if (scrollContainer) {
-      setTimeout(() => {
-        scrollContainer.scrollTo({
-          top: scrollContainer.scrollHeight,
-          behavior: 'smooth',
-        });
-      }, 50); // short delay for new content layout
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollContainer) {
+        setTimeout(() => {
+          scrollContainer.scrollTo({
+            top: scrollContainer.scrollHeight,
+            behavior: 'smooth',
+          });
+        }, 50); // short delay for new content layout
+      }
     }
-  }
-}, [messages, optimisticMessages, sendMessage.isPending]);
+  }, [messages, optimisticMessages, sendMessage.isPending]);
 
   // Handle the insertion of prompt text
   const handleEmotionSelect = (text: string) => {
@@ -394,15 +402,15 @@ useEffect(() => {
 
   // All messages including optimistic ones
   const allMessages = [
-    ...(messages || []), 
+    ...(messages || []),
     ...optimisticMessages
   ].sort((a, b) => {
     // Sort by timestamp
-    return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+    return new Date(a.createdAt ?? 0).getTime() - new Date(b.createdAt ?? 0).getTime();
   });
 
   return (
-        <Card className="flex flex-col h-[calc(100vh-10rem)] md:h-full">
+    <Card className="flex flex-col h-full bg-black text-noble-black-100 border border-noble-black-900  md:h-full">
 
 
       <CardHeader className="py-2 px-4 flex-shrink-0">
@@ -418,13 +426,13 @@ useEffect(() => {
                 />
               </div>
               <span className="text-sm sm:text-base font-semibold">タスクアシスタント</span>
-              <Badge variant="outline" className="ml-1 bg-blue-500/10 text-xs py-0">ミライAI</Badge>
+              <Badge variant="outline" className="ml-1 bg-noble-black-100  text-xs py-0">ミライAI</Badge>
             </div>
 
             <div className="flex items-center gap-1">
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="text-xs h-6 w-6 sm:h-7 sm:w-auto px-0 sm:px-2 rounded-full sm:rounded-md"
                 onClick={() => setShowEmotions(true)}
               >
@@ -434,9 +442,9 @@ useEffect(() => {
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     className="text-xs h-6 w-6 sm:h-7 sm:w-auto px-0 sm:px-2 rounded-full sm:rounded-md"
                     disabled={!allMessages.length}
                   >
@@ -444,7 +452,7 @@ useEffect(() => {
                     <span className="hidden sm:inline ml-1">履歴削除</span>
                   </Button>
                 </AlertDialogTrigger>
-                  <AlertDialogContent className="mx-auto max-w-[90%] sm:max-w-md md:max-w-lg lg:max-w-xl rounded-xl p-6">
+                <AlertDialogContent className="mx-auto max-w-[90%] sm:max-w-md md:max-w-lg lg:max-w-xl rounded-xl p-6">
 
                   <AlertDialogHeader>
                     <AlertDialogTitle className="flex items-center gap-2">
@@ -457,7 +465,7 @@ useEffect(() => {
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                    <AlertDialogAction 
+                    <AlertDialogAction
                       onClick={() => clearChatHistoryMutation.mutate()}
                       className="bg-destructive hover:bg-destructive/90"
                       disabled={clearChatHistoryMutation.isPending}
@@ -473,19 +481,19 @@ useEffect(() => {
         </div>
       </CardHeader>
 
-        <CardContent className="flex flex-col flex-grow min-h-0">
+      <CardContent className="flex flex-col flex-grow min-h-0 bg-noble-black-900 border-x-2 p-0 border-black ">
 
-          <ScrollArea ref={scrollAreaRef} className="flex-grow min-h-0 overflow-y-auto">
+        <ScrollArea ref={scrollAreaRef} className="flex-grow min-h-0 overflow-y-auto ">
           {isLoadingMessages ? (
             <div className="flex h-full min-h-[200px] items-center justify-center">
               <ChatLoadingIndicator message="チャット履歴を読み込んでいます..." />
             </div>
           ) : allMessages.length === 0 ? (
-            <div className="flex flex-col h-full min-h-[200px] items-center justify-center text-center p-2 sm:p-4">
+            <div className="flex flex-col h-full min-h-[200px] items-center justify-center text-center p-2 sm:p-4 bg-black ">
               <div className="relative">
                 <motion.div
                   className="absolute inset-0 rounded-full border-2 border-blue-500/30"
-                  animate={{ 
+                  animate={{
                     scale: [1, 1.2, 1],
                     opacity: [0.7, 0.2, 0.7],
                     borderColor: ["rgba(59, 130, 246, 0.3)", "rgba(59, 130, 246, 0.1)", "rgba(59, 130, 246, 0.3)"]
@@ -505,9 +513,9 @@ useEffect(() => {
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-lg w-full mb-4">
-                <Button 
-                  variant="outline" 
-                  className="text-left h-auto py-2 sm:py-3 justify-start border-blue-500/20 hover:bg-blue-500/5"
+                <Button
+                  variant="outline"
+                  className="text-left h-auto py-2 sm:py-3 justify-start border-noble-black-900 hover:bg-noble-black-100 bg-noble-black-900 text-noble-black-100"
                   onClick={() => handleEmotionSelect("タスク達成のためのベストなアクションプランを教えてください。")}
                 >
                   <div className="flex items-start gap-2">
@@ -519,9 +527,9 @@ useEffect(() => {
                   </div>
                 </Button>
 
-                <Button 
-                  variant="outline" 
-                  className="text-left h-auto py-2 sm:py-3 justify-start border-blue-500/20 hover:bg-blue-500/5"
+                <Button
+                  variant="outline"
+                  className="text-left h-auto py-2 sm:py-3 justify-start border-noble-black-900 hover:bg-noble-black-100 bg-noble-black-900 text-noble-black-100"
                   onClick={() => handleEmotionSelect("タスク達成のモチベーションを維持する方法を教えてください。")}
                 >
                   <div className="flex items-start gap-2">
@@ -533,9 +541,9 @@ useEffect(() => {
                   </div>
                 </Button>
 
-                <Button 
-                  variant="outline" 
-                  className="text-left h-auto py-2 sm:py-3 justify-start border-blue-500/20 hover:bg-blue-500/5"
+                <Button
+                  variant="outline"
+                  className="text-left h-auto py-2 sm:py-3 justify-start border-noble-black-900 hover:bg-noble-black-100 bg-noble-black-900 text-noble-black-100"
                   onClick={() => handleEmotionSelect("SMARTタスクの設定方法について教えてください。")}
                 >
                   <div className="flex items-start gap-2">
@@ -547,9 +555,9 @@ useEffect(() => {
                   </div>
                 </Button>
 
-                <Button 
-                  variant="outline" 
-                  className="text-left h-auto py-2 sm:py-3 justify-start border-blue-500/20 hover:bg-blue-500/5"
+                <Button
+                  variant="outline"
+                  className="text-left h-auto py-2 sm:py-3 justify-start border-noble-black-900 hover:bg-noble-black-100 bg-noble-black-900 text-noble-black-100"
                   onClick={() => handleEmotionSelect("タスク達成を妨げる障害を克服する方法を教えてください。")}
                 >
                   <div className="flex items-start gap-2">
@@ -567,14 +575,14 @@ useEffect(() => {
               </p>
             </div>
           ) : (
-            <div className="space-y-3 sm:space-y-4 pb-4 min-h-[200px]">
-              {allMessages.map((message) => {
+            <div className="space-y-3 sm:space-y-4  min-h-[200px] p-4">
+              {allMessages.map((message, idx) => {
                 // Ensure id is treated as a number for the ChatMessage component
                 const messageForChat = {
                   ...message,
                   // Convert string id to number for optimistic messages
                   id: typeof message.id === 'string' ? parseInt(message.id.replace(/\D/g, '')) || -1 : message.id,
-                  onRegenerateAnswer: message.isBot 
+                  onRegenerateAnswer: message.isBot
                     ? () => { /* Implement regenerate functionality if needed */ }
                     : undefined
                 };
@@ -582,6 +590,11 @@ useEffect(() => {
                   <ChatMessage
                     key={message.id}
                     message={messageForChat}
+                    isFirstInGroup={idx === 0}
+                    isLastInGroup={idx === allMessages.length - 1}
+                    isPlayingAudio={false}
+                    playingMessageId={null}
+                    onPlayAudio={() => { }}
                   />
                 );
               })}
@@ -595,7 +608,7 @@ useEffect(() => {
         </ScrollArea>
       </CardContent>
 
-      <CardFooter className="p-2 sm:p-4 pt-2 flex-shrink-0 bg-slate-900/90 border-t border-blue-500/20 mt-auto">
+      <CardFooter className="p-2 sm:p-4 pt-2 flex-shrink-0 bg-black border-t border-noble-black-900 mt-auto rounded-2xl">
         <form onSubmit={handleSubmit} className="flex w-full gap-1 sm:gap-2 relative">
           <AnimatePresence>
             {showEmotions && (
@@ -612,7 +625,7 @@ useEffect(() => {
               value={messageText}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setMessageText(e.target.value)}
               disabled={sendMessage.isPending}
-              className="w-full pr-8 min-h-[36px] sm:min-h-[40px] max-h-[100px] sm:max-h-[200px] resize-none text-sm sm:text-base"
+              className="w-full pr-8 min-h-[36px] sm:min-h-[40px] max-h-[100px] sm:max-h-[200px] resize-none text-sm sm:text-base bg-noble-black-900 text-noble-black-100 outline-none focus:outline-none active:outline-none border border-noble-black-900"
               rows={1}
               onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
                 if (e.key === "Enter" && !e.shiftKey && !isMobile) {
@@ -630,7 +643,7 @@ useEffect(() => {
                 <TooltipTrigger asChild>
                   <motion.button
                     type="button"
-                    className="absolute right-2 top-2 text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 px-1.5 py-1 rounded-md hover:bg-accent/50"
+                    className="absolute right-2 top-1.5 text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 px-1.5 py-1 rounded-md hover:bg-accent/50"
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     onMouseDown={(e) => e.stopPropagation()}   // 🛠️ Add this
@@ -647,9 +660,9 @@ useEffect(() => {
             </TooltipProvider>
           </div>
 
-          <Button 
-            type="submit" 
-            size="icon" 
+          <Button
+            type="submit"
+            size="icon"
             disabled={!messageText.trim() || sendMessage.isPending}
           >
             <Send className="h-4 w-4" />

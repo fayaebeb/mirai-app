@@ -89,7 +89,7 @@ export default function FeedbackDialog({ open, onOpenChange }: FeedbackDialogPro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md mx-auto max-w-[95%] border border-blue-900/50 bg-slate-950/90 backdrop-blur-lg shadow-md p-6 rounded-xl ">
+      <DialogContent className="sm:max-w-md mx-auto max-w-[95%] border border-noble-black-900 bg-black backdrop-blur-lg shadow-md p-6 rounded-xl ">
         <DialogHeader>
           <DialogTitle className="text-white text-xl">フィードバックをお聞かせください</DialogTitle>
           <DialogDescription className="text-white">
@@ -100,7 +100,7 @@ export default function FeedbackDialog({ open, onOpenChange }: FeedbackDialogPro
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
           {/* Rating Stars */}
           <div className="space-y-2">
-            <Label htmlFor="rating" className="text-violet-500">評価</Label>
+            <Label htmlFor="rating" className="text-noble-black-100">評価</Label>
             <div className="flex space-x-1">
               {[1, 2, 3, 4, 5].map((value) => (
                 <Button
@@ -119,11 +119,11 @@ export default function FeedbackDialog({ open, onOpenChange }: FeedbackDialogPro
           
           {/* Comment Textarea */}
           <div className="space-y-2">
-            <Label htmlFor="comment" className="text-violet-500">コメント</Label>
+            <Label htmlFor="comment" className="text-noble-black-100">コメント</Label>
             <Textarea
               id="comment"
               placeholder="ご意見・ご感想をお聞かせください..."
-              className="min-h-[100px] border-blue-900/50 bg-slate-950 focus:border-violet-900/50 focus:ring-blue-900/50"
+              className="min-h-[100px] border-noble-black-900 bg-noble-black-900 text-noble-black-100 "
               value={comment}
               onChange={(e) => setComment(e.target.value)}
             />
@@ -134,14 +134,14 @@ export default function FeedbackDialog({ open, onOpenChange }: FeedbackDialogPro
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="mt-4 border-blue-900/50 bg-slate-950 font-medium rounded-xl shadow-md "
+              className="mt-4 border-noble-black-900 bg-noble-black-900 text-noble-black-100 font-medium rounded-xl shadow-md "
             >
               キャンセル
             </Button>
             <Button
               type="submit"
               disabled={feedbackMutation.isPending || (!comment && rating === null)}
-              className="mt-4 bg-gradient-to-r from-violet-400 to-violet-500 hover:from-violet-500 hover:to-violet-600 text-violet-900 hover:text-white font-medium rounded-xl shadow-md "
+              className="mt-4  bg-noble-black-100 text-noble-black-900 font-medium rounded-xl shadow-md "
             >
               送信
             </Button>

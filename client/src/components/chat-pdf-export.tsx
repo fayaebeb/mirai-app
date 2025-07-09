@@ -120,11 +120,11 @@ export interface ChatPDFExportProps {
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button
-              variant="outline" 
-              size="sm" 
+              variant="ghost" 
+             
               className={clsx( 
                 // your existing defaults 
-               "flex items-center gap-2 px-3 py-2 text-sm hover:bg-blue-50 hover:text-blue-600 transition-colors", 
+               "text-noble-black-100 hover:text-noble-black-900 bg-black border border-noble-black-900 shadow-black shadow-2xl hover:bg-noble-black-100 flex items-center gap-1 p-2 xl:px-3 xl:py-1 rounded-full", 
                 // **override** on mobile via the passed‐in prop 
                 triggerClassName 
               )} 

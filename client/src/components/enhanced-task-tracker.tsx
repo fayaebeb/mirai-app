@@ -5,9 +5,9 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
-import { 
-  Check, Plus, Target, Trash2, Calendar, Rocket, Award, Clock, 
-  TrendingUp, Zap, ArrowUpCircle, Edit2, Tag, AlertTriangle, 
+import {
+  Check, Plus, Target, Trash2, Calendar, Rocket, Award, Clock,
+  TrendingUp, Zap, ArrowUpCircle, Edit2, Tag, AlertTriangle,
   Filter, RefreshCw, ChevronDown, SearchIcon, X, Bell
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -48,7 +48,7 @@ import {
 } from "@/components/ui/select";
 
 import { Label } from "@/components/ui/label";
-import { 
+import {
   Accordion,
   AccordionContent,
   AccordionItem,
@@ -78,9 +78,9 @@ const defaultCategories: TaskCategory[] = [
 type PriorityType = "high" | "medium" | "low";
 
 const priorityOptions = [
-  { value: "high" as PriorityType, label: "高", color: "text-red-500", bgColor: "bg-red-100", icon: <AlertTriangle className="h-3.5 w-3.5" /> },
-  { value: "medium" as PriorityType, label: "中", color: "text-amber-500", bgColor: "bg-amber-100", icon: <Target className="h-3.5 w-3.5" /> },
-  { value: "low" as PriorityType, label: "低", color: "text-green-500", bgColor: "bg-green-100", icon: <Check className="h-3.5 w-3.5" /> },
+  { value: "high" as PriorityType, label: "高", color: "text-red-400", bgColor: "bg-red-900/50", icon: <AlertTriangle className="h-3.5 w-3.5" /> },
+  { value: "medium" as PriorityType, label: "中", color: "text-amber-400", bgColor: "bg-amber-900/50", icon: <Target className="h-3.5 w-3.5" /> },
+  { value: "low" as PriorityType, label: "低", color: "text-green-400", bgColor: "bg-green-900/50", icon: <Check className="h-3.5 w-3.5" /> },
 ];
 
 // Define recurring types
@@ -137,7 +137,7 @@ export function EnhancedTaskTracker() {
   const [recurringType, setRecurringType] = useState<RecurringType>("daily");
   const [recurringInterval, setRecurringInterval] = useState<number>(1);
   const [recurringEndDate, setRecurringEndDate] = useState<Date | undefined>(undefined);
-  
+
   // UI states
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -150,7 +150,7 @@ export function EnhancedTaskTracker() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const searchInputRef = useRef<HTMLInputElement>(null);
-  
+
   // Fetch goals
   const { data: goals = [], isLoading, error } = useQuery<Goal[]>({
     queryKey: ['/api/goals'],
@@ -167,60 +167,60 @@ export function EnhancedTaskTracker() {
   const filteredGoals = goals.filter(goal => {
     // Text search filter
     const searchFilter = searchQuery
-      ? goal.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        goal.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        goal.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        goal.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+      ? goal.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      goal.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      goal.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      goal.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
       : true;
-    
+
     // Priority filter
     const priorityFilter = filterPriority ? goal.priority === filterPriority : true;
-    
+
     // Category filter
     const categoryFilter = filterCategory ? goal.category === filterCategory : true;
-    
+
     // Status filter
-    const statusFilter = filterStatus === "completed" 
-      ? goal.completed 
-      : filterStatus === "active" 
-        ? !goal.completed 
+    const statusFilter = filterStatus === "completed"
+      ? goal.completed
+      : filterStatus === "active"
+        ? !goal.completed
         : true;
-    
+
     // Due date filter
     let dueDateFilter = true;
     if (filterDueDate) {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       if (filterDueDate === "today") {
-        dueDateFilter = goal.dueDate ? 
+        dueDateFilter = goal.dueDate ?
           new Date(goal.dueDate).toDateString() === today.toDateString() : false;
       } else if (filterDueDate === "tomorrow") {
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
-        dueDateFilter = goal.dueDate ? 
+        dueDateFilter = goal.dueDate ?
           new Date(goal.dueDate).toDateString() === tomorrow.toDateString() : false;
       } else if (filterDueDate === "week") {
         const weekLater = new Date(today);
         weekLater.setDate(weekLater.getDate() + 7);
-        dueDateFilter = goal.dueDate ? 
+        dueDateFilter = goal.dueDate ?
           new Date(goal.dueDate) >= today && new Date(goal.dueDate) <= weekLater : false;
       } else if (filterDueDate === "overdue") {
-        dueDateFilter = goal.dueDate ? 
+        dueDateFilter = goal.dueDate ?
           new Date(goal.dueDate) < today && !goal.completed : false;
       }
     }
-    
+
     return searchFilter && priorityFilter && categoryFilter && statusFilter && dueDateFilter;
   });
-  
+
   // Group the filtered goals
   const activeGoals = filteredGoals.filter(goal => !goal.completed);
   const completedGoals = filteredGoals.filter(goal => goal.completed);
-  
+
   // Get unique categories from all goals for filter dropdown
   const uniqueCategories = Array.from(new Set(goals.map(goal => goal.category).filter(Boolean))) as string[];
-  
+
   // Create goal mutation
   const createGoal = useMutation({
     mutationFn: async () => {
@@ -240,7 +240,7 @@ export function EnhancedTaskTracker() {
         recurringInterval: isRecurring ? recurringInterval : 1,
         recurringEndDate: isRecurring ? recurringEndDate : null
       };
-      
+
       const response = await apiRequest('POST', '/api/goals', newGoal);
       return await response.json();
     },
@@ -268,21 +268,21 @@ export function EnhancedTaskTracker() {
     mutationFn: async ({ id, completed }: { id: number, completed: boolean }) => {
       const goal = goals.find(g => g.id === id);
       if (!goal) throw new Error("Goal not found");
-      
+
       // For recurring tasks, create a new instance if marking complete
       if (goal.isRecurring && completed && goal.dueDate) {
         // Only create new recurring instance if task is marked as complete
         if (completed) {
           const nextDueDate = getNextDueDate(
-            new Date(goal.dueDate), 
-            goal.recurringType || "daily", 
+            new Date(goal.dueDate),
+            goal.recurringType || "daily",
             goal.recurringInterval || 1
           );
-          
+
           // Check if we've reached the recurring end date
-          const shouldCreateNewInstance = !goal.recurringEndDate || 
+          const shouldCreateNewInstance = !goal.recurringEndDate ||
             (nextDueDate <= new Date(goal.recurringEndDate));
-            
+
           if (shouldCreateNewInstance) {
             // Create a new instance with the next due date
             // Ensure priority is one of the valid enum values
@@ -290,18 +290,18 @@ export function EnhancedTaskTracker() {
             if (goal.priority === "high" || goal.priority === "medium" || goal.priority === "low") {
               priorityValue = goal.priority;
             }
-            
+
             // Ensure recurringType is one of the valid enum values
             let recurringTypeValue: RecurringType | undefined = undefined;
             if (goal.isRecurring) {
-              if (goal.recurringType === "daily" || goal.recurringType === "weekly" || 
-                  goal.recurringType === "monthly" || goal.recurringType === "custom") {
+              if (goal.recurringType === "daily" || goal.recurringType === "weekly" ||
+                goal.recurringType === "monthly" || goal.recurringType === "custom") {
                 recurringTypeValue = goal.recurringType;
               } else {
                 recurringTypeValue = "daily"; // Default
               }
             }
-            
+
             const newGoalData: Partial<InsertGoal> = {
               title: goal.title || "",
               description: goal.description || "",
@@ -319,7 +319,7 @@ export function EnhancedTaskTracker() {
               recurringInterval: goal.recurringInterval || 1,
               recurringEndDate: goal.recurringEndDate
             };
-            
+
             await apiRequest('POST', '/api/goals', newGoalData);
           }
         }
@@ -330,18 +330,18 @@ export function EnhancedTaskTracker() {
       if (goal.priority === "high" || goal.priority === "medium" || goal.priority === "low") {
         priorityValue = goal.priority;
       }
-      
+
       // Ensure recurringType is one of the valid enum values
       let recurringTypeValue: RecurringType | undefined = undefined;
       if (goal.isRecurring) {
-        if (goal.recurringType === "daily" || goal.recurringType === "weekly" || 
-            goal.recurringType === "monthly" || goal.recurringType === "custom") {
+        if (goal.recurringType === "daily" || goal.recurringType === "weekly" ||
+          goal.recurringType === "monthly" || goal.recurringType === "custom") {
           recurringTypeValue = goal.recurringType;
         } else {
           recurringTypeValue = "daily"; // Default
         }
       }
-      
+
       const updateData: Partial<InsertGoal> = {
         title: goal.title || "",
         description: goal.description || "",
@@ -356,7 +356,7 @@ export function EnhancedTaskTracker() {
         recurringInterval: goal.recurringInterval || 1,
         recurringEndDate: goal.recurringEndDate
       };
-      
+
       const response = await apiRequest('PUT', `/api/goals/${id}`, updateData);
       return await response.json();
     },
@@ -377,7 +377,7 @@ export function EnhancedTaskTracker() {
   const updateGoalDetails = useMutation({
     mutationFn: async () => {
       if (!currentEditingGoal) throw new Error("No goal selected for editing");
-      
+
       const updateData: Partial<InsertGoal> = {
         title: taskTitle.trim(),
         description: taskDescription.trim() || "",
@@ -392,7 +392,7 @@ export function EnhancedTaskTracker() {
         recurringInterval: isRecurring ? recurringInterval : 1, // Provide default if not recurring
         recurringEndDate: isRecurring ? recurringEndDate : null
       };
-      
+
       const response = await apiRequest('PUT', `/api/goals/${currentEditingGoal.id}`, updateData);
       return await response.json();
     },
@@ -539,16 +539,16 @@ export function EnhancedTaskTracker() {
     const dueDate = new Date(goal.dueDate);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     if (isBefore(dueDate, today) && !goal.completed) {
       return "overdue";
     }
-    
+
     const daysUntilDue = differenceInDays(dueDate, today);
     if (daysUntilDue >= 0 && daysUntilDue <= 3 && !goal.completed) {
       return "soon";
     }
-    
+
     return null;
   };
 
@@ -597,95 +597,96 @@ export function EnhancedTaskTracker() {
   }
 
   return (
-                  <Card className="w-full h-full flex flex-col overflow-hidden flex-grow">
-                    <CardHeader className="pb-2 relative flex-shrink-0">
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                        <div className="flex items-center gap-2">
-                          <div className="relative">
-                            <Target className="h-5 w-5 text-blue-500" />
-                            <motion.div
-                              className="absolute inset-0 rounded-full border border-blue-500/20"
-                              animate={{ scale: [1, 1.25, 1], opacity: [0.7, 0.2, 0] }}
-                              transition={{ duration: 2, repeat: Infinity }}
-                            />
-                          </div>
-                          <CardTitle className="text-base sm:text-lg w-full text-left sm:text-center break-words sm:break-keep">
-                            タスク管理
-                          </CardTitle>
-                        </div>
+    <Card className="w-full h-full flex flex-col overflow-hidden flex-grow bg-black text-noble-black-100 border border-noble-black-900">
+      <CardHeader className="pb-2 relative flex-shrink-0 gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Target className="h-5 w-5 text-blue-500" />
+              <motion.div
+                className="absolute inset-0 rounded-full border border-blue-500/20"
+                animate={{ scale: [1, 1.25, 1], opacity: [0.7, 0.2, 0] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
+            </div>
+            <CardTitle className="text-base sm:text-lg w-full text-left sm:text-center break-words sm:break-keep">
+              タスク管理
+            </CardTitle>
+          </div>
 
-                        {/* ここがポイント */}
-                        <div className="flex flex-row sm:flex-col sm:items-end gap-2 mt-1 sm:mt-0">
-                          {!isLoading && filteredGoals.length > 0 && (
-                            <Badge variant="outline" className="flex items-center gap-1 bg-blue-500/10 h-6">
-                              <Award className="h-3 w-3 text-blue-400" />
-                              <span className="text-xs">{completionRate}% 達成</span>
-                            </Badge>
-                          )}
+          {/* ここがポイント */}
+          <div className="flex flex-row sm:flex-col sm:items-end gap-2 mt-1 sm:mt-0">
+            {!isLoading && filteredGoals.length > 0 && (
+              <Badge variant="outline" className="flex items-center gap-1 bg-noble-black-100 text-noble-black-900 h-6 border border-noble-black-900">
+                <Award className="h-3 w-3 text-noble-black-900" />
+                <span className="text-xs">{completionRate}% 達成</span>
+              </Badge>
+            )}
 
-                          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                            <DialogTrigger asChild>
-                              <Button
-                                size={isMobile ? "sm" : "default"}
-                                variant="outline"
-                                className={cn(
-                                  "gap-1",
-                                  isMobile && "h-8 px-2 text-xs"
-                                )}
-                              >
-                                <Plus className={isMobile ? "h-3 w-3" : "h-4 w-4"} />
-                                <span>新規タスク</span>
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="w-full max-w-sm sm:max-w-xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
-                              <DialogHeader>
-                                <DialogTitle>新しいタスクを追加</DialogTitle>
-                                <DialogDescription>
-                                  タスクの詳細を入力して、追加してください。
-                                </DialogDescription>
-                              </DialogHeader>
-                
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  size={isMobile ? "sm" : "default"}
+                  variant="outline"
+                  className={cn(
+                    "gap-1 border-noble-black-900 hover:bg-noble-black-100 bg-noble-black-900 text-noble-black-100",
+                    isMobile && "h-8 px-2 text-xs border-noble-black-900 hover:bg-noble-black-100 bg-noble-black-900 text-noble-black-100"
+                  )}
+                >
+                  <Plus className={isMobile ? "h-3 w-3" : "h-4 w-4"} />
+                  <span>新規タスク</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="w-full max-w-sm sm:max-w-xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto border border-noble-black-800  bg-noble-black-900 text-noble-black-100">
+                <DialogHeader>
+                  <DialogTitle>新しいタスクを追加</DialogTitle>
+                  <DialogDescription>
+                    タスクの詳細を入力して、追加してください。
+                  </DialogDescription>
+                </DialogHeader>
+
                 <form onSubmit={handleSubmitNewTask} className="space-y-4 mt-2">
                   {/* Basic Task Info */}
                   <div className="space-y-3">
                     <div>
                       <Label htmlFor="task-title">タイトル <span className="text-red-500">*</span></Label>
-                      <Input 
+                      <Input
                         id="task-title"
-                        value={taskTitle} 
+                        value={taskTitle}
                         onChange={(e) => setTaskTitle(e.target.value)}
-                        placeholder="タスクのタイトルを入力" 
+                        placeholder="タスクのタイトルを入力"
                         autoFocus
                         required
+                        className="bg-black text-noble-black-100 outline-none active:outline-none border border-noble-black-900"
                       />
                     </div>
-                    
+
                     <div>
                       <Label htmlFor="task-description">詳細な説明</Label>
-                      <Textarea 
+                      <Textarea
                         id="task-description"
                         value={taskDescription}
                         onChange={(e) => setTaskDescription(e.target.value)}
                         placeholder="タスクの詳細を入力"
-                        className="min-h-[100px]"
+                        className="min-h-[100px] bg-black text-noble-black-100 outline-none focus:outline-none active:outline-none border border-noble-black-900"
                       />
                     </div>
                   </div>
-                  
+
                   {/* Task metadata */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="task-priority">優先度</Label>
                       <Select value={priority} onValueChange={handlePriorityChange}>
-                        <SelectTrigger className="w-full">
+                        <SelectTrigger className="w-full bg-black border border-noble-black-900 text-noble-black-100">
                           <SelectValue placeholder="優先度を選択" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="z-[999] bg-black border border-noble-black-900">
                           {priorityOptions.map(option => (
-                            <SelectItem 
-                              key={option.value} 
-                              value={option.value} 
-                              className="flex items-center gap-2"
+                            <SelectItem
+                              key={option.value}
+                              value={option.value}
+                              className="flex items-center gap-2 bg-black text-noble-black-100  border border-noble-black-900 cursor-pointer"
                             >
                               <div className="flex items-center gap-2">
                                 <span className={`${option.bgColor} p-1 rounded-full`}>
@@ -698,18 +699,18 @@ export function EnhancedTaskTracker() {
                         </SelectContent>
                       </Select>
                     </div>
-                    
+
                     <div>
                       <Label htmlFor="task-category">カテゴリ</Label>
                       <Select value={category} onValueChange={setCategory}>
-                        <SelectTrigger className="w-full">
+                        <SelectTrigger className="w-full bg-black text-noble-black-100 border border-noble-black-900">
                           <SelectValue placeholder="カテゴリを選択" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="z-[999] bg-black border border-noble-black-900 text-noble-black-100">
                           {defaultCategories.map(option => (
-                            <SelectItem 
-                              key={option.id} 
-                              value={option.id} 
+                            <SelectItem
+                              key={option.id}
+                              value={option.id}
                               className="flex items-center gap-2"
                             >
                               <div className="flex items-center gap-2">
@@ -722,7 +723,7 @@ export function EnhancedTaskTracker() {
                       </Select>
                     </div>
                   </div>
-                  
+
                   {/* Due date and reminder */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -731,8 +732,9 @@ export function EnhancedTaskTracker() {
                         <PopoverTrigger asChild>
                           <Button
                             variant="outline"
+                            onClick={() => document.body.style.pointerEvents = ""}
                             className={cn(
-                              "w-full justify-start text-left font-normal",
+                              "w-full justify-start text-left font-normal bg-black text-noble-black-100 outline-none active:outline-none border border-noble-black-900",
                               !dueDate && "text-muted-foreground"
                             )}
                           >
@@ -740,7 +742,7 @@ export function EnhancedTaskTracker() {
                             {dueDate ? format(dueDate, "yyyy年MM月dd日", { locale: ja }) : "期限日を選択"}
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
+                        <PopoverContent className="w-auto p-0 z-[999]">
                           <CalendarComponent
                             mode="single"
                             selected={dueDate}
@@ -751,16 +753,16 @@ export function EnhancedTaskTracker() {
                         </PopoverContent>
                       </Popover>
                     </div>
-                    
+
                     <div>
                       <div className="flex items-center justify-between h-6 mb-1">
                         <Label htmlFor="task-reminder">リマインダー</Label>
                         {reminderTime ? (
-                          <Button 
+                          <Button
                             type="button"
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-6 px-2 text-xs" 
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-xs bg-black text-noble-black-100  border border-noble-black-900"
                             onClick={() => setReminderTime(undefined)}
                           >
                             <X className="h-3 w-3 mr-1" />
@@ -768,7 +770,7 @@ export function EnhancedTaskTracker() {
                           </Button>
                         ) : (
                           // Invisible placeholder to reserve space
-                  <div className="w-[40px] h-[16px] invisible" aria-hidden="true">.</div>
+                          <div className="w-[40px] h-[16px] invisible" aria-hidden="true">.</div>
 
                         )}
                       </div>
@@ -777,8 +779,9 @@ export function EnhancedTaskTracker() {
                         <PopoverTrigger asChild>
                           <Button
                             variant="outline"
+                            onClick={() => document.body.style.pointerEvents = ""}
                             className={cn(
-                              "w-full h-10 flex items-center justify-start gap-2 text-left font-normal leading-none", // <- `h-10` & `leading-none`!
+                              "w-full h-10 flex items-center justify-start gap-2 text-left font-normal leading-none bg-black text-noble-black-100  border border-noble-black-900", // <- `h-10` & `leading-none`!
                               !reminderTime && "text-muted-foreground"
                             )}
                           >
@@ -791,10 +794,7 @@ export function EnhancedTaskTracker() {
                           </Button>
                         </PopoverTrigger>
 
-
-
-
-                        <PopoverContent className="w-auto p-0" align="start">
+                        <PopoverContent className="w-auto p-0 z-[999]" align="start">
                           <div className="p-4 space-y-4">
                             {/* Calendar */}
                             <CalendarComponent
@@ -804,9 +804,9 @@ export function EnhancedTaskTracker() {
                                 setReminderTime(
                                   date
                                     ? new Date(date.setHours(
-                                        reminderTime?.getHours() ?? new Date().getHours(),
-                                        reminderTime?.getMinutes() ?? new Date().getMinutes()
-                                      ))
+                                      reminderTime?.getHours() ?? new Date().getHours(),
+                                      reminderTime?.getMinutes() ?? new Date().getMinutes()
+                                    ))
                                     : undefined
                                 )
                               }
@@ -816,48 +816,48 @@ export function EnhancedTaskTracker() {
 
                             {/* Custom Time Picker */}
                             {reminderTime && (
-                  <div className="flex items-center justify-center space-x-2">
-                    {/* Hour */}
-                    <Select value={String(reminderTime.getHours())} onValueChange={(val) => {
-                      const newDate = new Date(reminderTime);
-                      newDate.setHours(Number(val));
-                      setReminderTime(newDate);
-                    }}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="時" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Array.from({ length: 24 }).map((_, i) => (
-                          <SelectItem key={i} value={String(i)}>
-                            {i.toString().padStart(2, "0")} 時
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <span className="text-sm text-gray-900 dark:text-gray-300">時</span>
+                              <div className="flex items-center justify-center space-x-2">
+                                {/* Hour */}
+                                <Select value={String(reminderTime.getHours())} onValueChange={(val) => {
+                                  const newDate = new Date(reminderTime);
+                                  newDate.setHours(Number(val));
+                                  setReminderTime(newDate);
+                                }}>
+                                  <SelectTrigger className="w-full bg-black text-noble-black-100  border border-noble-black-900">
+                                    <SelectValue placeholder="時" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {Array.from({ length: 24 }).map((_, i) => (
+                                      <SelectItem key={i} value={String(i)}>
+                                        {i.toString().padStart(2, "0")} 時
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <span className="text-sm text-gray-900 dark:text-gray-300">時</span>
 
-                    {/* Minute */}
-                    <Select
-                      value={String(reminderTime.getMinutes())}
-                      onValueChange={(val) => {
-                        const newDate = new Date(reminderTime);
-                        newDate.setMinutes(Number(val));
-                        setReminderTime(newDate);
-                      }}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="分" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Array.from({ length: 60 }).map((_, i) => (
-                          <SelectItem key={i} value={String(i)}>
-                            {i.toString().padStart(2, "0")} 分
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <span className="text-sm text-gray-900 dark:text-gray-300">分</span>
-                  </div>
+                                {/* Minute */}
+                                <Select
+                                  value={String(reminderTime.getMinutes())}
+                                  onValueChange={(val) => {
+                                    const newDate = new Date(reminderTime);
+                                    newDate.setMinutes(Number(val));
+                                    setReminderTime(newDate);
+                                  }}
+                                >
+                                  <SelectTrigger className="w-full bg-black text-noble-black-100  border border-noble-black-900">
+                                    <SelectValue placeholder="分" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {Array.from({ length: 60 }).map((_, i) => (
+                                      <SelectItem key={i} value={String(i)}>
+                                        {i.toString().padStart(2, "0")} 分
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <span className="text-sm text-gray-900 dark:text-gray-300">分</span>
+                              </div>
 
                             )}
                           </div>
@@ -866,10 +866,30 @@ export function EnhancedTaskTracker() {
 
                     </div>
                   </div>
-                  
+
                   {/* Tags */}
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="task-tags">タグ</Label>
+
+                    <div className="flex gap-2">
+                      <Input
+                        id="task-tags"
+                        value={newTag}
+                        onChange={(e) => setNewTag(e.target.value)}
+                        onKeyDown={handleTagKeyDown}
+                        placeholder="新しいタグを入力"
+                        className="flex-1 bg-black text-noble-black-100 outline-none active:outline-none border border-noble-black-900"
+                      />
+                      <Button
+                        type="button"
+                        className="bg-black text-noble-black-100 "
+                        variant="outline"
+                        onClick={handleAddTag}
+                        disabled={!newTag.trim()}
+                      >
+                        追加
+                      </Button>
+                    </div>
                     <div className="flex flex-wrap gap-2 mb-2">
                       {tags.map((tag, index) => (
                         <Badge key={index} variant="secondary" className="gap-1 pl-2">
@@ -886,26 +906,8 @@ export function EnhancedTaskTracker() {
                         </Badge>
                       ))}
                     </div>
-                    <div className="flex gap-2">
-                      <Input
-                        id="task-tags"
-                        value={newTag}
-                        onChange={(e) => setNewTag(e.target.value)}
-                        onKeyDown={handleTagKeyDown}
-                        placeholder="新しいタグを入力"
-                        className="flex-1"
-                      />
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        onClick={handleAddTag}
-                        disabled={!newTag.trim()}
-                      >
-                        追加
-                      </Button>
-                    </div>
                   </div>
-                  
+
                   {/* Recurring Options */}
                   <div className="space-y-4">
                     <div className="flex items-center space-x-2">
@@ -913,20 +915,21 @@ export function EnhancedTaskTracker() {
                         id="recurring-task"
                         checked={isRecurring}
                         onCheckedChange={setIsRecurring}
+                        className=""
                       />
                       <Label htmlFor="recurring-task">繰り返しタスク</Label>
                     </div>
-                    
+
                     {isRecurring && (
-                      <div className="space-y-4 pl-6 border-l-2 border-blue-200">
+                      <div className="space-y-4 pl-6 border-l-2 border-black">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
                             <Label htmlFor="recurring-type">繰り返しの種類</Label>
                             <Select value={recurringType} onValueChange={handleRecurringTypeChange}>
-                              <SelectTrigger>
+                              <SelectTrigger className="bg-black border border-noble-black-900 text-noble-black-100">
                                 <SelectValue placeholder="繰り返しの種類を選択" />
                               </SelectTrigger>
-                              <SelectContent>
+                              <SelectContent className="z-[999]">
                                 {recurringOptions.map(option => (
                                   <SelectItem key={option.value} value={option.value}>
                                     {option.label}
@@ -935,7 +938,7 @@ export function EnhancedTaskTracker() {
                               </SelectContent>
                             </Select>
                           </div>
-                          
+
                           <div>
                             <Label htmlFor="recurring-interval">
                               間隔
@@ -949,21 +952,22 @@ export function EnhancedTaskTracker() {
                               type="number"
                               min="1"
                               value={recurringInterval}
+                              className="bg-black text-noble-black-100 outline-none focus:outline-none border border-noble-black-900"
                               onChange={(e) => setRecurringInterval(parseInt(e.target.value) || 1)}
                             />
                           </div>
                         </div>
-                        
+
                         <div>
                           <div className="flex items-center justify-between">
                             <Label>繰り返し終了日</Label>
 
                             {recurringEndDate ? (
-                              <Button 
+                              <Button
                                 type="button"
-                                variant="ghost" 
-                                size="sm" 
-                                className="h-6 px-2 text-xs" 
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 px-2 text-xs bg-black border border-noble-black-900 text-noble-black-100"
                                 onClick={() => setRecurringEndDate(undefined)}
                               >
                                 <X className="h-3 w-3 mr-1" />
@@ -978,8 +982,9 @@ export function EnhancedTaskTracker() {
                           </div>
 
                           <Popover>
-                            <PopoverTrigger asChild>
+                            <PopoverTrigger className="bg-black border border-noble-black-900" asChild>
                               <Button
+                                onClick={() => document.body.style.pointerEvents = ""}
                                 variant="outline"
                                 className={cn(
                                   "w-full justify-start text-left font-normal",
@@ -990,7 +995,7 @@ export function EnhancedTaskTracker() {
                                 {recurringEndDate ? format(recurringEndDate, "yyyy年MM月dd日", { locale: ja }) : "終了日を選択 (省略可)"}
                               </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0">
+                            <PopoverContent className="w-auto p-0 z-[999]">
                               <CalendarComponent
                                 mode="single"
                                 selected={recurringEndDate}
@@ -1004,11 +1009,12 @@ export function EnhancedTaskTracker() {
                       </div>
                     )}
                   </div>
-                  
-                    <DialogFooter className={cn(isMobile && "flex-col gap-2")}>
+
+                  <DialogFooter className={cn(isMobile && "flex-col gap-2")}>
                     <Button
                       type="button"
                       variant="outline"
+                      className="bg-black text-noble-black-100 border border-noble-black-900"
                       onClick={() => {
                         resetForm();
                         setIsAddDialogOpen(false);
@@ -1025,203 +1031,204 @@ export function EnhancedTaskTracker() {
             </Dialog>
           </div>
         </div>
-        
+
         {!isLoading && filteredGoals.length > 0 && (
-          <CardDescription className="mt-2">
+          <CardDescription className="mt-4">
             <div className="w-full bg-muted rounded-full h-2 mb-2 overflow-hidden">
               <Progress value={completionRate} className="h-full" />
             </div>
-            <div className="flex justify-between text-xs text-muted-foreground">
+            <div className="flex justify-between text-xs text-noble-black-100">
               <span>{completedGoals.length} 完了</span>
               <span>{totalTasks} 合計</span>
             </div>
           </CardDescription>
         )}
       </CardHeader>
-      
-                {/* Task filters section */}
-                  <div className="px-4 flex flex-row gap-2 items-center border-b border-border/40 overflow-x-auto min-h-[64px]">
-                  <div className="relative flex-1 max-w-full sm:max-w-xs min-w-0">
-                    <SearchIcon className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="タスクを検索..."
-                      className="pl-8 pr-8 h-9 w-full"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      ref={searchInputRef}
-                    />
-                    {searchQuery && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-9 w-9 p-0"
-                        onClick={() => setSearchQuery("")}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    )}
+
+      {/* Task filters section */}
+      <div className="px-4 flex flex-row gap-2 items-center border-b border-border/40 overflow-x-auto min-h-[64px]">
+        <div className="relative flex-1 max-w-full sm:max-w-xs min-w-0">
+          <SearchIcon className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="タスクを検索..."
+            className="pl-8 pr-8 h-9 w-full bg-noble-black-900 text-noble-black-100 outline-none focus:outline-none active:outline-none border border-noble-black-900"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            ref={searchInputRef}
+          />
+          {searchQuery && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute right-0 top-0 h-9 w-9 p-0"
+              onClick={() => setSearchQuery("")}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+
+        <div className="flex-shrink-0">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9 flex-shrink-0 フィルタ border-noble-black-900 hover:bg-noble-black-100 bg-noble-black-900 text-noble-black-100">
+                <Filter className="h-4 w-4 mr-1" />
+                フィルタ
+                <ChevronDown className="h-3.5 w-3.5 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent
+              align="end"
+              className="w-56 max-w-[90vw] max-h-[40vh] overflow-y-auto px-2 bg-noble-black-900 border border-noble-black-800 text-noble-black-100"
+            >
+              <DropdownMenuLabel>フィルタを選択</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-noble-black-800" />
+
+              {/* Priority filter */}
+              <DropdownMenuLabel className="text-xs pt-2 font-normal text-muted-foreground">
+                優先度
+              </DropdownMenuLabel>
+              <DropdownMenuItem
+                className={!filterPriority ? "bg-black border-noble-black-900" : "hover:bg-black"}
+                onClick={() => setFilterPriority(null)}
+              >
+                すべて
+              </DropdownMenuItem>
+
+              {priorityOptions.map((p) => (
+                <DropdownMenuItem
+                  key={p.value}
+                  className={filterPriority === p.value ? "bg-black border-noble-black-900" : "hover:bg-black"}
+                  onClick={() => setFilterPriority(p.value)}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={`${p.bgColor} p-1 rounded-full`}>
+                      {p.icon}
+                    </span>
+                    <span className={p.color}>{p.label}</span>
                   </div>
+                </DropdownMenuItem>
+              ))}
 
-                  <div className="flex-shrink-0">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="h-9 flex-shrink-0">
-                          <Filter className="h-4 w-4 mr-1" />
-                          フィルタ
-                          <ChevronDown className="h-3.5 w-3.5 ml-1" />
-                        </Button>
-                      </DropdownMenuTrigger>
+              <DropdownMenuSeparator className="bg-noble-black-800" />
 
-                      <DropdownMenuContent
-                        align="end"
-                        className="w-56 max-w-[90vw] max-h-[40vh] overflow-y-auto px-2"
-                      >
-                        <DropdownMenuLabel>フィルタを選択</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-
-            {/* Priority filter */}
-            <DropdownMenuLabel className="text-xs pt-2 font-normal text-muted-foreground">
-              優先度
-            </DropdownMenuLabel>
-            <DropdownMenuItem
-              className={!filterPriority ? "bg-accent/50" : ""}
-              onClick={() => setFilterPriority(null)}
-            >
-              すべて
-            </DropdownMenuItem>
-
-            {priorityOptions.map((p) => (
+              {/* Category filter */}
+              <DropdownMenuLabel className="text-xs pt-2 font-normal text-muted-foreground">
+                カテゴリ
+              </DropdownMenuLabel>
               <DropdownMenuItem
-                key={p.value}
-                className={filterPriority === p.value ? "bg-accent/50" : ""}
-                onClick={() => setFilterPriority(p.value)}
+                className={!filterCategory ? "bg-black border-noble-black-900" : "hover:bg-black"}
+                onClick={() => setFilterCategory(null)}
               >
-                <div className="flex items-center gap-2">
-                  <span className={`${p.bgColor} p-1 rounded-full`}>
-                    {p.icon}
-                  </span>
-                  <span className={p.color}>{p.label}</span>
-                </div>
+                すべて
               </DropdownMenuItem>
-            ))}
 
-            <DropdownMenuSeparator />
+              {(uniqueCategories.length > 0
+                ? uniqueCategories
+                : defaultCategories.map((c) => c.id)
+              ).map((c) => (
+                <DropdownMenuItem
+                  key={c}
+                  className={filterCategory === c ? "bg-black border-noble-black-900" : "hover:bg-black"}
+                  onClick={() => setFilterCategory(c)}
+                >
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`${getCategoryColor(c)} w-3 h-3 rounded-full`}
+                    ></span>
+                    <span>{getCategoryName(c)}</span>
+                  </div>
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator className="bg-noble-black-800" />
 
-            {/* Category filter */}
-            <DropdownMenuLabel className="text-xs pt-2 font-normal text-muted-foreground">
-              カテゴリ
-            </DropdownMenuLabel>
-            <DropdownMenuItem
-              className={!filterCategory ? "bg-accent/50" : ""}
-              onClick={() => setFilterCategory(null)}
-            >
-              すべて
-            </DropdownMenuItem>
 
-            {(uniqueCategories.length > 0
-              ? uniqueCategories
-              : defaultCategories.map((c) => c.id)
-            ).map((c) => (
+              {/* Status filter */}
+              <DropdownMenuLabel className="text-xs pt-2 font-normal text-muted-foreground">
+                ステータス
+              </DropdownMenuLabel>
               <DropdownMenuItem
-                key={c}
-                className={filterCategory === c ? "bg-accent/50" : ""}
-                onClick={() => setFilterCategory(c)}
+                className={!filterStatus ? "bg-black border-noble-black-900" : "hover:bg-black"}
+                onClick={() => setFilterStatus(null)}
               >
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`${getCategoryColor(c)} w-3 h-3 rounded-full`}
-                  ></span>
-                  <span>{getCategoryName(c)}</span>
-                </div>
+                すべて
               </DropdownMenuItem>
-            ))}
 
-            <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className={filterStatus === "active" ? "bg-black border-noble-black-900" : "hover:bg-black"}
+                onClick={() => setFilterStatus("active")}
+              >
+                未完了のみ
+              </DropdownMenuItem>
 
-            {/* Status filter */}
-            <DropdownMenuLabel className="text-xs pt-2 font-normal text-muted-foreground">
-              ステータス
-            </DropdownMenuLabel>
-            <DropdownMenuItem
-              className={!filterStatus ? "bg-accent/50" : ""}
-              onClick={() => setFilterStatus(null)}
+              <DropdownMenuItem
+                className={filterStatus === "completed" ? "bg-black border-noble-black-900" : "hover:bg-black"}
+                onClick={() => setFilterStatus("completed")}
+              >
+                完了済みのみ
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator className="bg-noble-black-800" />
+
+
+              {/* Due date filter */}
+              <DropdownMenuLabel className="text-xs pt-2 font-normal text-muted-foreground">
+                期限日
+              </DropdownMenuLabel>
+              <DropdownMenuItem
+                className={!filterDueDate ? "bg-black border-noble-black-900" : "hover:bg-black"}
+                onClick={() => setFilterDueDate(null)}
+              >
+                すべて
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                className={filterDueDate === "today" ? "bg-black border-noble-black-900" : "hover:bg-black"}
+                onClick={() => setFilterDueDate("today")}
+              >
+                今日
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                className={filterDueDate === "tomorrow" ? "bg-black border-noble-black-900" : "hover:bg-black"}
+                onClick={() => setFilterDueDate("tomorrow")}
+              >
+                明日
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                className={filterDueDate === "week" ? "bg-black border-noble-black-900" : "hover:bg-black"}
+                onClick={() => setFilterDueDate("week")}
+              >
+                今週中
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                className={filterDueDate === "overdue" ? "bg-black border-noble-black-900" : "hover:bg-black"}
+                onClick={() => setFilterDueDate("overdue")}
+              >
+                期限超過
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Applied filters badges */}
+          {(filterPriority || filterCategory || filterStatus || filterDueDate || searchQuery) && (
+            <Badge
+              variant="outline"
+              className="rounded-lg h-9 px-3 mt-2 flex items-center gap-1 hover:bg-noble-black-100 hover:text-noble-black-900 transition-colors cursor-pointer flex-shrink-0 bg-black text-noble-black-100"
+              onClick={resetFilters}
             >
-              すべて
-            </DropdownMenuItem>
-
-            <DropdownMenuItem
-              className={filterStatus === "active" ? "bg-accent/50" : ""}
-              onClick={() => setFilterStatus("active")}
-            >
-              未完了のみ
-            </DropdownMenuItem>
-
-            <DropdownMenuItem
-              className={filterStatus === "completed" ? "bg-accent/50" : ""}
-              onClick={() => setFilterStatus("completed")}
-            >
-              完了済みのみ
-            </DropdownMenuItem>
-
-            <DropdownMenuSeparator />
-
-            {/* Due date filter */}
-            <DropdownMenuLabel className="text-xs pt-2 font-normal text-muted-foreground">
-              期限日
-            </DropdownMenuLabel>
-            <DropdownMenuItem
-              className={!filterDueDate ? "bg-accent/50" : ""}
-              onClick={() => setFilterDueDate(null)}
-            >
-              すべて
-            </DropdownMenuItem>
-
-            <DropdownMenuItem
-              className={filterDueDate === "today" ? "bg-accent/50" : ""}
-              onClick={() => setFilterDueDate("today")}
-            >
-              今日
-            </DropdownMenuItem>
-
-            <DropdownMenuItem
-              className={filterDueDate === "tomorrow" ? "bg-accent/50" : ""}
-              onClick={() => setFilterDueDate("tomorrow")}
-            >
-              明日
-            </DropdownMenuItem>
-
-            <DropdownMenuItem
-              className={filterDueDate === "week" ? "bg-accent/50" : ""}
-              onClick={() => setFilterDueDate("week")}
-            >
-              今週中
-            </DropdownMenuItem>
-
-            <DropdownMenuItem
-              className={filterDueDate === "overdue" ? "bg-accent/50" : ""}
-              onClick={() => setFilterDueDate("overdue")}
-            >
-              期限超過
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        {/* Applied filters badges */}
-        {(filterPriority || filterCategory || filterStatus || filterDueDate || searchQuery) && (
-          <Badge
-            variant="outline"
-            className="h-9 px-3 flex items-center gap-1 hover:bg-accent/30 transition-colors cursor-pointer flex-shrink-0"
-            onClick={resetFilters}
-          >
-            <X className="h-3.5 w-3.5" />
-            <span>フィルタをクリア</span>
-          </Badge>
-        )}
-      </div>
+              <X className="h-3.5 w-3.5" />
+              <span>フィルタをクリア</span>
+            </Badge>
+          )}
+        </div>
       </div>
 
 
-      
+
       <CardContent className="flex-grow overflow-hidden pb-1 flex flex-col min-h-0">
         {isLoading ? (
           <div className="flex justify-center items-center h-24">
@@ -1243,7 +1250,7 @@ export function EnhancedTaskTracker() {
             )}
           </div>
         ) : (
-            <ScrollArea className="flex-1 min-h-0 overflow-y-auto">
+          <ScrollArea className="flex-1 min-h-0 overflow-y-auto">
             <div className="space-y-4">
               {/* Overdue tasks */}
               {overdueTasks.length > 0 && (
@@ -1260,7 +1267,7 @@ export function EnhancedTaskTracker() {
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, height: 0 }}
-                          className="flex items-start gap-2 p-2 border-2 border-red-500/30 rounded-md group hover:bg-red-500/10 transition-colors bg-red-500/5"
+                          className="flex items-start gap-2 p-2 border-2 border-red-500/30 rounded-md group hover:bg-red-500/10 transition-colors bg-red-900/50"
                         >
                           <Button
                             size="icon"
@@ -1270,17 +1277,17 @@ export function EnhancedTaskTracker() {
                           >
                             <Check className="h-3 w-3" />
                           </Button>
-                          
+
                           <div className="flex-1 flex flex-col min-w-0">
                             <div className="flex items-center justify-between">
                               <span className="text-sm font-medium break-words line-clamp-2">{goal.title}</span>
-                              
+
                               <div className="flex items-center gap-1 ml-2">
                                 {/* Priority icon */}
                                 <div className={`${getPriorityDetails(goal.priority || "medium").bgColor} p-0.5 rounded-full hidden sm:flex`}>
                                   {getPriorityDetails(goal.priority || "medium").icon}
                                 </div>
-                                
+
                                 {/* Recurring icon */}
                                 {goal.isRecurring && (
                                   <span className="text-blue-500 hidden sm:flex">
@@ -1289,14 +1296,14 @@ export function EnhancedTaskTracker() {
                                 )}
                               </div>
                             </div>
-                            
+
                             {/* Display description if available */}
                             {goal.description && goal.description !== goal.title && (
                               <p className="text-xs text-muted-foreground mt-1 break-words line-clamp-2">
                                 {goal.description}
                               </p>
                             )}
-                            
+
                             <div className="flex flex-wrap gap-1 mt-2">
                               {/* Due date */}
                               {goal.dueDate && (
@@ -1307,7 +1314,7 @@ export function EnhancedTaskTracker() {
                                   </span>
                                 </span>
                               )}
-                              
+
                               {/* Category tag */}
                               {goal.category && (
                                 <Badge variant="outline" className="text-xs h-5 px-1.5 truncate max-w-[150px]">
@@ -1315,12 +1322,12 @@ export function EnhancedTaskTracker() {
                                   <span className="truncate">{getCategoryName(goal.category)}</span>
                                 </Badge>
                               )}
-                              
+
                               {/* Priority badge for mobile */}
                               <Badge variant="outline" className={`sm:hidden text-xs h-5 px-1.5 ${getPriorityDetails(goal.priority || "medium").color}`}>
                                 {getPriorityDetails(goal.priority || "medium").label}
                               </Badge>
-                              
+
                               {/* Tags */}
                               {goal.tags && goal.tags.length > 0 && (
                                 <div className="flex gap-1 flex-wrap">
@@ -1338,7 +1345,7 @@ export function EnhancedTaskTracker() {
                               )}
                             </div>
                           </div>
-                          
+
                           <div className="flex items-center gap-1 shrink-0">
                             <Button
                               size="icon"
@@ -1364,7 +1371,7 @@ export function EnhancedTaskTracker() {
                                   編集
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem 
+                                <DropdownMenuItem
                                   className="text-red-500 focus:text-red-500"
                                   onClick={() => deleteGoal.mutate(goal.id)}
                                 >
@@ -1380,7 +1387,7 @@ export function EnhancedTaskTracker() {
                   </div>
                 </div>
               )}
-              
+
               {/* Due soon tasks */}
               {dueSoonTasks.length > 0 && (
                 <div className="mb-4">
@@ -1406,17 +1413,17 @@ export function EnhancedTaskTracker() {
                           >
                             <Check className="h-3 w-3" />
                           </Button>
-                          
+
                           <div className="flex-1 flex flex-col min-w-0">
                             <div className="flex items-center justify-between">
                               <span className="text-sm font-medium break-words line-clamp-2">{goal.title}</span>
-                              
+
                               <div className="flex items-center gap-1 ml-2">
                                 {/* Priority icon */}
                                 <div className={`${getPriorityDetails(goal.priority || "medium").bgColor} p-0.5 rounded-full hidden sm:flex`}>
                                   {getPriorityDetails(goal.priority || "medium").icon}
                                 </div>
-                                
+
                                 {/* Recurring icon */}
                                 {goal.isRecurring && (
                                   <span className="text-blue-500 hidden sm:flex">
@@ -1425,14 +1432,14 @@ export function EnhancedTaskTracker() {
                                 )}
                               </div>
                             </div>
-                            
+
                             {/* Display description if available */}
                             {goal.description && goal.description !== goal.title && (
                               <p className="text-xs text-muted-foreground mt-1 break-words line-clamp-2">
                                 {goal.description}
                               </p>
                             )}
-                            
+
                             <div className="flex flex-wrap gap-1 mt-2">
                               {/* Due date */}
                               {goal.dueDate && (
@@ -1443,7 +1450,7 @@ export function EnhancedTaskTracker() {
                                   </span>
                                 </span>
                               )}
-                              
+
                               {/* Category tag */}
                               {goal.category && (
                                 <Badge variant="outline" className="text-xs h-5 px-1.5 truncate max-w-[150px]">
@@ -1451,12 +1458,12 @@ export function EnhancedTaskTracker() {
                                   <span className="truncate">{getCategoryName(goal.category)}</span>
                                 </Badge>
                               )}
-                              
+
                               {/* Priority badge for mobile */}
                               <Badge variant="outline" className={`sm:hidden text-xs h-5 px-1.5 ${getPriorityDetails(goal.priority || "medium").color}`}>
                                 {getPriorityDetails(goal.priority || "medium").label}
                               </Badge>
-                              
+
                               {/* Tags */}
                               {goal.tags && goal.tags.length > 0 && (
                                 <div className="flex gap-1 flex-wrap">
@@ -1474,7 +1481,7 @@ export function EnhancedTaskTracker() {
                               )}
                             </div>
                           </div>
-                          
+
                           <div className="flex items-center gap-1 shrink-0">
                             <Button
                               size="icon"
@@ -1500,7 +1507,7 @@ export function EnhancedTaskTracker() {
                                   編集
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem 
+                                <DropdownMenuItem
                                   className="text-red-500 focus:text-red-500"
                                   onClick={() => deleteGoal.mutate(goal.id)}
                                 >
@@ -1516,10 +1523,10 @@ export function EnhancedTaskTracker() {
                   </div>
                 </div>
               )}
-              
+
               {/* Regular active tasks */}
               {regularActiveTasks.length > 0 && (
-                <div>
+                <div className="pt-5">
                   <h3 className="flex items-center gap-1.5 font-medium mb-2">
                     <Rocket className="h-4 w-4 text-blue-500" />
                     <span>進行中のタスク</span>
@@ -1532,27 +1539,27 @@ export function EnhancedTaskTracker() {
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, height: 0 }}
-                          className="flex items-start gap-2 p-2 border border-blue-500/20 rounded-md group hover:bg-accent/50 transition-colors"
+                          className="flex items-start gap-2 p-2 border border-noble-black-900 rounded-md group hover:bg-black/50 bg-noble-black-900 text-noble-black-100 transition-colors"
                         >
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="h-6 w-6 rounded-full border border-input hover:bg-primary hover:text-primary-foreground shrink-0 mt-0.5"
+                            className="h-6 w-6 rounded-full border border-black hover:bg-noble-black-100 hover:text-noble-black-900  text-black shrink-0 mt-0.5"
                             onClick={() => updateGoalStatus.mutate({ id: goal.id, completed: !goal.completed })}
                           >
                             <Check className="h-3 w-3" />
                           </Button>
-                          
+
                           <div className="flex-1 flex flex-col min-w-0">
                             <div className="flex items-center justify-between">
                               <span className="text-sm font-medium break-words line-clamp-2">{goal.title}</span>
-                              
+
                               <div className="flex items-center gap-1 ml-2">
                                 {/* Priority icon */}
                                 <div className={`${getPriorityDetails(goal.priority || "medium").bgColor} p-0.5 rounded-full hidden sm:flex`}>
                                   {getPriorityDetails(goal.priority || "medium").icon}
                                 </div>
-                                
+
                                 {/* Recurring icon */}
                                 {goal.isRecurring && (
                                   <span className="text-blue-500 hidden sm:flex">
@@ -1561,14 +1568,14 @@ export function EnhancedTaskTracker() {
                                 )}
                               </div>
                             </div>
-                            
+
                             {/* Display description if available */}
                             {goal.description && goal.description !== goal.title && (
                               <p className="text-xs text-muted-foreground mt-1 break-words line-clamp-2">
                                 {goal.description}
                               </p>
                             )}
-                            
+
                             <div className="flex flex-wrap gap-1 mt-2">
                               {/* Due date */}
                               {goal.dueDate && (
@@ -1579,7 +1586,7 @@ export function EnhancedTaskTracker() {
                                   </span>
                                 </span>
                               )}
-                              
+
                               {/* Category tag */}
                               {goal.category && (
                                 <Badge variant="outline" className="text-xs h-5 px-1.5 truncate max-w-[150px]">
@@ -1587,12 +1594,12 @@ export function EnhancedTaskTracker() {
                                   <span className="truncate">{getCategoryName(goal.category)}</span>
                                 </Badge>
                               )}
-                              
+
                               {/* Priority badge for mobile */}
                               <Badge variant="outline" className={`sm:hidden text-xs h-5 px-1.5 ${getPriorityDetails(goal.priority || "medium").color}`}>
                                 {getPriorityDetails(goal.priority || "medium").label}
                               </Badge>
-                              
+
                               {/* Tags */}
                               {goal.tags && goal.tags.length > 0 && (
                                 <div className="flex gap-1 flex-wrap">
@@ -1610,13 +1617,13 @@ export function EnhancedTaskTracker() {
                               )}
                             </div>
                           </div>
-                          
+
                           <div className="flex items-center gap-1 shrink-0">
                             <Button
                               size="icon"
                               variant="ghost"
                               className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                              onClick={() => handleEditTask(goal)}
+                              onClick={() => { handleEditTask(goal); document.body.style.pointerEvents = "" }}
                             >
                               <Edit2 className="h-3.5 w-3.5" />
                             </Button>
@@ -1631,12 +1638,12 @@ export function EnhancedTaskTracker() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleEditTask(goal)}>
+                                <DropdownMenuItem onClick={() => { handleEditTask(goal); document.body.style.pointerEvents = "" }}>
                                   <Edit2 className="h-4 w-4 mr-2" />
                                   編集
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem 
+                                <DropdownMenuItem
                                   className="text-red-500 focus:text-red-500"
                                   onClick={() => deleteGoal.mutate(goal.id)}
                                 >
@@ -1652,17 +1659,17 @@ export function EnhancedTaskTracker() {
                   </div>
                 </div>
               )}
-              
+
               {/* Completed tasks */}
               {completedGoals.length > 0 && (
                 <div className="mt-6">
                   <Accordion type="single" collapsible className="w-full">
                     <AccordionItem value="completed-tasks" className="border-none">
                       <AccordionTrigger className="py-2 hover:no-underline">
-                        <h3 className="flex items-center gap-1.5 font-medium text-muted-foreground">
+                        <h3 className="flex items-center gap-1.5 font-medium text-noble-black-100">
                           <Check className="h-4 w-4" />
                           <span>完了済みのタスク</span>
-                          <Badge variant="outline" className="ml-2 font-normal">
+                          <Badge className="ml-2 font-normal border border-noble-black-900 bg-white text-noble-black-900">
                             {completedGoals.length}
                           </Badge>
                         </h3>
@@ -1676,7 +1683,7 @@ export function EnhancedTaskTracker() {
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, height: 0 }}
-                                className="flex items-start gap-2 p-2 border border-border/40 rounded-md group hover:bg-accent/30 transition-colors bg-accent/10"
+                                className="flex items-start gap-2 p-2 border border-noble-black-900 rounded-md group hover:bg-noble-black-800 transition-colors bg-noble-black-900"
                               >
                                 <Button
                                   size="icon"
@@ -1686,11 +1693,11 @@ export function EnhancedTaskTracker() {
                                 >
                                   <Check className="h-3 w-3" />
                                 </Button>
-                                
+
                                 <div className="flex-1 flex flex-col min-w-0 opacity-70">
                                   <div className="flex items-center justify-between">
                                     <span className="text-sm font-medium break-words line-clamp-1 line-through">{goal.title}</span>
-                                    
+
                                     <div className="flex items-center gap-1 ml-2">
                                       {/* Recurring icon */}
                                       {goal.isRecurring && (
@@ -1700,7 +1707,7 @@ export function EnhancedTaskTracker() {
                                       )}
                                     </div>
                                   </div>
-                                  
+
                                   <div className="flex flex-wrap gap-1 mt-1">
                                     {/* Category tag */}
                                     {goal.category && (
@@ -1711,7 +1718,7 @@ export function EnhancedTaskTracker() {
                                     )}
                                   </div>
                                 </div>
-                                
+
                                 <Button
                                   size="icon"
                                   variant="ghost"
@@ -1733,57 +1740,58 @@ export function EnhancedTaskTracker() {
           </ScrollArea>
         )}
       </CardContent>
-      
+
       {/* Edit Task Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-xl">
+        <DialogContent className="w-full max-w-sm sm:max-w-xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto border border-noble-black-900 bg-noble-black-900 text-noble-black-100">
           <DialogHeader>
             <DialogTitle>タスクを編集</DialogTitle>
             <DialogDescription>
               タスクの詳細を更新してください。
             </DialogDescription>
           </DialogHeader>
-          
+
           <form onSubmit={handleSubmitUpdateTask} className="space-y-4 mt-2">
             {/* Basic Task Info */}
             <div className="space-y-3">
               <div>
                 <Label htmlFor="edit-task-title">タイトル <span className="text-red-500">*</span></Label>
-                <Input 
+                <Input
                   id="edit-task-title"
-                  value={taskTitle} 
+                  value={taskTitle}
+                  className="bg-black text-noble-black-100 outline-none active:outline-none focus:outline-none border border-noble-black-900"
                   onChange={(e) => setTaskTitle(e.target.value)}
-                  placeholder="タスクのタイトルを入力" 
+                  placeholder="タスクのタイトルを入力"
                   required
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="edit-task-description">詳細な説明</Label>
-                <Textarea 
+                <Textarea
                   id="edit-task-description"
                   value={taskDescription}
                   onChange={(e) => setTaskDescription(e.target.value)}
                   placeholder="タスクの詳細を入力"
-                  className="min-h-[100px]"
+                  className="min-h-[100px] bg-black text-noble-black-100 outline-none active:outline-none focus:outline-none border border-noble-black-900"
                 />
               </div>
             </div>
-            
+
             {/* Task metadata */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="edit-task-priority">優先度</Label>
                 <Select value={priority} onValueChange={handlePriorityChange}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full bg-black border-noble-black-900">
                     <SelectValue placeholder="優先度を選択" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[999] bg-black text-noble-black-100 border border-noble-black-900">
                     {priorityOptions.map(option => (
-                      <SelectItem 
-                        key={option.value} 
-                        value={option.value} 
-                        className="flex items-center gap-2"
+                      <SelectItem
+                        key={option.value}
+                        value={option.value}
+                        className="flex items-center gap-2 bg-black text-noble-black-100 border border-noble-black-900 cursor-pointer"
                       >
                         <div className="flex items-center gap-2">
                           <span className={`${option.bgColor} p-1 rounded-full`}>
@@ -1796,19 +1804,19 @@ export function EnhancedTaskTracker() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div>
                 <Label htmlFor="edit-task-category">カテゴリ</Label>
                 <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full bg-black border-noble-black-900 text-noble-black-100">
                     <SelectValue placeholder="カテゴリを選択" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[999] bg-black border border-noble-black-900">
                     {defaultCategories.map(option => (
-                      <SelectItem 
-                        key={option.id} 
-                        value={option.id} 
-                        className="flex items-center gap-2"
+                      <SelectItem
+                        key={option.id}
+                        value={option.id}
+                        className="flex items-center gap-2 bg-black border border-noble-black-900 text-noble-black-100"
                       >
                         <div className="flex items-center gap-2">
                           <span className={`${option.color} w-3 h-3 rounded-full`}></span>
@@ -1820,7 +1828,7 @@ export function EnhancedTaskTracker() {
                 </Select>
               </div>
             </div>
-            
+
             {/* Due date and reminder */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -1829,8 +1837,9 @@ export function EnhancedTaskTracker() {
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
+                      onClick={() => document.body.style.pointerEvents = ""}
                       className={cn(
-                        "w-full justify-start text-left font-normal",
+                        "w-full justify-start text-left font-normal bg-black border-noble-black-900 text-noble-black-100",
                         !dueDate && "text-muted-foreground"
                       )}
                     >
@@ -1838,7 +1847,7 @@ export function EnhancedTaskTracker() {
                       {dueDate ? format(dueDate, "yyyy年MM月dd日", { locale: ja }) : "期限日を選択"}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
+                  <PopoverContent className="w-auto p-0 bg-black">
                     <CalendarComponent
                       mode="single"
                       selected={dueDate}
@@ -1854,11 +1863,11 @@ export function EnhancedTaskTracker() {
                 <div className="flex items-center justify-between h-6 mb-1">
                   <Label htmlFor="task-reminder">リマインダー</Label>
                   {reminderTime ? (
-                    <Button 
+                    <Button
                       type="button"
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-6 px-2 text-xs" 
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs bg-black border-noble-black-900 text-noble-black-100"
                       onClick={() => setReminderTime(undefined)}
                     >
                       <X className="h-3 w-3 mr-1" />
@@ -1866,15 +1875,16 @@ export function EnhancedTaskTracker() {
                     </Button>
                   ) : (
                     // Invisible placeholder to reserve space
-      <div className="w-[40px] h-[16px] invisible" aria-hidden="true">.</div>
+                    <div className="w-[40px] h-[16px] invisible" aria-hidden="true">.</div>
                   )}
                 </div>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
+                      onClick={() => document.body.style.pointerEvents = ""}
                       className={cn(
-                        "w-full h-10 justify-start text-left font-normal", // <- Add h-10 or same height as other inputs
+                        "w-full h-10 justify-start text-left font-normal bg-black border-noble-black-900 text-noble-black-100", // <- Add h-10 or same height as other inputs
                         !reminderTime && "text-muted-foreground"
                       )}
                     >
@@ -1886,7 +1896,7 @@ export function EnhancedTaskTracker() {
                   </PopoverTrigger>
 
 
-                  <PopoverContent className="w-auto p-0" align="start">
+                  <PopoverContent className="w-auto p-0 z-[999]" align="start">
                     <div className="p-4 space-y-4">
                       {/* Calendar */}
                       <CalendarComponent
@@ -1896,9 +1906,9 @@ export function EnhancedTaskTracker() {
                           setReminderTime(
                             date
                               ? new Date(date.setHours(
-                                  reminderTime?.getHours() ?? new Date().getHours(),
-                                  reminderTime?.getMinutes() ?? new Date().getMinutes()
-                                ))
+                                reminderTime?.getHours() ?? new Date().getHours(),
+                                reminderTime?.getMinutes() ?? new Date().getMinutes()
+                              ))
                               : undefined
                           )
                         }
@@ -1908,48 +1918,48 @@ export function EnhancedTaskTracker() {
 
                       {/* Custom Time Picker */}
                       {reminderTime && (
-            <div className="flex items-center justify-center space-x-2">
-              {/* Hour */}
-              <Select value={String(reminderTime.getHours())} onValueChange={(val) => {
-                const newDate = new Date(reminderTime);
-                newDate.setHours(Number(val));
-                setReminderTime(newDate);
-              }}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="時" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 24 }).map((_, i) => (
-                    <SelectItem key={i} value={String(i)}>
-                      {i.toString().padStart(2, "0")} 時
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <span className="text-sm text-gray-900 dark:text-gray-300">時</span>
+                        <div className="flex items-center justify-center space-x-2 z-[999]">
+                          {/* Hour */}
+                          <Select value={String(reminderTime.getHours())} onValueChange={(val) => {
+                            const newDate = new Date(reminderTime);
+                            newDate.setHours(Number(val));
+                            setReminderTime(newDate);
+                          }}>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="時" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Array.from({ length: 24 }).map((_, i) => (
+                                <SelectItem key={i} value={String(i)}>
+                                  {i.toString().padStart(2, "0")} 時
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <span className="text-sm text-gray-900 dark:text-gray-300">時</span>
 
-              {/* Minute */}
-              <Select
-                value={String(reminderTime.getMinutes())}
-                onValueChange={(val) => {
-                  const newDate = new Date(reminderTime);
-                  newDate.setMinutes(Number(val));
-                  setReminderTime(newDate);
-                }}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="分" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 60 }).map((_, i) => (
-                    <SelectItem key={i} value={String(i)}>
-                      {i.toString().padStart(2, "0")} 分
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <span className="text-sm text-gray-900 dark:text-gray-300">分</span>
-            </div>
+                          {/* Minute */}
+                          <Select
+                            value={String(reminderTime.getMinutes())}
+                            onValueChange={(val) => {
+                              const newDate = new Date(reminderTime);
+                              newDate.setMinutes(Number(val));
+                              setReminderTime(newDate);
+                            }}
+                          >
+                            <SelectTrigger className="w-full bg-black border-noble-black-900 text-noble-black-100 ">
+                              <SelectValue placeholder="分" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-black border-noble-black-900 text-noble-black-100">
+                              {Array.from({ length: 60 }).map((_, i) => (
+                                <SelectItem key={i} value={String(i)}>
+                                  {i.toString().padStart(2, "0")} 分
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <span className="text-sm text-noble-black-100">分</span>
+                        </div>
 
                       )}
                     </div>
@@ -1958,26 +1968,11 @@ export function EnhancedTaskTracker() {
 
               </div>
             </div>
-            
+
             {/* Tags */}
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="edit-task-tags">タグ</Label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {tags.map((tag, index) => (
-                  <Badge key={index} variant="secondary" className="gap-1 pl-2">
-                    {tag}
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-4 w-4 p-0 ml-1 hover:bg-transparent"
-                      onClick={() => handleRemoveTag(tag)}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </Badge>
-                ))}
-              </div>
+
               <div className="flex gap-2">
                 <Input
                   id="edit-task-tags"
@@ -1985,19 +1980,36 @@ export function EnhancedTaskTracker() {
                   onChange={(e) => setNewTag(e.target.value)}
                   onKeyDown={handleTagKeyDown}
                   placeholder="新しいタグを入力"
-                  className="flex-1"
+                  className="flex-1 bg-black text-noble-black-100 outline-none active:outline-none focus:outline-none border border-noble-black-900"
                 />
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={handleAddTag}
+                  className="bg-black border border-noble-black-900 text-noble-black-100"
                   disabled={!newTag.trim()}
                 >
                   追加
                 </Button>
               </div>
+              <div className="flex flex-wrap gap-2 ">
+                {tags.map((tag, index) => (
+                  <Badge key={index} variant="secondary" className="gap-1 pl-2">
+                    {tag}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-4 w-4 p-0 ml-1 bg-black border-noble-black-900 border"
+                      onClick={() => handleRemoveTag(tag)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </Badge>
+                ))}
+              </div>
             </div>
-            
+
             {/* Recurring Options */}
             <div className="space-y-4">
               <div className="flex items-center space-x-2">
@@ -2008,26 +2020,26 @@ export function EnhancedTaskTracker() {
                 />
                 <Label htmlFor="edit-recurring-task">繰り返しタスク</Label>
               </div>
-              
+
               {isRecurring && (
-                <div className="space-y-4 pl-6 border-l-2 border-blue-200">
+                <div className="space-y-4 pl-6 border-l-2 border-black">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="edit-recurring-type">繰り返しの種類</Label>
                       <Select value={recurringType} onValueChange={handleRecurringTypeChange}>
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-black border border-noble-black-900">
                           <SelectValue placeholder="繰り返しの種類を選択" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="z-[999] bg-black text-noble-black-900 border border-noble-black-900">
                           {recurringOptions.map(option => (
-                            <SelectItem key={option.value} value={option.value}>
+                            <SelectItem className="bg-black text-noble-black-900 border border-noble-black-900 cursor-pointer" key={option.value} value={option.value}>
                               {option.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
-                    
+
                     <div>
                       <Label htmlFor="edit-recurring-interval">
                         間隔
@@ -2041,21 +2053,22 @@ export function EnhancedTaskTracker() {
                         type="number"
                         min="1"
                         value={recurringInterval}
+                        className="bg-black text-noble-black-100 outline-none focus:outline-none border border-noble-black-900"
                         onChange={(e) => setRecurringInterval(parseInt(e.target.value) || 1)}
                       />
                     </div>
                   </div>
-                  
+
                   <div>
                     <div className="flex items-center justify-between">
                       <Label>繰り返し終了日</Label>
 
                       {recurringEndDate ? (
-                        <Button 
+                        <Button
                           type="button"
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-6 px-2 text-xs" 
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-2 text-xs"
                           onClick={() => setRecurringEndDate(undefined)}
                         >
                           <X className="h-3 w-3 mr-1" />
@@ -2072,9 +2085,10 @@ export function EnhancedTaskTracker() {
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
+                          onClick={() => document.body.style.pointerEvents = ""}
                           variant="outline"
                           className={cn(
-                            "w-full justify-start text-left font-normal",
+                            "w-full justify-start text-left font-normal bg-black text-noble-black-100 border border-noble-black-900",
                             !recurringEndDate && "text-muted-foreground"
                           )}
                         >
@@ -2082,7 +2096,7 @@ export function EnhancedTaskTracker() {
                           {recurringEndDate ? format(recurringEndDate, "yyyy年MM月dd日", { locale: ja }) : "終了日を選択 (省略可)"}
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
+                      <PopoverContent className="w-auto p-0 z-[999]">
                         <CalendarComponent
                           mode="single"
                           selected={recurringEndDate}
@@ -2096,11 +2110,11 @@ export function EnhancedTaskTracker() {
                 </div>
               )}
             </div>
-            
+
             <DialogFooter>
               <Button
                 type="button"
-                variant="outline"
+
                 onClick={() => {
                   resetForm();
                   setIsEditDialogOpen(false);

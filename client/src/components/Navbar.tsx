@@ -9,9 +9,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Zap, Book, Target, Trash2, BrainCircuit, Menu, Home, X, Download, LogOut, LucideHandHelping, AudioLines } from "lucide-react";
+import { Zap, Book, Target, Trash2, BrainCircuit, Menu, Home, X, Download, LogOut, LucideHandHelping, AudioLines, Gem, User, MessageSquare, SettingsIcon, Voicemail } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useRecoilState } from 'recoil';
+import { useRecoilState, useRecoilValue } from 'recoil';
 import { ActiveTab, activeTabState } from '@/states/activeTabState';
 import { Message } from "@shared/schema";
 import { queryClient } from "@/lib/queryClient";
@@ -30,9 +30,12 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { ChatPDFExport } from './chat-pdf-export';
 import { useToast } from '@/hooks/use-toast';
-import { settingsStateAtom } from '@/states/settingsState';
+import { settingsStateAtom, sidePanelStateAtom } from '@/states/settingsState';
 import FeedbackDialog from './feedback-dialog';
 import { Link } from 'wouter';
+import { activeChatIdAtom } from '@/states/chatStates';
+import { Avatar } from '@radix-ui/react-avatar';
+import { AvatarFallback } from './ui/avatar';
 
 const Navbar = () => {
 
@@ -43,11 +46,21 @@ const Navbar = () => {
     const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
     const { toast } = useToast();
     const [_, setIsSettingsOpen] = useRecoilState(settingsStateAtom);
+    const activeChatId = useRecoilValue(activeChatIdAtom)
 
-
-    const { data: messages = [] } = useQuery<Message[]>({
-        queryKey: ['/api/messages'],
-        enabled: !!user,
+    const {
+        data: messages = [],
+        isLoading: isLoadingMsgs,
+        error: msgsError,
+    } = useQuery<Message[]>({
+        queryKey: ["/api/chats", activeChatId, "messages"],          // 👈 unique per chat
+        queryFn: async () => {
+            const res = await apiRequest("GET", `/api/chats/${activeChatId}/messages`);
+            if (!res.ok) throw new Error("メッセージの取得に失敗しました。");
+            return res.json() as Promise<Message[]>;
+        },
+        enabled: !!activeChatId,                                     // run only when a chat is selected
+        staleTime: 0,                                                // always refetch on focus
     });
 
     const handleClearChat = () => {
@@ -60,35 +73,47 @@ const Navbar = () => {
         // setIsSidebarOpen(false)
     };
 
-    const clearChatHistory = useMutation({
+    const clearChatHistory = useMutation<void, Error>({
+        // 1️⃣ No parameters — we read activeChatId from closure
         mutationFn: async () => {
-            const response = await apiRequest(
-                'DELETE',
-                '/api/messages'
+            if (activeChatId === null) {
+                throw new Error("チャットが選択されていません。");
+            }
+            const res = await apiRequest(
+                "DELETE",
+                `/api/chats/${activeChatId}/messages`
             );
-            return response.json();
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || "チャット履歴のクリアに失敗しました。");
+            }
         },
+
+        // 2️⃣ Clear only the active chat’s cache on success
         onSuccess: () => {
-            // Clear the messages in the query cache
-            queryClient.setQueryData<Message[]>(['/api/messages'], []);
+            const key: [string, number, string] = [
+                "/api/chats",
+                activeChatId!,
+                "messages",
+            ];
+            queryClient.setQueryData<Message[]>(key, []);
+            queryClient.invalidateQueries({ queryKey: key });
 
-            // Close the confirmation dialog
             setShowClearConfirm(false);
-
-            // Show success toast
             toast({
                 title: "チャット履歴をクリアしました",
                 description: "すべてのメッセージが削除されました。",
             });
         },
+
         onError: (error) => {
             console.error("Error clearing chat history:", error);
             toast({
                 title: "エラーが発生しました",
-                description: "チャット履歴のクリアに失敗しました。",
-                variant: "destructive"
+                description: error.message,
+                variant: "destructive",
             });
-        }
+        },
     });
 
     const handleTabChange = (value: string) => {
@@ -291,9 +316,7 @@ const Navbar = () => {
 
 
 
-
-                            {/* Username badge */}
-                            <AnimatePresence>
+                            {/* <AnimatePresence>
                                 {displayName && (
                                     <motion.div
                                         className="flex items-center gap-1 bg-slate-800/70 px-2 py-1 rounded-md border border-blue-500/20 backdrop-blur-sm"
@@ -319,9 +342,9 @@ const Navbar = () => {
                                         <Zap className="h-3 w-3 text-blue-400" />
                                     </motion.div>
                                 )}
-                            </AnimatePresence>
+                            </AnimatePresence> */}
                             {/* Feedback badge */}
-                            <AnimatePresence>
+                            {/* <AnimatePresence>
                                 {displayName && (
                                     <motion.div
                                         className="hidden sm:flex items-center gap-1 bg-slate-800/70 px-2 py-1 rounded-md border border-blue-500/20 backdrop-blur-sm"
@@ -344,9 +367,9 @@ const Navbar = () => {
                                         <LucideHandHelping className="h-3 w-3 text-blue-400" />
                                     </motion.div>
                                 )}
-                            </AnimatePresence>
+                            </AnimatePresence> */}
                             {/* Voice mode page badge */}
-                            <AnimatePresence>
+                            {/* <AnimatePresence>
                                 <motion.div
                                     className="hidden sm:flex items-center gap-1 bg-slate-800/70 px-2 py-1 rounded-md border border-blue-500/20 backdrop-blur-sm"
                                     initial={{ opacity: 0, x: 10 }}
@@ -370,11 +393,11 @@ const Navbar = () => {
                                     <AudioLines className="h-3 w-3 text-blue-400" />
                                 </motion.div>
 
-                            </AnimatePresence>
+                            </AnimatePresence> */}
 
 
                             {/* Logout button */}
-                            <motion.div
+                            {/* <motion.div
                                 // hidden by default (all sizes), becomes flex (or block) at sm+
                                 className="hidden sm:flex"
                                 whileHover={{ scale: 1.05 }}
@@ -389,6 +412,109 @@ const Navbar = () => {
                                 >
                                     <LogOut className="h-3.5 w-3.5" />
                                 </Button>
+                            </motion.div> */}
+
+                            {/* User Dropdown Menu */}
+                            <motion.div
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                className="relative"
+                            >
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button
+                                            id="settings-dropdown"
+                                            variant="outline"
+                                            size="sm"
+                                            className="bg-slate-800 border border-blue-500/20 text-blue-300 hover:bg-blue-700 flex items-center gap-2 rounded-full pl-2 pr-3"
+                                        >
+                                            <Avatar className="h-7 w-7 border border-blue-200 bg-blue-100/70 rounded-full">
+                                                <AvatarFallback className="text-blue-300 text-xs">
+                                                    {displayName ? displayName[0].toUpperCase() : ""}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <motion.span
+                                                className="text-sm font-medium hidden sm:flex items-center"
+                                                animate={{ scale: [1, 1.05, 1] }}
+                                                transition={{ duration: 2, repeat: Infinity }}
+                                            >
+                                                {displayName}さん
+                                                <Gem className="h-3 w-3 text-blue-400 ml-1" />
+                                            </motion.span>
+                                            <Menu className="h-4 w-4 sm:hidden" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-56 bg-slate-800 border border-blue-500/20 backdrop-blur-sm">
+                                        <DropdownMenuLabel className="text-blue-300 flex items-center gap-2">
+                                            <User className="h-4 w-4 text-blue-300" />
+                                            <span>{displayName}さん</span>
+                                        </DropdownMenuLabel>
+                                        <DropdownMenuSeparator className="bg-blue-500/20" />
+
+                                        {/* Voice Mode Option */}
+                                        <Link href="/voice">
+                                            <DropdownMenuItem className="cursor-pointer text-white hover:bg-blue-500 focus:bg-blue-600/20 focus:text-blue-300">
+                                                <AudioLines className="h-4 w-4 text-white hover:text-blue-300" />
+                                                音声モード
+                                            </DropdownMenuItem>
+                                        </Link>
+
+
+
+                                        {/* Feedback Option */}
+                                        <DropdownMenuItem
+                                            onClick={() => setShowFeedbackDialog(true)}
+                                            className="cursor-pointer text-white hover:bg-blue-50 focus:bg-blue-600/20 focus:text-blue-300"
+                                        >
+                                            <MessageSquare className="h-4 w-4 text-white hover:text-blue-300" />
+                                            フィードバック
+                                        </DropdownMenuItem>
+                                     
+
+                                        {/* Onboarding Option */}
+                                        {/* <DropdownMenuItem
+                                        onClick={startTour}
+                                        className="cursor-pointer text-blue-700 hover:bg-blue-50 focus:bg-blue-50 focus:text-blue-800"
+                                    >
+                                        <BookOpen className="h-4 w-4 text-blue-500" />
+                                        チュートリアル
+                                    </DropdownMenuItem> */}
+
+                                        {/* Info Page Option */}
+                                        {/* <Link href="/info">
+                                        <DropdownMenuItem
+                                            className="cursor-pointer text-blue-700 hover:bg-blue-50 focus:bg-blue-50 focus:text-blue-800"
+                                        >
+                                            <BadgeInfo className="h-4 w-4 text-blue-500" />
+                                            情報ページ
+                                        </DropdownMenuItem>
+                                    </Link> */}
+
+                                        <DropdownMenuItem
+                                            onClick={handleOpenSheet}
+                                            className="cursor-pointer text-white hover:bg-blue-50 focus:bg-blue-600/20 focus:text-blue-300"
+                                        >
+                                            <SettingsIcon className="h-4 w-4 text-white hover:text-blue-300" />
+                                            設定
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator className="blue-500/20" />
+
+                                        {/* Logout Option */}
+                                        <DropdownMenuItem
+                                            onClick={() => setShowLogoutConfirm(true)}
+                                            disabled={logoutMutation.isPending}
+                                            className="cursor-pointer text-white hover:bg-blue-50 focus:bg-blue-600/20 focus:text-blue-300"
+                                        >
+                                            <LogOut className="h-4 w-4 text-white hover:text-blue-300" />
+                                            <motion.span
+                                                animate={{ scale: logoutMutation.isPending ? [1, 1.1, 1] : 1 }}
+                                                transition={{ duration: 0.5, repeat: logoutMutation.isPending ? Infinity : 0 }}
+                                            >
+                                                ログアウト
+                                            </motion.span>
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </motion.div>
                         </div>
                     </div>
@@ -430,6 +556,7 @@ const Navbar = () => {
                         </AlertDialogCancel>
                         <AlertDialogAction
                             onClick={() => clearChatHistory.mutate()}
+                            disabled={!activeChatId}
                             className="bg-red-900/50 hover:bg-red-900 text-red-50 border border-red-800"
                         >
                             削除する

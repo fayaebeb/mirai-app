@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Heart, Lightbulb, FileText } from "lucide-react";
+import { Sparkles, Heart, Lightbulb, FileText, Trash2, Download, X, Menu } from "lucide-react";
 import { Message } from "@shared/schema";
 import { nanoid } from "nanoid";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -17,7 +17,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChatLoadingIndicator } from "./chat-loading-indicator";
-
+import { Trefoil } from 'ldrs/react'
+import 'ldrs/react/Trefoil.css'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,8 +31,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { promptCategories } from "@/components/starter-prompts";
 import { Badge } from "@/components/ui/badge";
-import { useRecoilState } from "recoil";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import { currentAudioUrlAtom, isPlayingAudioAtom, isProcessingVoiceAtom, playingMessageIdAtom } from "@/states/voicePlayerStates";
+import { activeChatIdAtom } from "@/states/chatStates";
+import { Spotlight } from "./ui/spotlight";
+import { useSidebar } from "./ui/sidebar";
+import { ChatPDFExport } from "./chat-pdf-export";
+import { activeTabState } from "@/states/activeTabState";
 
 // Define a type for optimistic messages that uses string IDs instead of numbers
 type OptimisticMessage = {
@@ -274,6 +280,7 @@ export const ChatInterface = ({
   const [isPlayingAudio, setIsPlayingAudio] = useRecoilState(isPlayingAudioAtom);
   const [playingMessageId, setPlayingMessageId] = useRecoilState(playingMessageIdAtom);
   const [currentAudioUrl, setCurrentAudioUrl] = useRecoilState(currentAudioUrlAtom);
+  const activeChatId = useRecoilValue(activeChatIdAtom)
 
   // Use either the external or internal state and functions
   const setInput = externalSetInput || setInputInternal;
@@ -306,52 +313,72 @@ export const ChatInterface = ({
     }
   }, [user]);
 
+
+
   // Fetch previous messages
-  const { data: messages = [] } = useQuery<Message[]>({
-    queryKey: ["/api/messages"],
-    enabled: !!user,
+  const {
+    data: messages = [],
+    isLoading: isLoadingMsgs,
+    error: msgsError,
+  } = useQuery<Message[]>({
+    queryKey: ["/api/chats", activeChatId, "messages"],          // 👈 unique per chat
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/chats/${activeChatId}/messages`);
+      if (!res.ok) throw new Error("メッセージの取得に失敗しました。");
+      return res.json() as Promise<Message[]>;
+    },
+    enabled: !!activeChatId,                                     // run only when a chat is selected
+    staleTime: 0,                                                // always refetch on focus
   });
 
-  // Clear chat history mutation
-  const clearChatHistory = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest("DELETE", "/api/messages");
-      return response.json();
-    },
-    onSuccess: () => {
-      // Clear the messages in the query cache
-      queryClient.setQueryData<Message[]>(["/api/messages"], []);
-
-      // Close the confirmation dialog
-      setShowClearConfirm(false);
-
-      // Show success toast
-      toast({
-        title: "チャット履歴をクリアしました",
-        description: "すべてのメッセージが削除されました。",
-      });
-
-      // Ensure UI refreshes and scrolls to empty state properly
-      setTimeout(() => {
-        if (messageEndRef.current) {
-          messageEndRef.current.scrollIntoView({ behavior: "smooth" });
-        }
-      }, 100);
-    },
-    onError: (error) => {
-      console.error("Error clearing chat history:", error);
-      toast({
-        title: "エラーが発生しました",
-        description: "チャット履歴のクリアに失敗しました。",
-        variant: "destructive",
-      });
-    },
-  });
 
   // Handle clear chat button click
   const handleClearChat = () => {
     setShowClearConfirm(true);
   };
+
+  const clearChatHistory = useMutation<void, Error>({
+    // 1️⃣ No parameters — we read activeChatId from closure
+    mutationFn: async () => {
+      if (activeChatId === null) {
+        throw new Error("チャットが選択されていません。");
+      }
+      const res = await apiRequest(
+        "DELETE",
+        `/api/chats/${activeChatId}/messages`
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "チャット履歴のクリアに失敗しました。");
+      }
+    },
+
+    // 2️⃣ Clear only the active chat’s cache on success
+    onSuccess: () => {
+      const key: [string, number, string] = [
+        "/api/chats",
+        activeChatId!,
+        "messages",
+      ];
+      queryClient.setQueryData<Message[]>(key, []);
+      queryClient.invalidateQueries({ queryKey: key });
+
+      setShowClearConfirm(false);
+      toast({
+        title: "チャット履歴をクリアしました",
+        description: "すべてのメッセージが削除されました。",
+      });
+    },
+
+    onError: (error) => {
+      console.error("Error clearing chat history:", error);
+      toast({
+        title: "エラーが発生しました",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   // Effect to handle initial display and make header always visible on mobile
   useEffect(() => {
@@ -395,7 +422,7 @@ export const ChatInterface = ({
 
   // Scroll to bottom when messages change
   useEffect(() => {
-    if (messageEndRef.current) {
+    if (messageEndRef.current && messages.length !== 0) {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages, messageEndRef]);
@@ -415,36 +442,44 @@ export const ChatInterface = ({
     lastTimestamp: Date;
   };
 
-  // Group messages by sender to enable better visualization and collapsing
+  // Group messages by sender for better visualization / collapsing
   const groupedMessages = useMemo(() => {
     if (!messages.length) return [];
 
     return messages.reduce((groups: MessageGroup[], message) => {
       const lastGroup = groups[groups.length - 1];
 
+      // make sure we have a Date object (API may return ISO string)
+      const msgTime = message.createdAt
+        ? message.createdAt instanceof Date
+          ? message.createdAt
+          : new Date(message.createdAt)
+        : new Date(); // fallback for optimistic rows
+
       if (lastGroup && (lastGroup.sender === "bot") === message.isBot) {
-        // Same sender as previous message group - add to existing group
+        // Same sender → append
         lastGroup.messages.push(message);
-        lastGroup.lastTimestamp = new Date(message.timestamp);
+        lastGroup.lastTimestamp = msgTime;
       } else {
-        // Different sender - create a new group
+        // New sender → start new group
         groups.push({
           sender: message.isBot ? "bot" : "user",
           messages: [message],
-          lastTimestamp: new Date(message.timestamp),
+          lastTimestamp: msgTime,
         });
       }
-
       return groups;
     }, []);
   }, [messages]);
 
   // Common quick replies/suggestions based on conversation context
   const quickReplies = [
-    { text: "詳細を教えて", icon: <Sparkles className="h-3 w-3" /> },
-    { text: "例を示して", icon: <Lightbulb className="h-3 w-3" /> },
-    { text: "まとめて", icon: <FileText className="h-3 w-3" /> },
+    { text: "詳細を教えて", icon: <Sparkles className="h-4 w-4" /> },
+    { text: "例を示して", icon: <Lightbulb className="h-4 w-4" /> },
+    { text: "まとめて", icon: <FileText className="h-4 w-4" /> },
   ];
+
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Handle quick reply selection
   const handleQuickReplySelect = (text: string) => {
@@ -583,211 +618,396 @@ export const ChatInterface = ({
     }
   };
 
+  const { open } = useSidebar()
+  const setActiveTab = useSetRecoilState(activeTabState)
+
+  if (isLoadingMsgs) {
+    return (
+      <div
+        style={{
+          "--scroll-area-track-bg": "transparent",
+          "--scroll-area-thumb-bg": "transparent",
+          "--scroll-area-thumb-hover-bg": "transparent",
+        } as React.CSSProperties}
+        className="h-full" >
+        <div className=" flex flex-col items-center justify-center h-full px-4   md:py-0 md:px-40 z-10 space-y-4">
+          <Spotlight />
+
+          <Trefoil
+            size="60"
+            stroke="4"
+            strokeLength="0.15"
+            bgOpacity="0.1"
+            speed="1.4"
+            color="#f2f2f2"
+          />
+          <h1 className="text-5xl md:text-7xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400 bg-opacity-50">読み込み中</h1>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <Card className="w-full h-full md:max-w-[90%] mx-auto flex flex-col overflow-hidden relative border-blue-600/20 shadow-lg shadow-blue-900/10 bg-gradient-to-b from-slate-950 to-slate-900">
-      {showTutorial && <Tutorial onClose={() => setShowTutorial(false)} />}
 
-      {/* Confirmation Dialog for clearing chat history */}
-      <AlertDialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
-        <AlertDialogContent className="bg-slate-900 border border-blue-500/30">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-blue-100">
-              チャット履歴をクリアしますか？
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-blue-300/70">
-              この操作は取り消せません。すべてのチャットメッセージがデータベースから削除されます。
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="border-blue-500/30 hover:bg-blue-950/50 text-blue-300">
-              キャンセル
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => clearChatHistory.mutate()}
-              className="bg-red-600 hover:bg-red-700 text-white"
+
+    <div
+      style={{
+        "--scroll-area-track-bg": "transparent",
+        "--scroll-area-thumb-bg": "transparent",
+        "--scroll-area-thumb-hover-bg": "transparent",
+      } as React.CSSProperties}
+      className="h-full" >
+
+      {
+        messages.length === 0 ? (
+
+          <div className=" flex flex-col items-center justify-center h-full px-4   md:py-0 md:px-40 z-10">
+            <Spotlight />
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="flex flex-col space-y-4 items-center justify-center h-full "
             >
-              クリア
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Main chat container with auto-scroll */}
-      <div className="flex-1 overflow-y-auto overscroll-none">
-        <ScrollArea
-          className="h-full px-1 sm:px-4 py-1 w-full overflow-auto -webkit-overflow-scrolling-touch bg-slate-900/90 backdrop-blur-md rounded-none sm:rounded-xl shadow-xl border-0 sm:border border-blue-500/20 pt-1 pb-12"
-          ref={scrollAreaRef}
-        >
-          <div className="space-y-2 w-full max-w-full">
-            {messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center sm:min-h-[300px] text-center py-4">
+              <div className="">
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                  className="p-6 rounded-2xl bg-blue-900/10 border border-blue-500/10 max-w-sm"
-                >
-                  <div className="relative mb-4 mx-auto w-14 h-14 flex items-center justify-center">
-                    <motion.div
-                      className="absolute inset-0 rounded-full border border-blue-400/30"
-                      animate={{
-                        scale: [1, 1.1, 1],
-                        opacity: [0.3, 0.5, 0.3],
-                        rotate: 360,
-                      }}
-                      transition={{
-                        duration: 4,
-                        repeat: Infinity,
-                        ease: "linear",
-                      }}
-                    />
-                    <Sparkles className="h-10 w-10 text-blue-400" />
-                  </div>
+                  className=""
+                  animate={{
+                    scale: [1, 1.1, 1],
+                    opacity: [0.3, 0.5, 0.3],
+                    rotate: 360,
+                  }}
+                  transition={{
+                    duration: 4,
+                    repeat: Infinity,
+                    ease: "linear",
+                  }}
+                />
+                <Sparkles className="h-10 w-10 text-black" />
+              </div>
 
-                  <h3 className="text-lg font-medium mb-2 text-blue-100">
-                    対話を始めましょう
-                  </h3>
-                  <p className="text-blue-300/80 max-w-xs mx-auto text-sm">
-                    下のテキストボックスにメッセージを入力して、
-                    <br />
-                    ミライと対話を開始してください
-                  </p>
+              <h3 className="text-2xl md:text-5xl font-medium mb-2 text-noble-black-100">
+                対話を始めましょう
+              </h3>
+              <p className="text-noble-black-300/80 max-w-xs mx-auto text-sm text-center">
+                下のテキストボックスにメッセージを入力して、
+                <br />
+                ミライと対話を開始してください
+              </p>
 
-                  {/* New: Quick start suggestions */}
-                  <div className="mt-5 space-y-2">
-                    <p className="text-xs text-blue-400 font-semibold">
-                      試してみる:
-                    </p>
-                    <div className="flex flex-wrap gap-2 justify-center">
-                      {promptCategories[0].prompts
-                        .slice(0, 3)
-                        .map((prompt, i) => (
+              {/* New: Quick start suggestions */}
+              <div className="mt-5 space-y-2">
+                <p className="text-xs text-black font-semibold text-center">
+                  プロジェクト:
+                </p>
+                <div className="hidden md:grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-5">
+
+                  <motion.button
+                    onClick={() => setActiveTab("voice")}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="w-full bg-black border  z-20 border-noble-black-100/20 hover:bg-gradient-to-br   text-noble-black-400 rounded-lg shadow-md text-sm  p-5"
+                  >
+                    ボイスモッド
+                  </motion.button>
+                  <motion.button
+                    onClick={() => setActiveTab("notes")}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="w-full bg-black border z-20 border-noble-black-100/20 hover:bg-gradient-to-br   text-noble-black-400 rounded-lg shadow-md text-sm p-5"
+                  >
+                    メモ
+                  </motion.button>
+                  <motion.button
+                    onClick={() => setActiveTab("mindmap")}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="w-full bg-black border z-20 border-noble-black-100/20 hover:bg-gradient-to-br   text-noble-black-400 rounded-lg shadow-md text-sm p-5"
+                  >
+                    マインドマップ
+                  </motion.button>
+                  <motion.button
+                    onClick={() => setActiveTab("goals")}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="w-full bg-black border z-20 border-noble-black-100/20 hover:bg-gradient-to-br   text-noble-black-400 rounded-lg shadow-md text-sm p-5"
+                  >
+                    ゴール
+                  </motion.button>
+
+                </div>
+              </div>
+              <div className="mt-5 space-y-2 w-full">
+                <p className="text-xs text-black font-semibold text-center">
+                  試してみる:
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-y-2 md:gap-y-0 md:gap-x-5">
+                  {promptCategories[0].prompts.slice(0, 3).map((prompt, i) => (
+                    <motion.button
+                      key={i}
+                      onClick={() => handleEmotionSelect(prompt.message || prompt.text)}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="
+        box-border        
+        min-w-0           
+        w-full            
+        bg-black border z-20 border-noble-black-100/20
+        hover:bg-gradient-to-br text-noble-black-400
+        rounded-lg shadow-md text-sm
+        p-2 md:p-5        
+        break-words      
+      "
+                    >
+                      {prompt.text}
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        ) : (
+          // Enhanced with message grouping
+          groupedMessages.map((group: MessageGroup, groupIndex: number) => (
+            <div key={`group-${groupIndex}`} className="mb-3 overflow-y-auto">
+              {/* Messages from the same sender grouped together */}
+              <div
+                className={`flex flex-col ${group.sender === "user" ? "items-end" : "items-start"}`}
+              >
+                {group.messages.map((message: Message, i: number) => {
+                  // Find the corresponding user message for bot messages to enable regeneration
+                  const lastUserMessageIndex = message.isBot
+                    ? messages.findIndex((m) => m.id === message.id) - 1
+                    : -1;
+                  const lastUserMessage =
+                    lastUserMessageIndex >= 0
+                      ? messages[lastUserMessageIndex]
+                      : null;
+
+                  const handleRegenerateAnswer = () => {
+                    if (lastUserMessage?.content) {
+                      externalSendMessageMutation?.mutate({
+                        content: lastUserMessage.content,
+                        useWeb,
+                        useDb,
+                      });
+                    }
+                  };
+
+                  // First message in a group shows the avatar
+                  const isFirstInGroup = i === 0;
+
+                  return (
+                    <div
+                      className={`w-full max-w-full ${i > 0 ? "mt-1" : "mt-10"}`}
+                      key={
+                        typeof message.id === "string"
+                          ? message.id
+                          : `msg-${message.id}`
+                      }
+                    >
+                      <ChatMessage
+                        message={{
+                          ...message,
+                          onRegenerateAnswer: message.isBot
+                            ? handleRegenerateAnswer
+                            : undefined,
+                        }}
+                        isFirstInGroup={isFirstInGroup}
+                        isLastInGroup={i === group.messages.length - 1}
+                        isPlayingAudio={isPlayingAudio}
+                        playingMessageId={playingMessageId}
+                        onPlayAudio={playMessageAudio}
+                      />
+                    </div>
+                  );
+                })}
+
+                {/* Timestamp shown once per group at the end */}
+                {/* <div className={`text-[9px] text-noble-black-100 font-mono mt-1 ${group.sender === 'user' ? 'mr-2' : 'ml-2'}`}>
+                  {group.lastTimestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </div> */}
+
+                {/* Quick replies after bot messages */}
+                <div className="relative xl:hidden">
+                  {group.sender === "bot" &&
+                    groupIndex === groupedMessages.length - 1 && (
+                      <motion.div
+
+                        className="fixed top-6 right-5 z-20 flex justify-center px-4 space-x-2 "
+                      >
+
+                        {messages.length > 0 && (
+                          <Button
+                            variant="ghost"
+                            onClick={handleClearChat}
+                            className="text-noble-black-100 hover:text-noble-black-900 bg-black border border-noble-black-900 shadow-black shadow-2xl hover:bg-noble-black-100 flex items-center gap-1 p-2 rounded-full"
+                          >
+                            <Trash2 className="h-4 w-4 text-noble-black-100" />
+                            <span className="hidden sm:inline">チャット履歴をクリア</span>
+                          </Button>
+                        )}
+
+
+                        {quickReplies.map((reply, i) => (
                           <motion.button
                             key={i}
-                            onClick={() =>
-                              handleEmotionSelect(prompt.message || prompt.text)
-                            }
+                            onClick={() => handleQuickReplySelect(reply.text)}
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            className="text-xs px-3 py-1.5 rounded-full bg-blue-900/30 text-blue-300 border border-blue-500/20 hover:bg-blue-800/40 transition-colors"
+                            className="flex items-center shadow-black shadow-2xl space-x-1.5 rounded-full border border-noble-black-900 bg-white px-3 py-0.5 text-xs font-medium text-noble-black-900 hover:bg-black hover:text-white transition-colors"
                           >
-                            {prompt.text}
+                            {reply.icon}
+                            <span className="hidden md:flex">{reply.text}</span>
                           </motion.button>
                         ))}
-                    </div>
-                  </div>
-                </motion.div>
-              </div>
-            ) : (
-              // Enhanced with message grouping
-              groupedMessages.map((group: MessageGroup, groupIndex: number) => (
-                <div key={`group-${groupIndex}`} className="mb-3">
-                  {/* Messages from the same sender grouped together */}
-                  <div
-                    className={`flex flex-col ${group.sender === "user" ? "items-end" : "items-start"}`}
-                  >
-                    {group.messages.map((message: Message, i: number) => {
-                      // Find the corresponding user message for bot messages to enable regeneration
-                      const lastUserMessageIndex = message.isBot
-                        ? messages.findIndex((m) => m.id === message.id) - 1
-                        : -1;
-                      const lastUserMessage =
-                        lastUserMessageIndex >= 0
-                          ? messages[lastUserMessageIndex]
-                          : null;
 
-                      const handleRegenerateAnswer = () => {
-                        if (lastUserMessage?.content) {
-                          externalSendMessageMutation?.mutate({
-                            content: lastUserMessage.content,
-                            useWeb,
-                            useDb,
-                          });
-                        }
-                      };
 
-                      // First message in a group shows the avatar
-                      const isFirstInGroup = i === 0;
-
-                      return (
-                        <div
-                          className={`w-full max-w-full ${i > 0 ? "mt-1" : "mt-0"}`}
-                          key={
-                            typeof message.id === "string"
-                              ? message.id
-                              : `msg-${message.id}`
-                          }
-                        >
-                          <ChatMessage
-                            message={{
-                              ...message,
-                              onRegenerateAnswer: message.isBot
-                                ? handleRegenerateAnswer
-                                : undefined,
-                            }}
-                            isFirstInGroup={isFirstInGroup}
-                            isLastInGroup={i === group.messages.length - 1}
-                            isPlayingAudio={isPlayingAudio}
-                            playingMessageId={playingMessageId}
-                            onPlayAudio={playMessageAudio}
+                        {messages.length > 0 && (
+                          <ChatPDFExport
+                            messages={messages}
+                            triggerContent={
+                              <>
+                                <Download className="h-4 w-4 " />
+                                <span className="hidden sm:flex">エクスポート</span>
+                              </>
+                            }
+                            triggerClassName="
+                      
+                    "
                           />
-                        </div>
-                      );
-                    })}
+                        )}
 
-                    {/* Timestamp shown once per group at the end */}
-                    {/*<div className={`text-[9px] text-blue-400/50 font-mono mt-1 ${group.sender === 'user' ? 'mr-2' : 'ml-2'}`}>
-                              {group.lastTimestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                            </div>*/}
+                      </motion.div>
+                    )}
+                </div>
 
-                    {/* Quick replies after bot messages */}
-                    {/* {group.sender === 'bot' && groupIndex === groupedMessages.length - 1 && (
-                            <motion.div 
-                              initial={{ opacity: 0, y: 5 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: 0.3, duration: 0.3 }}
-                              className="ml-10 mt-2 flex flex-wrap gap-2"
+                <div className="relative xl:flex hidden">
+                  {/* only show when bot is done speaking */}
+                  {group.sender === "bot" && groupIndex === groupedMessages.length - 1 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 5, x: drawerOpen ? -250 : (open ? 64 : 16) }}
+                      animate={{ opacity: 1, y: 0, x: drawerOpen ? -250 : (open ? 64 : 16) }}
+                      exit={{ opacity: 0, y: 5, x: drawerOpen ? -250 : (open ? 64 : 16) }}
+                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                      className="fixed top-6 left-0 right-0  z-20 flex justify-center items-center px-4 space-x-2 "
+                    >
+                      <div className="relative flex items-center z-30">
+                        {/* DRAWER TOGGLE */}
+                        <motion.button
+                          onClick={() => setDrawerOpen((o) => !o)}
+                          animate={{ x: drawerOpen ? -8 : 0 }}
+                          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                          className="text-noble-black-100 hover:text-noble-black-900 bg-black border border-noble-black-900 shadow-black shadow-2xl hover:bg-noble-black-100 flex items-center gap-1 p-2.5  rounded-full"
+                        >
+                          {drawerOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                        </motion.button>
+
+                        {/* SLIDING PANEL */}
+                        <AnimatePresence>
+                          {drawerOpen && (
+                            <motion.div
+                              initial={{ opacity: 0, x: 10, width: 0 }}
+                              animate={{ opacity: 1, x: 0, width: "100rem" }}
+                              exit={{ opacity: 0, x: 10, width: 0 }}
+                              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                              className="absolute left-full top-0 flex items-center space-x-2 overflow-hidden z-20"
                             >
+                              {/* 1) Clear Chat */}
+                              {messages.length > 0 && (
+                                <Button
+                                  variant="ghost"
+                                  onClick={handleClearChat}
+                                  className="text-noble-black-100 hover:text-noble-black-900 bg-black border border-noble-black-900 shadow-black shadow-2xl hover:bg-noble-black-100 flex items-center gap-1 p-2  xl:px-3 xl:py-1 rounded-full"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  <span className="hidden xl:flex">チャット履歴をクリア</span>
+                                </Button>
+                              )}
+
+                              {/* 2) Quick Replies */}
                               {quickReplies.map((reply, i) => (
                                 <motion.button
                                   key={i}
                                   onClick={() => handleQuickReplySelect(reply.text)}
                                   whileHover={{ scale: 1.05 }}
                                   whileTap={{ scale: 0.95 }}
-                                  className="text-xs px-2 py-1 rounded-full bg-blue-900/20 text-blue-400 border border-blue-500/20 hover:bg-blue-900/40 transition-colors flex items-center gap-1.5"
+                                  className="text-noble-black-100 hover:text-noble-black-900 bg-black border border-noble-black-900 shadow-black shadow-2xl hover:bg-noble-black-100 flex items-center gap-x-1 p-2  xl:px-3 xl:py-1 rounded-full"
                                 >
                                   {reply.icon}
-                                  <span>{reply.text}</span>
+                                  <span className="hidden xl:flex">{reply.text}</span>
                                 </motion.button>
                               ))}
+
+                              {/* 3) PDF Export */}
+                              {messages.length > 0 && (
+                                <ChatPDFExport
+                                  messages={messages}
+                                  triggerContent={
+                                    <>
+                                      <Download className="h-4 w-4" />
+                                      <span className="hidden xl:flex">エクスポート</span>
+                                    </>
+                                  }
+                                  triggerClassName=""
+                                />
+                              )}
                             </motion.div>
-                          )}*/}
-                  </div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </motion.div>
+                  )}
                 </div>
-              ))
-            )}
 
-            {/* Enhanced loading state */}
-            {externalSendMessageMutation?.isPending && (
-              <motion.div
-                className="flex justify-start pt-2 pb-4 pl-2"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <ChatLoadingIndicator
-                  variant="character"
-                  message="ミライが処理中..."
-                />
-              </motion.div>
-            )}
-            <div ref={messageEndRef} />
-          </div>
-        </ScrollArea>
-      </div>
 
-      {/* Input form removed and moved to a separate component */}
-    </Card>
+              </div>
+            </div>
+          ))
+        )
+      }
+
+      {/* Enhanced loading state */}
+      {externalSendMessageMutation?.isPending && (
+        <motion.div
+          className="flex justify-start pt-2 pb-4 pl-2"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <ChatLoadingIndicator
+            variant="character"
+            message="ミライが処理中..."
+          />
+        </motion.div>
+      )}
+      <div ref={messageEndRef} />
+
+      <AlertDialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
+        <AlertDialogContent className="mx-auto max-w-[90%] sm:max-w-md md:max-w-lg lg:max-w-xl rounded-xl p-6 bg-black text-noble-black-100 border border-noble-black-900">
+
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-noble-black-100">チャット履歴をクリアしますか？</AlertDialogTitle>
+            <AlertDialogDescription className="text-noble-black-300">
+              この操作は取り消せません。すべてのチャット履歴が削除されます。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-noble-black-900 text-noble-black-100  hover:bg-noble-black-800 border-0 hover:text-noble-black-100">
+              キャンセル
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => clearChatHistory.mutate()}
+              disabled={!activeChatId}
+              className="bg-noble-black-100  text-noble-black-900 border border-noble-black-900 hover:text-noble-black-100"
+            >
+              削除する
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+
   );
 };
 

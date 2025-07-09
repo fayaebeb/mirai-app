@@ -1,4 +1,4 @@
-import { users, messages, sessions, notes, goals, type User, type InsertUser, type Message, type InsertMessage, type Session, type Note, type InsertNote, type Goal, type InsertGoal, InsertUserSafe, InsertFeedback, Feedback, inviteTokens } from "@shared/schema";
+import { users, messages, sessions, notes, goals, type User, type InsertUser, type Message, type InsertMessage, type Session, type Note, type InsertNote, type Goal, type InsertGoal, InsertUserSafe, InsertFeedback, Feedback, inviteTokens, Chat, chats } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, not } from "drizzle-orm";
 import session from "express-session";
@@ -12,10 +12,11 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUserSafe): Promise<User>;
-  getMessagesByUserAndSession(userId: number, sessionId: string): Promise<Message[]>;
+
+  getMessagesByChat(userId: number, chatId: number): Promise<Message[]>;
   createMessage(userId: number, message: InsertMessage): Promise<Message>;
-  deleteMessagesBySessionId(userId: number, sessionId: string): Promise<boolean>;
-  deleteMessagesByUserAndSession(userId: number, sessionId: string): Promise<void>;
+  deleteMessagesInChat(userId: number, chatId: number): Promise<boolean>;
+
   getUserLastSession(userId: number): Promise<Session | undefined>;
   getSessionBySessionId(sessionId: string): Promise<Session | undefined>;
   createUserSession(userId: number, sessionId: string): Promise<Session>;
@@ -33,6 +34,11 @@ export interface IStorage {
   getInviteToken(tokenString: string): Promise<typeof inviteTokens.$inferSelect | undefined>;
   useInviteToken(tokenId: number, userId: number): Promise<void>;
   sessionStore: session.Store;
+
+  getChatsByUser(userId: number): Promise<Chat[]>;
+  createChat(userId: number, title?: string, type?: string): Promise<Chat>;
+  renameChat(userId: number, chatId: number, title: string): Promise<Chat | undefined>;
+  deleteChat(userId: number, chatId: number): Promise<boolean>;
 }
 
 // Representing the feedback table that already exists in the database
@@ -79,48 +85,77 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async getMessagesByUserAndSession(userId: number, sessionId: string): Promise<Message[]> {
+  async getChatById(chatId: number): Promise<Chat | undefined> {
+    const [chat] = await db
+      .select()
+      .from(chats)
+      .where(eq(chats.id, chatId))
+      .limit(1);
+    return chat;
+  }
+
+  async getChatsByUser(userId: number) {
+    return await db.query.chats.findMany({
+      where: eq(chats.userId, userId),
+      orderBy: [desc(chats.createdAt)],
+    });
+  }
+
+  async createChat(userId: number, title = "New chat", type = "regular") {
+    const [chat] = await db
+      .insert(chats)
+      .values({ userId, title, type })
+      .returning();
+    return chat;
+  }
+
+  async renameChat(userId: number, chatId: number, title: string) {
+    const [chat] = await db
+      .update(chats)
+      .set({ title })
+      .where(and(eq(chats.id, chatId), eq(chats.userId, userId)))
+      .returning();
+    return chat;
+  }
+
+  async deleteChat(userId: number, chatId: number) {
+    const del = await db
+      .delete(chats)
+      .where(and(eq(chats.id, chatId), eq(chats.userId, userId)));
+    return !!del.rowCount;
+  }
+
+  /* helper: reuse for goal / notes system threads */
+  async getOrCreateSystemChat(userId: number, title: string, type: string) {
+    const existing = await db.query.chats.findFirst({
+      where: and(eq(chats.userId, userId), eq(chats.type, type)),
+    });
+    if (existing) return existing;
+    return this.createChat(userId, title, type);
+  }
+
+   async getMessagesByChat(userId: number, chatId: number) {
     return await db
       .select()
       .from(messages)
-      .where(
-        and(
-          eq(messages.userId, userId),
-          eq(messages.sessionId, sessionId)
-        )
-      )
-      .orderBy(messages.timestamp);
+      .where(and(eq(messages.chatId, chatId), eq(messages.userId, userId)))
+      .orderBy(messages.createdAt);
   }
 
-  async createMessage(userId: number, message: InsertMessage): Promise<Message> {
-    const [newMessage] = await db
+  async createMessage(userId: number, msg: InsertMessage) {
+    const [m] = await db
       .insert(messages)
-      .values({
-        userId,
-        ...message,
-      })
+      .values({ userId, ...msg }) // msg must include chatId
       .returning();
-    return newMessage;
+    return m;
   }
 
-  async deleteMessagesBySessionId(userId: number, sessionId: string): Promise<boolean> {
-    const result = await db
+  async deleteMessagesInChat(userId: number, chatId: number) {
+    const del = await db
       .delete(messages)
-      .where(
-        and(
-          eq(messages.userId, userId),
-          eq(messages.sessionId, sessionId)
-        )
-      );
-    return !!result.rowCount;
+      .where(and(eq(messages.chatId, chatId), eq(messages.userId, userId)));
+    return !!del.rowCount;
   }
-
-  async deleteMessagesByUserAndSession(userId: number, sessionId: string): Promise<void> {
-    await db
-      .delete(messages)
-      .where(and(eq(messages.userId, userId), eq(messages.sessionId, sessionId)));
-  }
-
   async getUserLastSession(userId: number): Promise<Session | undefined> {
     const [session] = await db
       .select()

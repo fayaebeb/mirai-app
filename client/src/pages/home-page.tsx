@@ -18,11 +18,16 @@ import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { nanoid } from "nanoid";
 import Footer from "@/components/Footer";
-import { useRecoilState } from "recoil";
+import { useRecoilState, useRecoilValue } from "recoil";
 import { ActiveTab, activeTabState } from "@/states/activeTabState";
 import Navbar from "@/components/Navbar";
 import TranscriptionConfirmation from "@/components/transcription-confirmation";
 import { currentAudioUrlAtom, isPlayingAudioAtom, isProcessingVoiceAtom, playingMessageIdAtom } from "@/states/voicePlayerStates";
+import { activeChatIdAtom } from "@/states/chatStates";
+import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
+import FloatingSidebar from "@/components/Sidepanel";
+import { useRenameChat } from "@/hooks/useRenameChat";
+import VoiceModePage from "./voice-mode-page";
 
 // Audio player for bot responses
 const AudioPlayer = ({ audioUrl, isPlaying, onPlayComplete }: { audioUrl: string, isPlaying: boolean, onPlayComplete: () => void }) => {
@@ -73,12 +78,13 @@ export default function HomePage() {
   const [playingMessageId, setPlayingMessageId] = useRecoilState(playingMessageIdAtom);
   const [isProcessingVoice, setIsProcessingVoice] = useRecoilState(isProcessingVoiceAtom);
   const [isPlayingAudio, setIsPlayingAudio] = useRecoilState(isPlayingAudioAtom);
+  const [hasEntered, setHasEntered] = useState(false);
 
-
+  const activeChatId = useRecoilValue(activeChatIdAtom)
 
 
   const CHAT_SESSION_KEY_PREFIX = "chat_session_id_user_";
-
+  const chatKey = ["/api/chats", activeChatId, "messages"] as const;
   // Get messages for PDF export
 
 
@@ -89,56 +95,47 @@ export default function HomePage() {
     { content: string; useWeb: boolean; useDb: boolean },
     { previousMessages?: Message[] }
   >({
-    mutationFn: async ({ content, useWeb, useDb }: { content: string; useWeb: boolean; useDb: boolean }) => {
-
-      if (!sessionId) {
-        throw new Error("セッションIDが見つかりません。再ログインしてください。");
-      }
-
-      const response = await apiRequest('POST', '/api/messages', {
-        content,
-        useWeb,
-        useDb,
-        isBot: false,
-        sessionId
-      });
+    mutationFn: async ({ content, useWeb, useDb }) => {
+      if (!activeChatId) throw new Error("チャットが選択されていません。");
+      const response = await apiRequest(
+        "POST",
+        `/api/messages`,
+        { content, useWeb, useDb, isBot: false, chatId: activeChatId }
+      );
       return response.json();
     },
-    onMutate: async ({ content }: { content: string; useWeb: boolean; useDb: boolean }) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['/api/messages'] });
 
-      // Snapshot the previous value
-      const previousMessages = queryClient.getQueryData<Message[]>(['/api/messages']);
+    onMutate: async ({ content }) => {
+      if (!activeChatId) throw new Error("チャットが選択されていません。");
 
-      // Optimistically add user message
+      await queryClient.cancelQueries({ queryKey: chatKey });
+      const previousMessages = queryClient.getQueryData<Message[]>(chatKey);
+
       const tempUserMessage: Message = {
-        id: -Date.now(), // Temporary ID
+        id: -Date.now(),
         userId: user!.id,
+        chatId: activeChatId,
         content,
         isBot: false,
-        sessionId: `user_${user!.id}_${user!.email}`,
-        timestamp: new Date(),
+        createdAt: new Date(),
       };
 
-      queryClient.setQueryData<Message[]>(['/api/messages'], (old = []) => [
+      queryClient.setQueryData<Message[]>(chatKey, (old = []) => [
         ...old,
         tempUserMessage
       ]);
 
-      // Return a context object with the snapshotted value
       return { previousMessages };
     },
-    onSuccess: (newBotMessage: Message) => {
-      // Clear input field
-      setInput('');
 
-      // Add the bot message to the existing messages without invalidating
-      queryClient.setQueryData<Message[]>(['/api/messages'], (old = []) => [
+    onSuccess: (newBotMessage: Message) => {
+      setInput("");
+      queryClient.setQueryData<Message[]>(chatKey, (old = []) => [
         ...old,
         newBotMessage
       ]);
     },
+
     onError: (error, content, context) => {
       console.error("Error sending message:", error);
 
@@ -153,9 +150,10 @@ export default function HomePage() {
         variant: "destructive"
       });
     },
+
     onSettled: () => {
       // Always refetch after error or success to ensure consistency
-      queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+      queryClient.invalidateQueries({ queryKey: chatKey });
     }
   });
 
@@ -264,17 +262,62 @@ export default function HomePage() {
 
 
   // Handle form submission
+  // const handleSubmit = (e: React.FormEvent) => {
+  //   e.preventDefault();
+
+  //   if (!input.trim() || sendMessage.isPending || !activeChatId) return;
+
+  //   // Clear immediately
+  //   setInput("");
+
+  //   sendMessage.mutate({ content: input, useWeb, useDb });
+  // };
+  const renameChat = useRenameChat();
+  const {
+    data: messages = [],
+    isLoading: loadingMsgs,
+    error: msgsError,
+  } = useQuery<Message[]>({
+    queryKey: ["/api/chats", activeChatId, "messages"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/chats/${activeChatId}/messages`);
+      if (!res.ok) throw new Error("メッセージの取得に失敗しました。");
+      return res.json() as Promise<Message[]>;
+    },
+    enabled: !!activeChatId,
+    staleTime: 5 * 60_000,   // 5 minutes in cache so you aren’t refetching constantly
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const content = input.trim();
+    if (!content || sendMessage.isPending || !activeChatId) return;
 
-    if (!input.trim() || sendMessage.isPending) return;
+    setInput(""); // clear immediately
 
-    // Clear immediately
-    setInput("");
+    sendMessage.mutate(
+      { content, useWeb, useDb },   // ← only these three props
+      {
+        onSuccess: () => {
+          // 1) rename if this was the very first message
+          if (messages.length === 0 && activeChatId) {
+            renameChat.mutate({
+              chatId: activeChatId,
+              title: content,
+            });
+          }
 
-    sendMessage.mutate({ content: input, useWeb, useDb });
+          // 2) refetch your messages
+          queryClient.invalidateQueries({
+            queryKey: ["/api/chats", activeChatId, "messages"],
+          });
+        },
+      }
+    );
   };
-
+  const handleEnterComplete = () => {
+    if (!hasEntered) setHasEntered(true);
+  };
 
   // Handle emotion selection from dropdown
   const handleEmotionSelect = (text: string) => {
@@ -301,6 +344,7 @@ export default function HomePage() {
   const handleClearChat = () => {
     setShowClearConfirm(true);
   };
+
 
 
   useEffect(() => {
@@ -363,63 +407,36 @@ export default function HomePage() {
     };
   }, []);
 
-
   // Render main content based on active tab
   const renderMainContent = () => {
     if (activeTab === "chat") {
       return (
         <motion.div
-          className="bg-slate-900/90 backdrop-blur-md rounded-none sm:rounded-xl shadow-xl py-4 sm:py-0 px-0 w-full max-w-full border-0 sm:border border-blue-500/20 min-h-screen relative mb-0"
+          className="h-full"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
         >
-          <div className="relative z-10 pb-16 sm:pb-24">
-            <ChatInterface
-              input={input}
-              setInput={setInput}
-              handleSubmit={handleSubmit}
-              sendMessageMutation={sendMessage}
-              handleEmotionSelect={handleEmotionSelect}
-              useWeb={useWeb}
-              useDb={useDb}
-            />
-          </div>
+          <ChatInterface
+            input={input}
+            setInput={setInput}
+            handleSubmit={handleSubmit}
+            sendMessageMutation={sendMessage}
+            handleEmotionSelect={handleEmotionSelect}
+            useWeb={useWeb}
+            useDb={useDb}
+          />
         </motion.div>
 
       );
     } else if (activeTab === "mindmap") {
       return (
         <motion.div
-          className="bg-slate-900/90 backdrop-blur-md rounded-xl shadow-xl p-4 max-w-3xl md:max-w-4xl lg:max-w-5xl mx-auto border border-blue-500/20 overflow-hidden relative h-[calc(100vh-8rem)]"
+          className="h-full p-5"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
         >
-          {/* Circuit-like pattern background */}
-          <div className="absolute inset-0 z-0 opacity-5 pointer-events-none">
-            <div className="absolute top-1/4 left-1/4 w-1/2 h-px bg-blue-400" />
-            <div className="absolute top-1/2 left-1/6 w-2/3 h-px bg-blue-400" />
-            <div className="absolute top-3/4 left-1/3 w-1/3 h-px bg-blue-400" />
-            <div className="absolute top-1/6 left-1/2 w-px h-2/3 bg-blue-400" />
-            <div className="absolute top-1/4 left-2/3 w-px h-1/2 bg-blue-400" />
-            <div className="absolute top-1/3 left-1/3 w-px h-1/3 bg-blue-400" />
-          </div>
-
-          {/* Tech corner elements */}
-          <div className="absolute top-2 left-2 text-blue-400 opacity-30">
-            <BrainCircuit size={14} />
-          </div>
-          <div className="absolute top-2 right-2 text-blue-500 opacity-30">
-            <Zap size={14} />
-          </div>
-          <div className="absolute bottom-2 left-2 text-blue-400 opacity-30">
-            <Database size={14} />
-          </div>
-          <div className="absolute bottom-2 right-2 text-blue-500 opacity-30">
-            <Cpu size={14} />
-          </div>
-
           <div className="relative z-10 h-full">
             <MindMapGenerator />
           </div>
@@ -428,36 +445,14 @@ export default function HomePage() {
     } else if (activeTab === "notes") {
       return (
         <motion.div
-          className="bg-slate-900/90 backdrop-blur-md rounded-xl shadow-xl p-4 max-w-3xl md:max-w-4xl lg:max-w-5xl mx-auto border border-blue-500/20 overflow-hidden relative h-[calc(100vh-8rem)]"
+          className="h-full p-5"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
         >
-          {/* Circuit-like pattern background */}
-          <div className="absolute inset-0 z-0 opacity-5 pointer-events-none">
-            <div className="absolute top-1/4 left-1/4 w-1/2 h-px bg-blue-400" />
-            <div className="absolute top-1/2 left-1/6 w-2/3 h-px bg-blue-400" />
-            <div className="absolute top-3/4 left-1/3 w-1/3 h-px bg-blue-400" />
-            <div className="absolute top-1/6 left-1/2 w-px h-2/3 bg-blue-400" />
-            <div className="absolute top-1/4 left-2/3 w-px h-1/2 bg-blue-400" />
-            <div className="absolute top-1/3 left-1/3 w-px h-1/3 bg-blue-400" />
-          </div>
 
-          {/* Tech corner elements */}
-          <div className="absolute top-2 left-2 text-blue-400 opacity-30">
-            <Book size={14} />
-          </div>
-          <div className="absolute top-2 right-2 text-blue-500 opacity-30">
-            <FileText size={14} />
-          </div>
-          <div className="absolute bottom-2 left-2 text-blue-400 opacity-30">
-            <Database size={14} />
-          </div>
-          <div className="absolute bottom-2 right-2 text-blue-500 opacity-30">
-            <Cpu size={14} />
-          </div>
 
-          <div className="relative z-10 h-full">
+          <div className="z-10 h-full">
             <NotesList />
           </div>
         </motion.div>
@@ -465,21 +460,18 @@ export default function HomePage() {
     } else if (activeTab === "goals") {
       return (
         <motion.div
-          className="bg-slate-900/90 backdrop-blur-md rounded-xl shadow-xl p-4 max-w-3xl md:max-w-4xl lg:max-w-5xl mx-auto border border-blue-500/20 overflow-hidden relative h-[calc(100vh-5rem)]"
+          className="h-full p-5"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
         >
-
-
-
 
           <div className="relative z-10 h-full">
             <div className="h-full flex flex-col md:flex-row gap-4">
               {/* Mobile tabs to switch between goal tracker and chat */}
               <div className="flex md:hidden mb-2">
                 <Tabs defaultValue="tracker" className="w-full">
-                  <TabsList className="bg-slate-800/50 border border-blue-500/20 w-full sticky top-0 z-10">
+                  <TabsList className="bg-black border border-noble-black-900 w-full sticky top-0 z-10">
                     <TabsTrigger value="tracker" className="flex-1 gap-1.5">
                       <Target className="h-3.5 w-3.5" />
                       <span>タスク</span>
@@ -490,11 +482,11 @@ export default function HomePage() {
                     </TabsTrigger>
                   </TabsList>
 
-                  <TabsContent value="tracker" className="mt-2 h-[calc(100vh-10.5rem)] overflow-y-auto">
+                  <TabsContent value="tracker" className="mt-2 h-full overflow-y-auto">
                     <EnhancedTaskTracker />
                   </TabsContent>
 
-                  <TabsContent value="chat" className="mt-2 h-[calc(100vh-9.5rem)] overflow-hidden">
+                  <TabsContent value="chat" className="mt-2 h-full overflow-hidden">
                     <div className="h-full flex flex-col">
                       <div className="flex-grow flex">
                         <GoalChatInterface />
@@ -513,7 +505,7 @@ export default function HomePage() {
                     <EnhancedTaskTracker />
                   </div>
                 </div>
-                <div className="md:w-2/3 h-full border-l border-blue-500/20 pl-4">
+                <div className="md:w-2/3 h-full border-l border-noble-black-800 pl-4">
                   <GoalChatInterface />
                 </div>
               </div>
@@ -521,16 +513,45 @@ export default function HomePage() {
           </div>
         </motion.div>
       );
+    } else if (activeTab === "voice") {
+      return (
+        <VoiceModePage />
+      )
     }
     return null;
   };
-  
+
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-900 to-slate-800 relative overflow-hidden">
+    <div className="relative flex flex-col h-full">
       {/* Fixed position chat input for chat tab only */}
-      {activeTab === "chat" && (
-        <div className="fixed bottom-0 md:bottom-5  p-5  md:p-0 left-0 right-0 z-40">
-          <div className="max-w-3xl mx-auto ">
+
+      {/* Main content section */}
+      <main className="h-full  overflow-y-auto ">
+        {renderMainContent()}
+      </main>
+
+
+
+      {
+        activeTab === "chat" && (
+
+          <motion.div
+            // animate layout shifts whenever <main>’s width changes
+            layout
+            // only run this “initial” on the *very* first mount
+            initial={!hasEntered ? { opacity: 0, y: 50, scale: 0.8 } : false}
+            // this is the state it settles into
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{
+              // entrance: a snappy spring
+              type: "spring",
+              stiffness: 350,
+              damping: 30,
+            }}
+            // after entrance finishes, don’t ever re-use `initial` again
+            onAnimationComplete={handleEnterComplete}
+            className="w-full h-fit flex flex-col items-center justify-center md:pb-2"
+          >
             {currentAudioUrl && (
               <AudioPlayer
                 audioUrl={currentAudioUrl}
@@ -541,7 +562,7 @@ export default function HomePage() {
 
             <AnimatePresence>
               {showTranscriptionConfirmation && transcribedText && (
-                <div className="w-full">
+                <div className="w-fit  md:mx-auto">
                   <TranscriptionConfirmation
                     text={transcribedText}
                     onConfirm={handleConfirmTranscription}
@@ -565,50 +586,12 @@ export default function HomePage() {
               isProcessingVoice={isProcessingVoice}
             />
 
-          </div>
-        </div>
-      )}
-      {/* Floating decorative elements */}
-      <div className="absolute top-20 right-10 opacity-20 hidden md:block">
-        <motion.div
-          animate={{
-            y: [0, -10, 0],
-            rotate: 360
-          }}
-          transition={{
-            y: { duration: 3, repeat: Infinity, ease: "easeInOut" },
-            rotate: { duration: 20, repeat: Infinity, ease: "linear" }
-          }}
-        >
-          <Database className="h-16 w-16 text-blue-300" />
-        </motion.div>
-      </div>
+          </motion.div>
 
-      <div className="absolute bottom-20 left-10 opacity-10 hidden md:block">
-        <motion.div
-          animate={{
-            y: [0, 10, 0],
-            rotate: -360
-          }}
-          transition={{
-            y: { duration: 4, repeat: Infinity, ease: "easeInOut" },
-            rotate: { duration: 25, repeat: Infinity, ease: "linear" }
-          }}
-        >
-          <Globe className="h-20 w-20 text-blue-400" />
-        </motion.div>
-      </div>
-
-      {/* Improved header for mobile */}
-      <Navbar />
-
-      {/* Main content section */}
-      <main className="flex-1 w-full max-w-full px-0 pt-16 sm:pt-18">
-        {renderMainContent()}
-      </main>
-      <Footer />
-
-
+        )
+      }
     </div>
+
+
   );
 }

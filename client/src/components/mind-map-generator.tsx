@@ -4,13 +4,13 @@ import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
-import { 
-  BrainCircuit, 
-  RefreshCw, 
-  Download, 
-  ZoomIn, 
-  ZoomOut, 
-  Home, 
+import {
+  BrainCircuit,
+  RefreshCw,
+  Download,
+  ZoomIn,
+  ZoomOut,
+  Home,
   HelpCircle,
   Info
 } from "lucide-react";
@@ -21,7 +21,10 @@ import { hierarchy, tree } from "d3-hierarchy";
 import { motion } from "framer-motion";
 import { toPng } from "html-to-image";
 import type { MindMapNode } from "@/types/MindMap";
-
+import { Grid } from 'ldrs/react'
+import 'ldrs/react/Grid.css'
+import { cn } from "@/lib/utils";
+import { Spotlight } from "./ui/spotlight";
 /** ------------------------------------------------------------------------------------------------
  *  MindMapGenerator
  *  – Radial mind-map generator with dynamic node sizing, collision-free layout & zoom / pan.
@@ -38,7 +41,7 @@ export function MindMapGenerator() {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const zoomRef = useRef<any>(null);
-  
+
   // Color scheme based on node depth
   const nodeColors = {
     0: "#3b82f6", // Root - blue
@@ -93,10 +96,10 @@ export function MindMapGenerator() {
       .on("zoom", (event) => {
         g.attr("transform", event.transform.toString());
       });
-    
+
     // Store zoom in ref for external controls
     zoomRef.current = zoomBehaviour;
-    
+
     // Center the mindmap initially
     const initialTransform = d3.zoomIdentity.translate(width / 2, height / 2).scale(0.8);
     svg.call(zoomBehaviour as any).call(zoomBehaviour.transform as any, initialTransform);
@@ -138,11 +141,11 @@ export function MindMapGenerator() {
       .attr("d", d3.linkRadial<any, any>()
         .angle(d => d.x)
         .radius(d => d.y) as any)
-      .attr("stroke-dasharray", function() {
+      .attr("stroke-dasharray", function () {
         const length = (this as SVGPathElement).getTotalLength();
         return `${length} ${length}`;
       })
-      .attr("stroke-dashoffset", function() {
+      .attr("stroke-dashoffset", function () {
         return (this as SVGPathElement).getTotalLength();
       })
       .transition()
@@ -210,46 +213,46 @@ export function MindMapGenerator() {
       .attr("opacity", 0.7);
 
     // Interactive events
-    g.selectAll(".node").each(function(d: any) {
+    g.selectAll(".node").each(function (d: any) {
       const node = d3.select(this);
-      
+
       // Add hover effects
-      node.on("mouseover", function() {
+      node.on("mouseover", function () {
         d3.select(this).select("rect")
           .transition().duration(150)
           .attr("transform", "scale(1.08)")
           .attr("filter", "drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3))");
-        
+
         // Highlight connections
         g.selectAll(".link").attr("stroke-opacity", 0.15);
         highlightConnections(d, g);
       })
-      .on("mouseout", function() {
-        d3.select(this).select("rect")
-          .transition().duration(150)
-          .attr("transform", "scale(1)")
-          .attr("filter", null);
-          
-        // Reset connections
-        g.selectAll(".link").attr("stroke-opacity", 0.5);
-      })
-      .on("click", function(event, d: any) {
-        // Set active node and focus
-        setSelectedNode(d.data.id);
-        
-        // Focus on the clicked node
-        const transform = d3.zoomIdentity
-          .translate(width / 2, height / 2)
-          .scale(1.2)
-          .translate(-Math.sin(d.x) * d.y, Math.cos(d.x) * d.y);
-          
-        svg.transition().duration(750)
-          .call(zoomBehaviour.transform as any, transform);
-          
-        event.stopPropagation();
-      });
+        .on("mouseout", function () {
+          d3.select(this).select("rect")
+            .transition().duration(150)
+            .attr("transform", "scale(1)")
+            .attr("filter", null);
+
+          // Reset connections
+          g.selectAll(".link").attr("stroke-opacity", 0.5);
+        })
+        .on("click", function (event, d: any) {
+          // Set active node and focus
+          setSelectedNode(d.data.id);
+
+          // Focus on the clicked node
+          const transform = d3.zoomIdentity
+            .translate(width / 2, height / 2)
+            .scale(1.2)
+            .translate(-Math.sin(d.x) * d.y, Math.cos(d.x) * d.y);
+
+          svg.transition().duration(750)
+            .call(zoomBehaviour.transform as any, transform);
+
+          event.stopPropagation();
+        });
     });
-    
+
     // Function to highlight connections between nodes
     function highlightConnections(node: any, g: d3.Selection<SVGGElement, unknown, null, undefined>) {
       // Highlight the path from root to this node
@@ -261,7 +264,7 @@ export function MindMapGenerator() {
           .attr("stroke", getNodeColor(current.depth))
           .attr("stroke-opacity", 0.8)
           .attr("stroke-width", 2);
-          
+
         // Move to parent
         current = current.parent;
       }
@@ -272,7 +275,7 @@ export function MindMapGenerator() {
       svg.transition().duration(750)
         .call(zoomBehaviour.transform as any, initialTransform);
     });
-    
+
   }, [hierarchicalData, nodeColors, selectedNode, setSelectedNode]);
 
   // ───────────────────────────────────────── form handlers ───────────────────────────────────────
@@ -296,7 +299,7 @@ export function MindMapGenerator() {
       /* 3️⃣  Create a canvas that is just a bit taller */
       const watermarkHeight = 48;       // px – change as you like
       const canvas = document.createElement("canvas");
-      canvas.width  = img.width;
+      canvas.width = img.width;
       canvas.height = img.height + watermarkHeight;
       const ctx = canvas.getContext("2d");
 
@@ -366,7 +369,7 @@ export function MindMapGenerator() {
   return (
     <div className="flex flex-col w-full h-full">
       {/* ─────────────── controls */}
-      <div className="p-4 bg-card rounded-lg mb-4">
+      <div className="p-4 bg-black border border-noble-black-900 text-noble-black-100 rounded-2xl mb-4">
         <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2 mb-4">
           <BrainCircuit className="h-5 w-5" />
           マインドマップ
@@ -379,30 +382,31 @@ export function MindMapGenerator() {
               placeholder="マインドマップとして視覚化するトピックや概念を入力してください…"
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
-              className="h-24 resize-none"
+              className="h-24 resize-none text-noble-black-100 bg-noble-black-900 focus:outline-none border-0 outline-none"
             />
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Button type="submit" disabled={!topic.trim() || generateMindMap.isPending}>
+            <Button className="text-noble-black-900 bg-noble-black-100 hover:text-noble-black-100 rounded-full" type="submit" disabled={!topic.trim() || generateMindMap.isPending}>
               <BrainCircuit className="mr-2 h-4 w-4" />
               マインドマップを生成
             </Button>
             {mindMapData && (
               <>
-                <Button type="button" variant="outline" onClick={() => generateMindMap.mutate(topic)} disabled={generateMindMap.isPending}>
-                  <RefreshCw className="mr-2 h-4 w-4" />
+                <Button className="bg-noble-black-900 text-noble-black-100 border border-noble-black-800 rounded-full" type="button" variant="outline" onClick={() => generateMindMap.mutate(topic)} disabled={generateMindMap.isPending}>
+                  <RefreshCw className="mr-1 h-4 w-4" />
                   再生成
                 </Button>
-                <Button type="button" variant="outline" onClick={exportAsPng} disabled={generateMindMap.isPending}>
-                  <Download className="mr-2 h-4 w-4" />
+                <Button className="bg-noble-black-900 text-noble-black-100 border border-noble-black-800 rounded-full" type="button" variant="outline" onClick={exportAsPng} disabled={generateMindMap.isPending}>
+                  <Download className="mr-1 h-4 w-4" />
                   エクスポート
                 </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  className="bg-noble-black-900 text-noble-black-100 border border-noble-black-800 rounded-full"
+                  variant="outline"
                   onClick={() => setShowLegend(!showLegend)}
                 >
-                  <Info className="mr-2 h-4 w-4" />
+                  <Info className="mr-1 h-4 w-4" />
                   {showLegend ? '凡例を非表示' : '凡例を表示'}
                 </Button>
               </>
@@ -412,12 +416,18 @@ export function MindMapGenerator() {
       </div>
 
       {/* ─────────────── visualization */}
-      <div ref={containerRef} className="flex-grow w-full overflow-hidden bg-card rounded-lg relative">
+      <div ref={containerRef} className="flex-grow w-full overflow-hidden bg-black border border-noble-black-900 rounded-2xl relative">
         {generateMindMap.isPending ? (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="flex flex-col items-center">
-              <Skeleton className="h-8 w-40 mb-3" />
-              <p className="text-sm text-muted-foreground">マインドマップを生成中...</p>
+
+
+              <Grid
+                size="60"
+                speed="1.5"
+                color="#f2f2f2"
+              />
+              <p className="text-sm text-noble-black-100">マインドマップを生成中...</p>
             </div>
           </div>
         ) : mindMapData ? (
@@ -432,29 +442,29 @@ export function MindMapGenerator() {
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button size="sm" variant="outline" onClick={handleZoomIn} className="h-8 w-8 p-0 rounded-full bg-card/80 backdrop-blur-sm">
+                    <Button size="sm" variant="outline" onClick={handleZoomIn} className="h-8 w-8 p-0 rounded-full bg-noble-black-100 text-noble-black-900 backdrop-blur-sm">
                       <ZoomIn className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>拡大</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              
+
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button size="sm" variant="outline" onClick={handleZoomOut} className="h-8 w-8 p-0 rounded-full bg-card/80 backdrop-blur-sm">
+                    <Button size="sm" variant="outline" onClick={handleZoomOut} className="h-8 w-8 p-0 rounded-full bg-noble-black-100 text-noble-black-900 backdrop-blur-sm">
                       <ZoomOut className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>縮小</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              
+
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button size="sm" variant="outline" onClick={handleResetView} className="h-8 w-8 p-0 rounded-full bg-card/80 backdrop-blur-sm">
+                    <Button size="sm" variant="outline" onClick={handleResetView} className="h-8 w-8 p-0 rounded-full bg-noble-black-100 text-noble-black-900 backdrop-blur-sm">
                       <Home className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
@@ -465,8 +475,8 @@ export function MindMapGenerator() {
 
             {/* Color Legend */}
             {showLegend && (
-              <motion.div 
-                className="absolute left-4 top-4 bg-card/90 backdrop-blur-sm p-3 rounded-lg border border-border shadow-md z-10"
+              <motion.div
+                className="absolute left-4 top-4 bg-card/90 backdrop-blur-sm p-3 rounded-2xl border border-border shadow-md z-10"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
@@ -475,9 +485,9 @@ export function MindMapGenerator() {
                 <div className="space-y-1.5">
                   {[0, 1, 2, 3, 4].map(depth => (
                     <div key={depth} className="flex items-center">
-                      <div 
-                        className="w-3 h-3 rounded-full mr-2" 
-                        style={{ backgroundColor: nodeColors[depth as keyof typeof nodeColors] }} 
+                      <div
+                        className="w-3 h-3 rounded-full mr-2"
+                        style={{ backgroundColor: nodeColors[depth as keyof typeof nodeColors] }}
                       />
                       <span className="text-xs">
                         {depth === 0 ? 'ルートノード' : `レベル ${depth} ノード`}
@@ -497,13 +507,22 @@ export function MindMapGenerator() {
             <svg ref={svgRef} width="100%" height="100%" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet" />
           </motion.div>
         ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
-            <BrainCircuit className="h-16 w-16 text-muted-foreground mb-4" />
-            <h3 className="text-xl font-medium mb-2">マインドマップを生成するにはトピックを入力してください</h3>
-            <p className="text-muted-foreground max-w-md">
-              上に概念、トピックを入力するかメモを貼り付けて、「マインドマップを生成」をクリックするとアイデアや関連を視覚化できます。
-            </p>
+          // <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
+          // <div className="relative flex h-[50rem] w-full items-center justify-center bg-black border border-noble-black-100 text-noble-black-100">
+          <div className="h-full bg-black border border-noble-black-900 text-noble-black-100 rounded-2xl">
+            <Spotlight  />
+
+            {/* Radial gradient for the container to give a faded look */}
+            <div className="flex flex-col items-center justify-center h-full p-5 md:p-0">
+              <BrainCircuit className="h-16 w-16 text-muted-foreground mb-4" />
+              <h3 className="text-xl font-medium mb-2">マインドマップを生成するにはトピックを入力してください</h3>
+              <p className="text-muted-foreground max-w-md">
+                上に概念、トピックを入力するかメモを貼り付けて、「マインドマップを生成」をクリックするとアイデアや関連を視覚化できます。
+              </p>
+            </div>
           </div>
+          // </div>
+          // </div>
         )}
       </div>
     </div>

@@ -83,6 +83,11 @@ export const validateMessage = [
     .optional()
     .isBoolean()
     .withMessage("useDb must be a boolean"),
+  body("chatId")
+    .exists().withMessage("chatId is required")
+    .bail()
+    .isInt({ gt: 0 }).withMessage("chatId must be a positive integer")
+    .toInt(),
 ];
 
 export const validateFeedback = [
