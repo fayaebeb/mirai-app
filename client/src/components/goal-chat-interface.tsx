@@ -183,14 +183,14 @@ const EmotionButtons = ({ onSelect, onClose }: EmotionButtonsProps) => {
   return (
     <motion.div
       ref={containerRef}
-      className="bg-card shadow-lg rounded-xl border overflow-hidden w-full max-w-md"
+      className="bg-noble-black-900 border-noble-black-800 text-noble-black-100 shadow-lg rounded-xl border overflow-hidden w-full max-w-md"
       initial={{ y: 20, opacity: 0, scale: 0.95 }}
       animate={{ y: 0, opacity: 1, scale: 1 }}
       exit={{ y: 20, opacity: 0, scale: 0.9 }}
       transition={{ duration: 0.2 }}
     >
       {/* Category selector */}
-      <div className="flex gap-1 p-2 bg-muted/40 overflow-x-auto scrollbar-hide">
+      <div className="flex gap-1 p-2 bg-black border border-noble-black-800 overflow-x-auto scrollbar-hide">
         {promptCategories.map((category) => (
           <Button
             key={category.name}
@@ -207,12 +207,12 @@ const EmotionButtons = ({ onSelect, onClose }: EmotionButtonsProps) => {
       </div>
 
       {/* Prompt buttons */}
-      <div className="grid grid-cols-1 gap-1 p-2 max-h-60 overflow-y-auto">
+      <div className="grid grid-cols-1 gap-1 p-2 max-h-60 overflow-y-auto ">
         {selectedCategoryData.prompts.map((prompt, index) => (
           <motion.button
             type="button" // Prevents default submit behavior
             key={index}
-            className="flex flex-col items-start rounded-lg px-3 py-2 text-left hover:bg-accent transition-colors"
+            className="flex flex-col items-start rounded-lg px-3 py-2 text-left hover:bg-black transition-colors"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => {

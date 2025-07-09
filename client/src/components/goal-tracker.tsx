@@ -492,6 +492,7 @@ export function GoalTracker() {
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
+                        onClick={() =>  document.body.style.pointerEvents = ""}
                         className={cn(
                           "w-full justify-start text-left font-normal",
                           !dueDate && "text-muted-foreground"

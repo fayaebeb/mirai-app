@@ -1409,6 +1409,7 @@ export function NotesList() {
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button
+                    onClick={() =>  document.body.style.pointerEvents = ""}
                       variant="ghost"
                       size="sm"
                       className="text-xs flex items-center gap-1"

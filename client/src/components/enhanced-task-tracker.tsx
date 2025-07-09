@@ -732,6 +732,7 @@ export function EnhancedTaskTracker() {
                         <PopoverTrigger asChild>
                           <Button
                             variant="outline"
+                            onClick={() => document.body.style.pointerEvents = ""}
                             className={cn(
                               "w-full justify-start text-left font-normal bg-black text-noble-black-100 outline-none active:outline-none border border-noble-black-900",
                               !dueDate && "text-muted-foreground"
@@ -778,6 +779,7 @@ export function EnhancedTaskTracker() {
                         <PopoverTrigger asChild>
                           <Button
                             variant="outline"
+                            onClick={() => document.body.style.pointerEvents = ""}
                             className={cn(
                               "w-full h-10 flex items-center justify-start gap-2 text-left font-normal leading-none bg-black text-noble-black-100  border border-noble-black-900", // <- `h-10` & `leading-none`!
                               !reminderTime && "text-muted-foreground"
@@ -791,9 +793,6 @@ export function EnhancedTaskTracker() {
                             </span>
                           </Button>
                         </PopoverTrigger>
-
-
-
 
                         <PopoverContent className="w-auto p-0 z-[999]" align="start">
                           <div className="p-4 space-y-4">
@@ -871,7 +870,7 @@ export function EnhancedTaskTracker() {
                   {/* Tags */}
                   <div className="space-y-2">
                     <Label htmlFor="task-tags">タグ</Label>
-                    
+
                     <div className="flex gap-2">
                       <Input
                         id="task-tags"
@@ -985,6 +984,7 @@ export function EnhancedTaskTracker() {
                           <Popover>
                             <PopoverTrigger className="bg-black border border-noble-black-900" asChild>
                               <Button
+                                onClick={() => document.body.style.pointerEvents = ""}
                                 variant="outline"
                                 className={cn(
                                   "w-full justify-start text-left font-normal",
@@ -1623,7 +1623,7 @@ export function EnhancedTaskTracker() {
                               size="icon"
                               variant="ghost"
                               className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                              onClick={() => {handleEditTask(goal); document.body.style.pointerEvents = "" }}
+                              onClick={() => { handleEditTask(goal); document.body.style.pointerEvents = "" }}
                             >
                               <Edit2 className="h-3.5 w-3.5" />
                             </Button>
@@ -1638,7 +1638,7 @@ export function EnhancedTaskTracker() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => {handleEditTask(goal); document.body.style.pointerEvents = ""}}>
+                                <DropdownMenuItem onClick={() => { handleEditTask(goal); document.body.style.pointerEvents = "" }}>
                                   <Edit2 className="h-4 w-4 mr-2" />
                                   編集
                                 </DropdownMenuItem>
@@ -1669,7 +1669,7 @@ export function EnhancedTaskTracker() {
                         <h3 className="flex items-center gap-1.5 font-medium text-noble-black-100">
                           <Check className="h-4 w-4" />
                           <span>完了済みのタスク</span>
-                          <Badge  className="ml-2 font-normal border border-noble-black-900 bg-white text-noble-black-900">
+                          <Badge className="ml-2 font-normal border border-noble-black-900 bg-white text-noble-black-900">
                             {completedGoals.length}
                           </Badge>
                         </h3>
@@ -1837,6 +1837,7 @@ export function EnhancedTaskTracker() {
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
+                      onClick={() => document.body.style.pointerEvents = ""}
                       className={cn(
                         "w-full justify-start text-left font-normal bg-black border-noble-black-900 text-noble-black-100",
                         !dueDate && "text-muted-foreground"
@@ -1881,6 +1882,7 @@ export function EnhancedTaskTracker() {
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
+                      onClick={() => document.body.style.pointerEvents = ""}
                       className={cn(
                         "w-full h-10 justify-start text-left font-normal bg-black border-noble-black-900 text-noble-black-100", // <- Add h-10 or same height as other inputs
                         !reminderTime && "text-muted-foreground"
@@ -2083,6 +2085,7 @@ export function EnhancedTaskTracker() {
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
+                          onClick={() => document.body.style.pointerEvents = ""}
                           variant="outline"
                           className={cn(
                             "w-full justify-start text-left font-normal bg-black text-noble-black-100 border border-noble-black-900",

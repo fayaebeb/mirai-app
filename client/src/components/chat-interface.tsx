@@ -17,7 +17,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChatLoadingIndicator } from "./chat-loading-indicator";
-
+import { Trefoil } from 'ldrs/react'
+import 'ldrs/react/Trefoil.css'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -619,6 +620,33 @@ export const ChatInterface = ({
 
   const { open } = useSidebar()
   const setActiveTab = useSetRecoilState(activeTabState)
+
+  if (isLoadingMsgs) {
+    return (
+      <div
+        style={{
+          "--scroll-area-track-bg": "transparent",
+          "--scroll-area-thumb-bg": "transparent",
+          "--scroll-area-thumb-hover-bg": "transparent",
+        } as React.CSSProperties}
+        className="h-full" >
+        <div className=" flex flex-col items-center justify-center h-full px-4   md:py-0 md:px-40 z-10 space-y-4">
+          <Spotlight />
+
+          <Trefoil
+            size="60"
+            stroke="4"
+            strokeLength="0.15"
+            bgOpacity="0.1"
+            speed="1.4"
+            color="#f2f2f2"
+          />
+          <h1 className="text-5xl md:text-7xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400 bg-opacity-50">読み込み中</h1>
+        </div>
+      </div>
+    )
+  }
+
   return (
 
 
@@ -629,6 +657,7 @@ export const ChatInterface = ({
         "--scroll-area-thumb-hover-bg": "transparent",
       } as React.CSSProperties}
       className="h-full" >
+
       {
         messages.length === 0 ? (
 
@@ -804,7 +833,7 @@ export const ChatInterface = ({
                   {group.sender === "bot" &&
                     groupIndex === groupedMessages.length - 1 && (
                       <motion.div
-                        
+
                         className="fixed top-6 right-5 z-20 flex justify-center px-4 space-x-2 "
                       >
 
@@ -857,12 +886,12 @@ export const ChatInterface = ({
                   {/* only show when bot is done speaking */}
                   {group.sender === "bot" && groupIndex === groupedMessages.length - 1 && (
                     <motion.div
-                        initial={{ opacity: 0, y: 5, x: drawerOpen ? -250 : (open ? 64:16 ) }}
-                        animate={{ opacity: 1, y: 0, x: drawerOpen ? -250 : (open ? 64:16 ) }}
-                        exit={{ opacity: 0, y: 5, x: drawerOpen ? -250: (open ? 64:16 ) }}
-                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                        className="fixed top-6 left-0 right-0  z-20 flex justify-center items-center px-4 space-x-2 "
-                      >
+                      initial={{ opacity: 0, y: 5, x: drawerOpen ? -250 : (open ? 64 : 16) }}
+                      animate={{ opacity: 1, y: 0, x: drawerOpen ? -250 : (open ? 64 : 16) }}
+                      exit={{ opacity: 0, y: 5, x: drawerOpen ? -250 : (open ? 64 : 16) }}
+                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                      className="fixed top-6 left-0 right-0  z-20 flex justify-center items-center px-4 space-x-2 "
+                    >
                       <div className="relative flex items-center z-30">
                         {/* DRAWER TOGGLE */}
                         <motion.button
