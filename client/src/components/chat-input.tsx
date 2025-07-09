@@ -116,7 +116,7 @@ export const ChatInput = ({
   };
 
   return (
-    <div className="w-full px-0.5 pb-0.5 md:pb-0 md:px-0 md:w-fit  flex items-center justify-center relative">
+    <div className="w-full px-0.5 pb-0.5 md:pb-0 md:px-0 md:w-fit  flex items-center justify-center relative z-[49]">
       <form
         onSubmit={handleSubmit}
         className="  w-full md:min-w-[40rem] flex flex-col gap-2 rounded-2xl border border-noble-black-800 shadow-md bg-black/90 backdrop-blur-md px-4 py-3"
@@ -146,7 +146,7 @@ export const ChatInput = ({
 
 
         {/* Button Row */}
-        <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center justify-between flex-wrap gap-2 ">
           <div className="flex items-center gap-2">
             {/* Prompt Selector */}
             <TooltipProvider>
@@ -258,12 +258,12 @@ export const ChatInput = ({
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.9 }}
               transition={{ duration: 0.2 }}
-              className="absolute bottom-[125px] w-full md:w-fit left-0 flex justify-center border border-noble-black-800 shadow-md bg-black/90 backdrop-blur-md rounded-2xl overflow-hidden"
+              className="absolute bottom-[125px] w-full md:w-fit left-0 flex justify-center border border-noble-black-800 shadow-md bg-black/90 backdrop-blur-md rounded-2xl overflow-hidden z-[49]"
             >
               <div
                 ref={promptRef}
                 onClick={(e) => e.stopPropagation()}
-                className=" shadow-lg bg-black/90 backdrop-blur-md overflow-hidden w-full max-w-md"
+                className=" shadow-lg bg-black/90 backdrop-blur-md overflow-hidden w-full max-w-md z-[999]"
               >
                 <div className="flex  p-2 gap-1 overflow-x-auto scrollbar-hide border-b border-noble-black-800">
                   {promptCategories.map((category) => (
@@ -280,7 +280,7 @@ export const ChatInput = ({
                     </Button>
                   ))}
                 </div>
-                <div className="grid grid-cols-1 gap-1 p-2 max-h-60 overflow-y-auto">
+                <div className="grid grid-cols-1 gap-1 p-2 max-h-60 overflow-y-auto z-[49]">
                   {selectedCategoryData.prompts.map((prompt, index) => (
                     <motion.button
                       key={index}

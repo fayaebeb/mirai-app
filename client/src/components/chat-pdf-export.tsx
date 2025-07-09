@@ -124,7 +124,7 @@ export interface ChatPDFExportProps {
              
               className={clsx( 
                 // your existing defaults 
-               "text-noble-black-100 hover:text-noble-black-900 bg-black border border-noble-black-900 shadow-black shadow-2xl hover:bg-noble-black-100 flex items-center gap-1 p-2 sm:px-3 sm:py-1 rounded-full", 
+               "text-noble-black-100 hover:text-noble-black-900 bg-black border border-noble-black-900 shadow-black shadow-2xl hover:bg-noble-black-100 flex items-center gap-1 p-2 xl:px-3 xl:py-1 rounded-full", 
                 // **override** on mobile via the passed‐in prop 
                 triggerClassName 
               )} 

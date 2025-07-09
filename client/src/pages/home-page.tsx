@@ -550,7 +550,7 @@ export default function HomePage() {
             }}
             // after entrance finishes, don’t ever re-use `initial` again
             onAnimationComplete={handleEnterComplete}
-            className="w-full h-fit flex items-center justify-center md:pb-2"
+            className="w-full h-fit flex flex-col items-center justify-center md:pb-2"
           >
             {currentAudioUrl && (
               <AudioPlayer

@@ -90,27 +90,27 @@ const MessageSection = ({
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
-          className="p-2 bg-black backdrop-blur-sm "
+          className="p-2 bg-noble-black-900 border border-black backdrop-blur-sm text-noble-black-100 "
         >
           <div className="prose prose-xs prose-invert max-w-none w-full text-[10px] sm:text-xs text-noble-black-100">
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={{
                 p: ({ node, ...props }) => (
-                  <p className="text-noble-black-100 my-1.5" {...props} />
+                  <p className="text-noble-black-400 my-1.5" {...props} />
                 ),
                 table: ({ node, ...props }) => (
-                  <div className="overflow-x-auto w-full mx-auto pb-1 relative text-noble-black-100">
+                  <div className="overflow-x-auto w-full mx-auto pb-1 relative text-noble-black-400">
                     <div>
-                      <table className="text-[10px] sm:text-[11px] border-collapse table-auto border-spacing-0 text-noble-black-100" {...props} />
+                      <table className="text-[10px] sm:text-[11px] border-collapse border-noble-black-500 table-auto border-spacing-0 text-noble-black-400" {...props} />
                     </div>
                   </div>
                 ),
                 td: ({ node, ...props }) => (
-                  <td className="border border-noble-black-400/30 px-1 py-0.5 sm:px-2 sm:py-1 break-words whitespace-normal min-w-[50px] max-w-[150px] text-noble-black-100" {...props} />
+                  <td className="border border-noble-black-400/30 px-1 py-0.5 sm:px-2 sm:py-1 break-words whitespace-normal min-w-[50px] max-w-[150px] text-noble-black-400" {...props} />
                 ),
                 th: ({ node, ...props }) => (
-                  <th className="border border-noble-black-400/50 bg-noble-black-900 px-1 py-0.5 sm:px-2 sm:py-1 break-words whitespace-normal min-w-[50px] max-w-[150px] text-noble-black-100" {...props} />
+                  <th className="border border-noble-black-400/50 bg-noble-black-900 px-1 py-0.5 sm:px-2 sm:py-1 break-words whitespace-normal min-w-[50px] max-w-[150px] text-noble-black-400" {...props} />
                 ),
               }}
             >

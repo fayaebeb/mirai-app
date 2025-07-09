@@ -30,12 +30,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { promptCategories } from "@/components/starter-prompts";
 import { Badge } from "@/components/ui/badge";
-import { useRecoilState, useRecoilValue } from "recoil";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import { currentAudioUrlAtom, isPlayingAudioAtom, isProcessingVoiceAtom, playingMessageIdAtom } from "@/states/voicePlayerStates";
 import { activeChatIdAtom } from "@/states/chatStates";
 import { Spotlight } from "./ui/spotlight";
 import { useSidebar } from "./ui/sidebar";
 import { ChatPDFExport } from "./chat-pdf-export";
+import { activeTabState } from "@/states/activeTabState";
 
 // Define a type for optimistic messages that uses string IDs instead of numbers
 type OptimisticMessage = {
@@ -617,7 +618,7 @@ export const ChatInterface = ({
   };
 
   const { open } = useSidebar()
-
+  const setActiveTab = useSetRecoilState(activeTabState)
   return (
 
 
@@ -631,7 +632,7 @@ export const ChatInterface = ({
       {
         messages.length === 0 ? (
 
-          <div className=" flex flex-col items-center justify-center h-full px-4   md:py-0 md:px-40">
+          <div className=" flex flex-col items-center justify-center h-full px-4   md:py-0 md:px-40 z-10">
             <Spotlight />
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -673,7 +674,7 @@ export const ChatInterface = ({
                 <div className="hidden md:grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-5">
 
                   <motion.button
-
+                    onClick={() => setActiveTab("voice")}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     className="w-full bg-black border  z-20 border-noble-black-100/20 hover:bg-gradient-to-br   text-noble-black-400 rounded-lg shadow-md text-sm  p-5"
@@ -681,7 +682,7 @@ export const ChatInterface = ({
                     ボイスモッド
                   </motion.button>
                   <motion.button
-
+                    onClick={() => setActiveTab("notes")}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     className="w-full bg-black border z-20 border-noble-black-100/20 hover:bg-gradient-to-br   text-noble-black-400 rounded-lg shadow-md text-sm p-5"
@@ -689,7 +690,7 @@ export const ChatInterface = ({
                     メモ
                   </motion.button>
                   <motion.button
-
+                    onClick={() => setActiveTab("mindmap")}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     className="w-full bg-black border z-20 border-noble-black-100/20 hover:bg-gradient-to-br   text-noble-black-400 rounded-lg shadow-md text-sm p-5"
@@ -697,7 +698,7 @@ export const ChatInterface = ({
                     マインドマップ
                   </motion.button>
                   <motion.button
-
+                    onClick={() => setActiveTab("goals")}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     className="w-full bg-black border z-20 border-noble-black-100/20 hover:bg-gradient-to-br   text-noble-black-400 rounded-lg shadow-md text-sm p-5"
@@ -799,7 +800,7 @@ export const ChatInterface = ({
                 </div> */}
 
                 {/* Quick replies after bot messages */}
-                <div className="relative md:hidden">
+                <div className="relative xl:hidden">
                   {group.sender === "bot" &&
                     groupIndex === groupedMessages.length - 1 && (
                       <motion.div
@@ -852,13 +853,13 @@ export const ChatInterface = ({
                     )}
                 </div>
 
-                <div className="relative md:flex hidden">
+                <div className="relative xl:flex hidden">
                   {/* only show when bot is done speaking */}
                   {group.sender === "bot" && groupIndex === groupedMessages.length - 1 && (
                     <motion.div
-                        initial={{ opacity: 0, y: 5, x: drawerOpen ? -300 : (open ? 64:16 ) }}
-                        animate={{ opacity: 1, y: 0, x: drawerOpen ? -300 : (open ? 64:16 ) }}
-                        exit={{ opacity: 0, y: 5, x: drawerOpen ? -300: (open ? 64:16 ) }}
+                        initial={{ opacity: 0, y: 5, x: drawerOpen ? -250 : (open ? 64:16 ) }}
+                        animate={{ opacity: 1, y: 0, x: drawerOpen ? -250 : (open ? 64:16 ) }}
+                        exit={{ opacity: 0, y: 5, x: drawerOpen ? -250: (open ? 64:16 ) }}
                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
                         className="fixed top-6 left-0 right-0  z-20 flex justify-center items-center px-4 space-x-2 "
                       >
@@ -888,10 +889,10 @@ export const ChatInterface = ({
                                 <Button
                                   variant="ghost"
                                   onClick={handleClearChat}
-                                  className="text-noble-black-100 hover:text-noble-black-900 bg-black border border-noble-black-900 shadow-black shadow-2xl hover:bg-noble-black-100 flex items-center gap-1 p-2  sm:px-3 sm:py-1 rounded-full"
+                                  className="text-noble-black-100 hover:text-noble-black-900 bg-black border border-noble-black-900 shadow-black shadow-2xl hover:bg-noble-black-100 flex items-center gap-1 p-2  xl:px-3 xl:py-1 rounded-full"
                                 >
                                   <Trash2 className="h-4 w-4" />
-                                  <span className="hidden sm:inline">チャット履歴をクリア</span>
+                                  <span className="hidden xl:flex">チャット履歴をクリア</span>
                                 </Button>
                               )}
 
@@ -902,10 +903,10 @@ export const ChatInterface = ({
                                   onClick={() => handleQuickReplySelect(reply.text)}
                                   whileHover={{ scale: 1.05 }}
                                   whileTap={{ scale: 0.95 }}
-                                  className="text-noble-black-100 hover:text-noble-black-900 bg-black border border-noble-black-900 shadow-black shadow-2xl hover:bg-noble-black-100 flex items-center gap-x-1 p-2  sm:px-3 sm:py-1 rounded-full"
+                                  className="text-noble-black-100 hover:text-noble-black-900 bg-black border border-noble-black-900 shadow-black shadow-2xl hover:bg-noble-black-100 flex items-center gap-x-1 p-2  xl:px-3 xl:py-1 rounded-full"
                                 >
                                   {reply.icon}
-                                  <span className="hidden md:flex">{reply.text}</span>
+                                  <span className="hidden xl:flex">{reply.text}</span>
                                 </motion.button>
                               ))}
 
@@ -916,7 +917,7 @@ export const ChatInterface = ({
                                   triggerContent={
                                     <>
                                       <Download className="h-4 w-4" />
-                                      <span className="hidden sm:flex">エクスポート</span>
+                                      <span className="hidden xl:flex">エクスポート</span>
                                     </>
                                   }
                                   triggerClassName=""
