@@ -1,5 +1,10 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import { Trio } from 'ldrs/react'
+import 'ldrs/react/Trio.css'
+import { Mirage } from 'ldrs/react'
+import 'ldrs/react/Mirage.css'
+// Default values shown
 
 import { JellyTriangle } from 'ldrs/react'
 import 'ldrs/react/JellyTriangle.css'
@@ -87,11 +92,12 @@ export function ChatLoadingIndicator({
   // Minimal dot animation (existing animation style)
   if (variant === "dots") {
     return (
-      <div className="flex items-center gap-1 text-primary">
-        <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: "0ms" }} />
-        <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: "150ms" }} />
-        <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: "300ms" }} />
-      </div>
+
+      <Trio
+        size="40"
+        speed="1.3"
+        color="#f2f2f2"
+      />
     );
   }
 
@@ -126,7 +132,7 @@ export function ChatLoadingIndicator({
               size="30"
               speed="1.75"
               color="#f2f2f2"
-        
+
             />
           </motion.div>
 
@@ -163,7 +169,7 @@ export function ChatLoadingIndicator({
   return (
     <div className="flex items-center justify-center p-2">
       <div className="relative flex items-center">
-        <motion.div
+        {/* <motion.div
           className="w-6 h-6 border-2 border-noble-black-900 border-t-transparent rounded-full"
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
@@ -173,6 +179,13 @@ export function ChatLoadingIndicator({
           className="absolute inset-0 rounded-full border border-noble-black-900"
           animate={{ scale: [0.8, 1.1, 0.8], opacity: [0.3, 0.8, 0.3] }}
           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+        /> */}
+
+
+        <Mirage
+          size="60"
+          speed="2.5"
+          color="#f2f2f2"
         />
       </div>
       {message && (

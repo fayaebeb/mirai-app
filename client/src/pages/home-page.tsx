@@ -27,6 +27,7 @@ import { activeChatIdAtom } from "@/states/chatStates";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import FloatingSidebar from "@/components/Sidepanel";
 import { useRenameChat } from "@/hooks/useRenameChat";
+import VoiceModePage from "./voice-mode-page";
 
 // Audio player for bot responses
 const AudioPlayer = ({ audioUrl, isPlaying, onPlayComplete }: { audioUrl: string, isPlaying: boolean, onPlayComplete: () => void }) => {
@@ -416,50 +417,26 @@ export default function HomePage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
         >
-            <ChatInterface
-              input={input}
-              setInput={setInput}
-              handleSubmit={handleSubmit}
-              sendMessageMutation={sendMessage}
-              handleEmotionSelect={handleEmotionSelect}
-              useWeb={useWeb}
-              useDb={useDb}
-            />
+          <ChatInterface
+            input={input}
+            setInput={setInput}
+            handleSubmit={handleSubmit}
+            sendMessageMutation={sendMessage}
+            handleEmotionSelect={handleEmotionSelect}
+            useWeb={useWeb}
+            useDb={useDb}
+          />
         </motion.div>
 
       );
     } else if (activeTab === "mindmap") {
       return (
         <motion.div
-          className="bg-slate-900/90 backdrop-blur-md rounded-xl shadow-xl p-4 max-w-3xl md:max-w-4xl lg:max-w-5xl mx-auto border border-blue-500/20 overflow-hidden relative h-[calc(100vh-8rem)]"
+          className="h-full p-5"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
         >
-          {/* Circuit-like pattern background */}
-          <div className="absolute inset-0 z-0 opacity-5 pointer-events-none">
-            <div className="absolute top-1/4 left-1/4 w-1/2 h-px bg-blue-400" />
-            <div className="absolute top-1/2 left-1/6 w-2/3 h-px bg-blue-400" />
-            <div className="absolute top-3/4 left-1/3 w-1/3 h-px bg-blue-400" />
-            <div className="absolute top-1/6 left-1/2 w-px h-2/3 bg-blue-400" />
-            <div className="absolute top-1/4 left-2/3 w-px h-1/2 bg-blue-400" />
-            <div className="absolute top-1/3 left-1/3 w-px h-1/3 bg-blue-400" />
-          </div>
-
-          {/* Tech corner elements */}
-          <div className="absolute top-2 left-2 text-blue-400 opacity-30">
-            <BrainCircuit size={14} />
-          </div>
-          <div className="absolute top-2 right-2 text-blue-500 opacity-30">
-            <Zap size={14} />
-          </div>
-          <div className="absolute bottom-2 left-2 text-blue-400 opacity-30">
-            <Database size={14} />
-          </div>
-          <div className="absolute bottom-2 right-2 text-blue-500 opacity-30">
-            <Cpu size={14} />
-          </div>
-
           <div className="relative z-10 h-full">
             <MindMapGenerator />
           </div>
@@ -468,36 +445,14 @@ export default function HomePage() {
     } else if (activeTab === "notes") {
       return (
         <motion.div
-          className="bg-slate-900/90 backdrop-blur-md rounded-xl shadow-xl p-4 max-w-3xl md:max-w-4xl lg:max-w-5xl mx-auto border border-blue-500/20 overflow-hidden relative h-[calc(100vh-8rem)]"
+          className="h-full p-5"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
         >
-          {/* Circuit-like pattern background */}
-          <div className="absolute inset-0 z-0 opacity-5 pointer-events-none">
-            <div className="absolute top-1/4 left-1/4 w-1/2 h-px bg-blue-400" />
-            <div className="absolute top-1/2 left-1/6 w-2/3 h-px bg-blue-400" />
-            <div className="absolute top-3/4 left-1/3 w-1/3 h-px bg-blue-400" />
-            <div className="absolute top-1/6 left-1/2 w-px h-2/3 bg-blue-400" />
-            <div className="absolute top-1/4 left-2/3 w-px h-1/2 bg-blue-400" />
-            <div className="absolute top-1/3 left-1/3 w-px h-1/3 bg-blue-400" />
-          </div>
 
-          {/* Tech corner elements */}
-          <div className="absolute top-2 left-2 text-blue-400 opacity-30">
-            <Book size={14} />
-          </div>
-          <div className="absolute top-2 right-2 text-blue-500 opacity-30">
-            <FileText size={14} />
-          </div>
-          <div className="absolute bottom-2 left-2 text-blue-400 opacity-30">
-            <Database size={14} />
-          </div>
-          <div className="absolute bottom-2 right-2 text-blue-500 opacity-30">
-            <Cpu size={14} />
-          </div>
 
-          <div className="relative z-10 h-full">
+          <div className="z-10 h-full">
             <NotesList />
           </div>
         </motion.div>
@@ -505,7 +460,7 @@ export default function HomePage() {
     } else if (activeTab === "goals") {
       return (
         <motion.div
-          className="bg-slate-900/90 backdrop-blur-md rounded-xl shadow-xl p-4 max-w-3xl md:max-w-4xl lg:max-w-5xl mx-auto border border-blue-500/20 overflow-hidden relative h-[calc(100vh-5rem)]"
+          className="h-full p-5"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
@@ -516,7 +471,7 @@ export default function HomePage() {
               {/* Mobile tabs to switch between goal tracker and chat */}
               <div className="flex md:hidden mb-2">
                 <Tabs defaultValue="tracker" className="w-full">
-                  <TabsList className="bg-slate-800/50 border border-blue-500/20 w-full sticky top-0 z-10">
+                  <TabsList className="bg-black border border-noble-black-900 w-full sticky top-0 z-10">
                     <TabsTrigger value="tracker" className="flex-1 gap-1.5">
                       <Target className="h-3.5 w-3.5" />
                       <span>タスク</span>
@@ -527,11 +482,11 @@ export default function HomePage() {
                     </TabsTrigger>
                   </TabsList>
 
-                  <TabsContent value="tracker" className="mt-2 h-[calc(100vh-10.5rem)] overflow-y-auto">
+                  <TabsContent value="tracker" className="mt-2 h-full overflow-y-auto">
                     <EnhancedTaskTracker />
                   </TabsContent>
 
-                  <TabsContent value="chat" className="mt-2 h-[calc(100vh-9.5rem)] overflow-hidden">
+                  <TabsContent value="chat" className="mt-2 h-full overflow-hidden">
                     <div className="h-full flex flex-col">
                       <div className="flex-grow flex">
                         <GoalChatInterface />
@@ -550,7 +505,7 @@ export default function HomePage() {
                     <EnhancedTaskTracker />
                   </div>
                 </div>
-                <div className="md:w-2/3 h-full border-l border-blue-500/20 pl-4">
+                <div className="md:w-2/3 h-full border-l border-noble-black-800 pl-4">
                   <GoalChatInterface />
                 </div>
               </div>
@@ -558,6 +513,10 @@ export default function HomePage() {
           </div>
         </motion.div>
       );
+    } else if (activeTab === "voice") {
+      return (
+        <VoiceModePage />
+      )
     }
     return null;
   };

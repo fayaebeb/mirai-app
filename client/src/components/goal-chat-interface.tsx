@@ -242,7 +242,7 @@ export function GoalChatInterface() {
 
   // Fetch goal-specific messages
   const { data: messages = [], isLoading: isLoadingMessages } = useQuery<Message[]>({
-    queryKey: ['/api/chats/goal', 'messages'],
+    queryKey: ['/api/goal-messages', 'messages'],
     enabled: !!user,
   });
 
@@ -313,7 +313,7 @@ export function GoalChatInterface() {
 
       // Update the messages in the cache with both the user message and bot response
       queryClient.setQueryData<Message[]>(
-        ['/api/chats/goal', 'messages'],                               // new query-key
+        ['/api/goal-messages', 'messages'],                               // new query-key
         (oldMessages = []) => {
           // Avoid duplicate user messages (same content within 5 s)
           const userMessageExists = oldMessages.some(m =>
@@ -410,7 +410,7 @@ export function GoalChatInterface() {
   });
 
   return (
-    <Card className="flex flex-col h-[calc(100vh-10rem)] md:h-full">
+    <Card className="flex flex-col h-full bg-black text-noble-black-100 border border-noble-black-900  md:h-full">
 
 
       <CardHeader className="py-2 px-4 flex-shrink-0">
@@ -426,7 +426,7 @@ export function GoalChatInterface() {
                 />
               </div>
               <span className="text-sm sm:text-base font-semibold">タスクアシスタント</span>
-              <Badge variant="outline" className="ml-1 bg-blue-500/10 text-xs py-0">ミライAI</Badge>
+              <Badge variant="outline" className="ml-1 bg-noble-black-100  text-xs py-0">ミライAI</Badge>
             </div>
 
             <div className="flex items-center gap-1">
@@ -481,15 +481,15 @@ export function GoalChatInterface() {
         </div>
       </CardHeader>
 
-      <CardContent className="flex flex-col flex-grow min-h-0">
+      <CardContent className="flex flex-col flex-grow min-h-0 bg-noble-black-900 border-x-2 p-0 border-black ">
 
-        <ScrollArea ref={scrollAreaRef} className="flex-grow min-h-0 overflow-y-auto">
+        <ScrollArea ref={scrollAreaRef} className="flex-grow min-h-0 overflow-y-auto ">
           {isLoadingMessages ? (
             <div className="flex h-full min-h-[200px] items-center justify-center">
               <ChatLoadingIndicator message="チャット履歴を読み込んでいます..." />
             </div>
           ) : allMessages.length === 0 ? (
-            <div className="flex flex-col h-full min-h-[200px] items-center justify-center text-center p-2 sm:p-4">
+            <div className="flex flex-col h-full min-h-[200px] items-center justify-center text-center p-2 sm:p-4 bg-black ">
               <div className="relative">
                 <motion.div
                   className="absolute inset-0 rounded-full border-2 border-blue-500/30"
@@ -515,7 +515,7 @@ export function GoalChatInterface() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-lg w-full mb-4">
                 <Button
                   variant="outline"
-                  className="text-left h-auto py-2 sm:py-3 justify-start border-blue-500/20 hover:bg-blue-500/5"
+                  className="text-left h-auto py-2 sm:py-3 justify-start border-noble-black-900 hover:bg-noble-black-100 bg-noble-black-900 text-noble-black-100"
                   onClick={() => handleEmotionSelect("タスク達成のためのベストなアクションプランを教えてください。")}
                 >
                   <div className="flex items-start gap-2">
@@ -529,7 +529,7 @@ export function GoalChatInterface() {
 
                 <Button
                   variant="outline"
-                  className="text-left h-auto py-2 sm:py-3 justify-start border-blue-500/20 hover:bg-blue-500/5"
+                  className="text-left h-auto py-2 sm:py-3 justify-start border-noble-black-900 hover:bg-noble-black-100 bg-noble-black-900 text-noble-black-100"
                   onClick={() => handleEmotionSelect("タスク達成のモチベーションを維持する方法を教えてください。")}
                 >
                   <div className="flex items-start gap-2">
@@ -543,7 +543,7 @@ export function GoalChatInterface() {
 
                 <Button
                   variant="outline"
-                  className="text-left h-auto py-2 sm:py-3 justify-start border-blue-500/20 hover:bg-blue-500/5"
+                  className="text-left h-auto py-2 sm:py-3 justify-start border-noble-black-900 hover:bg-noble-black-100 bg-noble-black-900 text-noble-black-100"
                   onClick={() => handleEmotionSelect("SMARTタスクの設定方法について教えてください。")}
                 >
                   <div className="flex items-start gap-2">
@@ -557,7 +557,7 @@ export function GoalChatInterface() {
 
                 <Button
                   variant="outline"
-                  className="text-left h-auto py-2 sm:py-3 justify-start border-blue-500/20 hover:bg-blue-500/5"
+                  className="text-left h-auto py-2 sm:py-3 justify-start border-noble-black-900 hover:bg-noble-black-100 bg-noble-black-900 text-noble-black-100"
                   onClick={() => handleEmotionSelect("タスク達成を妨げる障害を克服する方法を教えてください。")}
                 >
                   <div className="flex items-start gap-2">
@@ -575,7 +575,7 @@ export function GoalChatInterface() {
               </p>
             </div>
           ) : (
-            <div className="space-y-3 sm:space-y-4 pb-4 min-h-[200px]">
+            <div className="space-y-3 sm:space-y-4  min-h-[200px] p-4">
               {allMessages.map((message, idx) => {
                 // Ensure id is treated as a number for the ChatMessage component
                 const messageForChat = {
@@ -608,7 +608,7 @@ export function GoalChatInterface() {
         </ScrollArea>
       </CardContent>
 
-      <CardFooter className="p-2 sm:p-4 pt-2 flex-shrink-0 bg-slate-900/90 border-t border-blue-500/20 mt-auto">
+      <CardFooter className="p-2 sm:p-4 pt-2 flex-shrink-0 bg-black border-t border-noble-black-900 mt-auto rounded-2xl">
         <form onSubmit={handleSubmit} className="flex w-full gap-1 sm:gap-2 relative">
           <AnimatePresence>
             {showEmotions && (
@@ -625,7 +625,7 @@ export function GoalChatInterface() {
               value={messageText}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setMessageText(e.target.value)}
               disabled={sendMessage.isPending}
-              className="w-full pr-8 min-h-[36px] sm:min-h-[40px] max-h-[100px] sm:max-h-[200px] resize-none text-sm sm:text-base"
+              className="w-full pr-8 min-h-[36px] sm:min-h-[40px] max-h-[100px] sm:max-h-[200px] resize-none text-sm sm:text-base bg-noble-black-900 text-noble-black-100 outline-none focus:outline-none active:outline-none border border-noble-black-900"
               rows={1}
               onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
                 if (e.key === "Enter" && !e.shiftKey && !isMobile) {
@@ -643,7 +643,7 @@ export function GoalChatInterface() {
                 <TooltipTrigger asChild>
                   <motion.button
                     type="button"
-                    className="absolute right-2 top-2 text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 px-1.5 py-1 rounded-md hover:bg-accent/50"
+                    className="absolute right-2 top-1.5 text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 px-1.5 py-1 rounded-md hover:bg-accent/50"
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     onMouseDown={(e) => e.stopPropagation()}   // 🛠️ Add this

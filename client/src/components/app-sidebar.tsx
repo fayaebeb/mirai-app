@@ -42,41 +42,19 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { useChats, useCreateChat, useDeleteChat } from "@/hooks/use-chat"
-import { useRecoilState } from "recoil"
+import { useRecoilState, useSetRecoilState } from "recoil"
 import { activeChatIdAtom } from "@/states/chatStates"
 import { sidePanelStateAtom } from "@/states/settingsState"
 import { Button } from "./ui/button"
 import { useAuth } from "@/hooks/use-auth"
+import { activeTabState } from "@/states/activeTabState"
 
 const itemVariants = {
   show: { opacity: 1, scale: 1, transition: { duration: 0.2 } },
   exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } },
 };
 // This is sample data.
-const data = {
-  projects: [
-    {
-      name: "ボイスモッド",
-      url: "#",
-      icon: Frame,
-    },
-    {
-      name: "メモ",
-      url: "#",
-      icon: PieChart,
-    },
-    {
-      name: "マインドマップ",
-      url: "#",
-      icon: Map,
-    },
-    {
-      name: "ゴール",
-      url: "#",
-      icon: GoalIcon,
-    },
-  ],
-}
+
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { open } = useSidebar()
@@ -91,6 +69,39 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [chatIdToDelete, setChatIdToDelete] = React.useState<number | null>(null);
   const [chatIdBeingDeleted, setChatIdBeingDeleted] = React.useState<number | null>(null);
   const CHAT_ACTIVE_KEY_PREFIX = "chat_active_";
+  const setActiveTab = useSetRecoilState(activeTabState);
+
+
+  const data = {
+    projects: [
+      {
+        name: "ボイスモッド",
+        url: "#",
+        icon: Frame,
+        click: () => setActiveTab('voice')
+      },
+      {
+        name: "メモ",
+        url: "#",
+        icon: PieChart,
+        click: () => setActiveTab('notes')
+      },
+      {
+        name: "マインドマップ",
+        url: "#",
+        icon: Map,
+        click: () => setActiveTab('mindmap')
+
+      },
+      {
+        name: "ゴール",
+        url: "#",
+        icon: GoalIcon,
+        click: () => setActiveTab('goals')
+
+      },
+    ],
+  }
 
   const storageKey = `${CHAT_ACTIVE_KEY_PREFIX}${user?.id}`;
 
@@ -142,7 +153,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <>
       <Sidebar
         collapsible="icon"
-        className="bg-black border-black hover:border-noble-black-900 text-noble-black-100 z-50"
+        className="bg-black border-black hover:border-noble-black-900 text-noble-black-100 z-[60] "
         {...props}
       >
         {/* Outer wrapper: full-height flex column */}
@@ -193,7 +204,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     onClick={() =>
                       createChat(
                         { title: "新しいチャット" },
-                        { onSuccess: (c) => setActiveChatId(c.id) }
+                        { onSuccess: (c) => {setActiveChatId(c.id); setActiveTab('chat'); } }
                       )
                     }
                   >
@@ -219,7 +230,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             ? "bg-noble-black-100 text-noble-black-900"
                             : " text-noble-black-100"
                             }`}
-                          onClick={() => setActiveChatId(chat.id)}
+                          onClick={() => { setActiveTab('chat'); setActiveChatId(chat.id) }}
                         >
                           <span className="truncate">{chat.title}</span>
                           <Trash2

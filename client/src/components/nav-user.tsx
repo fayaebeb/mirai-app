@@ -89,7 +89,7 @@ export function NavUser({
               </SidebarMenuButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent
-              className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg bg-noble-black-900 border border-noble-black-800 text-noble-black-100 shadow-2xl"
+              className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg bg-noble-black-900 border border-noble-black-800 text-noble-black-100 shadow-2xl z-[99]"
               side={isMobile ? "bottom" : "right"}
               align="end"
               sideOffset={4}
@@ -111,11 +111,11 @@ export function NavUser({
 
               <DropdownMenuGroup>
 
-                <DropdownMenuItem onClick={() => setShowFeedbackDialog(true)} className="cursor-pointer hover:bg-noble-black-100 hover:text-noble-black-900">
+                <DropdownMenuItem onClick={() => {setShowFeedbackDialog(true);  document.body.style.pointerEvents = "" }} className="cursor-pointer hover:bg-noble-black-100 hover:text-noble-black-900">
                   <SquareActivity />
                   フィードバック
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleOpenSheet} className="cursor-pointer hover:bg-noble-black-100 hover:text-noble-black-900">
+                <DropdownMenuItem onClick={() => {setIsSettingsOpen(true); document.body.style.pointerEvents = ""}} className="cursor-pointer hover:bg-noble-black-100 hover:text-noble-black-900">
                   <Settings />
                   設定
                 </DropdownMenuItem>

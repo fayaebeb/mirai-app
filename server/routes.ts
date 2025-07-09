@@ -1039,7 +1039,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
     const chats = await storage.getChatsByUser(req.user!.id);
-    res.json(chats);
+    const userChats = chats.filter(
+      chat => chat.type !== "notes" && chat.type !== "goal"
+    );
+    res.json(userChats);
   });
 
   app.patch("/api/chats/:chatId", async (req, res) => {

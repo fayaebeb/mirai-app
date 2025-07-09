@@ -274,7 +274,7 @@ export default function ChatMessage({
 
       {/* Only show avatar for bot messages at the start of a group */}
       {message.isBot && isFirstInGroup ? (
-        <Avatar className="hidden sm:flex flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 border border-noble-black-500/30 shadow-md bg-black mr-0.5">
+        <Avatar className="hidden sm:flex flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 border border-noble-black-500/30 shadow-md bg-black mr-0.5 ">
           <motion.div
             whileHover={{ scale: 1.05, rotate: [0, -5, 5, 0] }}
             transition={{ rotate: { duration: 0.5 } }}
@@ -289,7 +289,7 @@ export default function ChatMessage({
           </motion.div>
         </Avatar>
       ) : message.isBot ? (
-        <div className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 mr-0.5"></div>
+        <div className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 mr-0.5 bg-black border border-noble-black-500/20 rounded-full text-noble-black-100 flex items-center justify-center">み</div>
       ) : null}
 
 
@@ -324,9 +324,9 @@ export default function ChatMessage({
               <div className="absolute top-0 left-0 w-full h-full"
                 style={{
                   backgroundImage: `
-                    radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.3) 0%, transparent 15%),
-                    radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.3) 0%, transparent 15%),
-                    linear-gradient(60deg, transparent 0%, rgba(59, 130, 246, 0.1) 100%)
+                    radial-gradient(circle at 20% 30%, rgba(0, 0, 0, 0.3) 0%, transparent 15%),
+                    radial-gradient(circle at 80% 70%, rgba(0, 0, 0, 0.3) 0%, transparent 15%),
+                    linear-gradient(60deg, transparent 0%, rgba(0, 0, 0, 0.1) 100%)
                   `,
                   backgroundSize: '100% 100%'
                 }}

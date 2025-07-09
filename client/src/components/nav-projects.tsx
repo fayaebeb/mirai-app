@@ -22,6 +22,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { MouseEventHandler } from "react"
 
 export function NavProjects({
   projects,
@@ -30,6 +31,7 @@ export function NavProjects({
     name: string
     url: string
     icon: LucideIcon
+    click: () => void;
   }[]
 }) {
   const { isMobile } = useSidebar()
@@ -39,14 +41,14 @@ export function NavProjects({
       <SidebarGroupLabel className="text-noble-black-500">プロジェクト</SidebarGroupLabel>
       <SidebarMenu className="flex flex-col items-center justify-center text-noble-black-100">
         {projects.map((item) => (
-          
-            <SidebarMenuButton asChild>
-              <a href={item.url}>
-                <item.icon />
-                <span>{item.name}</span>
-              </a>
-            </SidebarMenuButton>
-          
+
+          <SidebarMenuButton key={item.name} asChild>
+            <div className="cursor-pointer" onClick={item.click}>
+              <item.icon />
+              <span>{item.name}</span>
+            </div>
+          </SidebarMenuButton>
+
         ))}
       </SidebarMenu>
     </SidebarGroup>

@@ -41,6 +41,10 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Spotlight } from "./ui/spotlight";
+import { Trio } from 'ldrs/react'
+import 'ldrs/react/Trio.css'
+
 
 // Array of prompts that users can quickly select
 interface Prompt {
@@ -698,10 +702,11 @@ export function NotesList() {
   }, []);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 h-full flex flex-col pt-5 md:pt-0">
+      <Spotlight />
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-        <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
-          <FileText className="h-5 w-5" />
+        <h2 className="text-2xl sm:text-2xl font-bold flex items-center gap-2 text-noble-black-100">
+          <FileText className="h-5 w-5 " />
           ノート
         </h2>
         <div className="flex flex-wrap gap-2">
@@ -714,7 +719,7 @@ export function NotesList() {
           >
             <Brain className="h-4 w-4" />
             <span>ノートとチャット</span>
-            <Badge variant="outline" className="ml-1 bg-blue-500/10 text-[10px] px-1 py-0.5 h-4 leading-none">AI</Badge>
+            <Badge variant="outline" className="ml-1 bg-noble-black-100 text-noble-black-900 text-[10px] px-1 py-0.5 h-4 leading-none">AI</Badge>
             {selectedNotes.length > 0 && (
               <Badge variant="secondary" className="ml-1">
                 {selectedNotes.length}
@@ -742,7 +747,7 @@ export function NotesList() {
                     placeholder="ノートのタイトル"
                     value={newNoteTitle}
                     onChange={(e) => setNewNoteTitle(e.target.value)}
-                    className="w-full"
+                    className="w-full bg-black outline-none focus:outline-none text-noble-black-100 border border-noble-black-900"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -751,7 +756,7 @@ export function NotesList() {
                     placeholder="ノートの内容"
                     value={newNoteContent}
                     onChange={(e) => setNewNoteContent(e.target.value)}
-                    className="w-full min-h-[200px]"
+                    className="w-full min-h-[200px] bg-black outline-none focus:outline-none text-noble-black-100 border border-noble-black-900"
                   />
                 </div>
               </div>
@@ -783,7 +788,7 @@ export function NotesList() {
             placeholder="ノートを検索..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9"
+            className="w-full pl-9 bg-black outline-none focus:outline-none active:outline-none text-noble-black-100 border border-noble-black-900"
           />
           <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -794,11 +799,11 @@ export function NotesList() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-          <div className="flex items-center gap-1 border rounded-md overflow-hidden p-1 bg-background">
+          <div className="flex items-center gap-1 rounded-md overflow-hidden p-1 bg-black">
             <Button
               size="sm"
               variant={viewMode === "list" ? "default" : "ghost"}
-              className="h-7 px-2"
+              className="h-7 px-2 "
               onClick={() => setViewMode("list")}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
@@ -814,7 +819,7 @@ export function NotesList() {
             <Button
               size="sm"
               variant={viewMode === "grid" ? "default" : "ghost"}
-              className="h-7 px-2"
+              className="h-7 px-2 "
               onClick={() => setViewMode("grid")}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
@@ -827,21 +832,21 @@ export function NotesList() {
             </Button>
           </div>
 
-          <div className="flex items-center gap-1 border rounded-md p-1 bg-background">
+          <div className="flex items-center gap-1 rounded-md p-1 bg-black text-noble-black-100">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="h-7 px-2 text-sm">
+                <Button className="h-7 px-2 text-sm bg-noble-black-900 text-noble-black-100">
                   {sortBy === 'updated' ? '更新日' : sortBy === 'created' ? '作成日' : 'タイトル'}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-24">
-                <DropdownMenuItem onClick={() => setSortBy('updated')}>
+              <DropdownMenuContent align="start" className="w-24 bg-noble-black-900 text-noble-black-100">
+                <DropdownMenuItem className="cursor-pointer" onClick={() => setSortBy('updated')}>
                   更新日
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortBy('created')}>
+                <DropdownMenuItem onClick={() => setSortBy('created')} className="cursor-pointer">
                   作成日
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortBy('title')}>
+                <DropdownMenuItem onClick={() => setSortBy('title')} className="cursor-pointer">
                   タイトル
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -869,17 +874,20 @@ export function NotesList() {
         </div>
       </div>
 
-      <Separator />
+      <Separator className="bg-noble-black-800" />
 
-      <Card className="p-0 overflow-auto mb-4 
-                            h-[calc(100vh-12rem)]
-                            max-h-[calc(100vh-25rem)] 
-                            sm:max-h-[calc(100vh-12rem)] 
-                            md:max-h-[calc(100vh-12rem)] 
-                            lg:max-h-[calc(100vh-16rem)] 
-                            xl:max-h-[calc(100vh-19rem)]">
+      <Card className="p-0 flex-1 min-h-0 overflow-auto
+                             bg-black text-noble-black-100 border-noble-black-900 border">
         {isLoading ? (
-          <div className="p-4 text-center">Loading notes...</div>
+          <div className="p-4 text-center flex flex-col items-center justify-center">
+
+            <Trio
+              size="40"
+              speed="1.3"
+              color="#f2f2f2"
+            />
+            <p>Loading ... </p>
+          </div>
         ) : isError ? (
           <div className="p-4 text-center text-red-500">Error loading notes</div>
         ) : filteredAndSortedNotes.length === 0 ? (
@@ -894,10 +902,10 @@ export function NotesList() {
                 </svg>
                 <p className="text-lg font-medium">No matching notes</p>
                 <p className="text-muted-foreground">
-                  「<span className="font-medium text-blue-400">{searchQuery}</span>」に一致するメモは見つかりませんでした。
+                  「<span className="font-medium text-noble-black-100">{searchQuery}</span>」に一致するメモは見つかりませんでした。
                   <br />
                   <button
-                    className="text-blue-400 hover:underline mt-2"
+                    className="text-noble-black-900 bg-noble-black-100 hover:underline mt-2"
                     onClick={() => setSearchQuery("")}
                   >
                     検索をクリア
@@ -913,173 +921,179 @@ export function NotesList() {
             )}
           </div>
         ) : viewMode === "list" ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="min-w-[160px]">タイトル</TableHead>
-                <TableHead className="min-w-[80px] hidden md:table-cell">日付</TableHead>
-                <TableHead className="min-w-[100px] text-right">操作</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <AnimatePresence>
-                {filteredAndSortedNotes.map((note) => (
-                  <motion.tr
-                    key={note.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    className={`cursor-pointer hover:bg-muted/50 transition-colors ${pinnedNotes.includes(note.id) ? 'bg-blue-950/30' : ''
-                      }`}
-                    onClick={() => handleViewNote(note)}
-                  >
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        {pinnedNotes.includes(note.id) ? (
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400">
-                            <path d="m15 2-6 6 4 4-7 7 4 4 7-7 4 4 6-6-12-12Z"></path>
-                          </svg>
-                        ) : (
-                          <FileText className="h-4 w-4 text-blue-500" />
-                        )}
-                        <span className="truncate max-w-[180px]">{note.title}</span>
-                        {note.content.length > 500 && (
-                          <Badge variant="outline" className="text-xs font-normal">長文</Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      <div className="flex flex-col">
-                        <span className="text-xs text-blue-400">
-                          {format(new Date(note.updatedAt), 'yyyy年MM月dd日')}
-                        </span>
-                        {/* Show time since creation if it's recent */}
-                        <span className="text-xs text-muted-foreground">
-                          {format(new Date(note.createdAt), '作成: yyyy年MM月dd日')}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={(e) => toggleNotePinned(note.id, e)}
-                                className={pinnedNotes.includes(note.id) ? "text-blue-400" : ""}
-                              >
-                                {pinnedNotes.includes(note.id) ? (
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <line x1="12" y1="17" x2="12" y2="22"></line>
-                                    <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 16.24Z"></path>
-                                  </svg>
-                                ) : (
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="m15 9-6 6"></path>
-                                    <path d="m9 9 6 6"></path>
-                                    <line x1="12" y1="17" x2="12" y2="22"></line>
-                                    <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 16.24Z"></path>
-                                  </svg>
-                                )}
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {pinnedNotes.includes(note.id) ? "Unpin" : "Pin this note"}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+          <div className="w-full overflow-x-auto">
+            <Table className="min-w-full table-auto border-noble-black-900 border">
+              <TableHeader className="border-noble-black-900 border">
+                <TableRow className="hover:bg-black">
+                  <TableHead className=" border-noble-black-900 border">タイトル</TableHead>
+                  <TableHead className=" hidden md:table-cell border-noble-black-900 border">日付</TableHead>
+                  <TableHead className=" text-right border-noble-black-900 border">操作</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody className="border-noble-black-900 border h-full overflow-y-auto">
+                <AnimatePresence>
+                  {filteredAndSortedNotes.map((note) => (
+                    <motion.tr
+                      key={note.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className={`cursor-pointer hover:bg-noble-black-900/50 transition-colors ${pinnedNotes.includes(note.id) ? 'bg-black' : ''
+                        }`}
+                      onClick={() => handleViewNote(note)}
+                    >
+                      <TableCell className="font-medium border-noble-black-900 border">
+                        <div className="flex items-center gap-2">
+                          {pinnedNotes.includes(note.id) ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400">
+                              <path d="m15 2-6 6 4 4-7 7 4 4 7-7 4 4 6-6-12-12Z"></path>
+                            </svg>
+                          ) : (
+                            <FileText className="h-4 w-4 text-noble-black-900" />
+                          )}
+                          <span className="truncate ">{note.title}</span>
+                          {note.content.length > 500 && (
+                            <Badge variant="outline" className="text-xs font-normal">長文</Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell border-noble-black-900 border">
+                        <div className="flex flex-col">
+                          <span className="text-xs text-noble-black-100">
+                            {format(new Date(note.updatedAt), 'yyyy年MM月dd日')}
+                          </span>
+                          {/* Show time since creation if it's recent */}
+                          <span className="text-xs text-muted-foreground">
+                            {format(new Date(note.createdAt), '作成: yyyy年MM月dd日')}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right border-noble-black-900 border">
+                        <div className="flex justify-between md:justify-end gap-2 ">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger className="p-1" asChild>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={(e) => toggleNotePinned(note.id, e)}
+                                  className={`p-0 md:p-2 w-5 md:w-10 ${pinnedNotes.includes(note.id) ? "text-blue-500" : ""}`}
+                                >
+                                  {pinnedNotes.includes(note.id) ? (
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      <line x1="12" y1="17" x2="12" y2="22"></line>
+                                      <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 16.24Z"></path>
+                                    </svg>
+                                  ) : (
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="m15 9-6 6"></path>
+                                      <path d="m9 9 6 6"></path>
+                                      <line x1="12" y1="17" x2="12" y2="22"></line>
+                                      <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 16.24Z"></path>
+                                    </svg>
+                                  )}
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {pinnedNotes.includes(note.id) ? "Unpin" : "Pin this note"}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
 
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleNoteSelection(note, e);
-                                }}
-                                className={selectedNotes.some(n => n.id === note.id) ? "text-blue-400" : ""}
-                              >
-                                <MessageSquare className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {selectedNotes.some(n => n.id === note.id)
-                                ? "Remove from chat selection"
-                                : "Add to chat selection"}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger className="p-1" asChild>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleNoteSelection(note, e);
+                                  }}
+                                  className={`${selectedNotes.some(n => n.id === note.id) ? "text-blue-400" : ""} p-0 md:p-2 w-5 md:w-10`}
+                                >
+                                  <MessageSquare className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {selectedNotes.some(n => n.id === note.id)
+                                  ? "Remove from chat selection"
+                                  : "Add to chat selection"}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
 
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleExportNote(note);
-                                }}
-                              >
-                                <Download className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              Export as PDF
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger className="p-1" asChild>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleExportNote(note);
+                                  }}
+                                  className="p-0 md:p-2 w-5 md:w-10"
+                                >
+                                  <Download className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                Export as PDF
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
 
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleEditNote(note);
-                                }}
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              ノートを編集
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger className="p-1" asChild>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditNote(note);
+                                  }}
+                                  className="p-0 md:p-2 w-5 md:w-10"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                ノートを編集
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
 
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleInitiateDelete(note.id);
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              Delete Note
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                    </TableCell>
-                  </motion.tr>
-                ))}
-              </AnimatePresence>
-            </TableBody>
-          </Table>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger className="p-1" asChild>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleInitiateDelete(note.id);
+                                  }}
+                                  className="p-0 md:p-2 w-5 md:w-10"
+
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                Delete Note
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                      </TableCell>
+                    </motion.tr>
+                  ))}
+                </AnimatePresence>
+              </TableBody>
+            </Table>
+          </div>
         ) : (
           // Grid view
           <div className="p-4">

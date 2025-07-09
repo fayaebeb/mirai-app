@@ -28,7 +28,7 @@ export function ProtectedRoute({
     console.log("Protected Route - No user, redirecting to auth page");
     return (
       <Route path={path}>
-        <Redirect to="/test" />
+        <Redirect to="/auth" />
       </Route>
     );
   }

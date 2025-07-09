@@ -769,7 +769,7 @@ export const ChatInterface = ({
                           <Button
                             variant="ghost"
                             onClick={handleClearChat}
-                            className="text-noble-black-100 hover:text-noble-black-100 bg-black border border-noble-black-900 shadow-black shadow-2xl hover:bg-black/30 flex items-center gap-1 px-2 py-0.5 sm:px-3 sm:py-0.5 rounded-full"
+                            className="text-noble-black-100 hover:text-noble-black-900 bg-black border border-noble-black-900 shadow-black shadow-2xl hover:bg-noble-black-100 flex items-center gap-1 px-2 py-0.5 sm:px-3 sm:py-0.5 rounded-full"
                           >
                             <Trash2 className="h-4 w-4 text-noble-black-100" />
                             <span className="hidden sm:inline">チャット履歴をクリア</span>
