@@ -30,6 +30,7 @@ import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { settingsStateAtom } from "@/states/settingsState";
 import { useChangePassword } from "@/hooks/useChangePass";
+import { Trio } from "ldrs/react";
 
 // ✅ Zod Schema
 const passwordSchema = z
@@ -133,9 +134,9 @@ const Settings = () => {
 
     return (
         <Sheet open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-            <SheetContent className="w-full sm:w-80 flex flex-col h-full bg-slate-900/90 backdrop-blur-2xl">
+            <SheetContent className="w-full sm:w-80 flex flex-col h-full bg-noble-black-900 backdrop-blur-2xl">
                 <SheetHeader className="p-6 space-y-5 h-full relative">
-                    <SheetTitle className="text-2xl text-center">設定</SheetTitle>
+                    <SheetTitle className="text-2xl text-center text-noble-black-100">設定</SheetTitle>
                     <SheetDescription>
                         <Form {...form}>
                             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -145,7 +146,7 @@ const Settings = () => {
                                     name="email"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel className="text-white flex items-center gap-1">
+                                            <FormLabel className="text-noble-black-100 flex items-center gap-1">
                                                 <Heart className="h-3 w-3" /> メールアドレス
                                             </FormLabel>
                                             <FormControl>
@@ -154,7 +155,7 @@ const Settings = () => {
                                                     {...field}
                                                     value={field.value}
                                                     readOnly
-                                                    className="border-blue-800 bg-gradient-to-r from-blue-600 to-blue-700  border backdrop-blur-sm text-white"
+                                                    className="border-noble-black-900 bg-black   border backdrop-blur-sm text-noble-black-100"
                                                 />
                                             </FormControl>
                                             <FormMessage className="text-red-400" />
@@ -168,19 +169,19 @@ const Settings = () => {
                                     name="oldPassword"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel className="text-white flex items-center gap-1">
+                                            <FormLabel className="text-noble-black-100 flex items-center gap-1">
                                                 <Star className="h-3 w-3" /> 現在のパスワード
                                             </FormLabel>
                                             <div className="relative">
                                                 <Input
                                                     type={showPassword ? "text" : "password"}
                                                     {...field}
-                                                    className="border-blue-800 bg-gradient-to-r from-blue-600 to-blue-700 text-white border backdrop-blur-sm pr-10"
+                                                    className="border-noble-black-900 bg-black  text-noble-black-100 border backdrop-blur-sm pr-10"
                                                 />
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowPassword((prev) => !prev)}
-                                                    className="absolute inset-y-0 right-2 flex items-center text-white"
+                                                    className="absolute inset-y-0 right-2 flex items-center text-noble-black-100"
                                                 >
                                                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                                 </button>
@@ -196,19 +197,19 @@ const Settings = () => {
                                     name="password"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel className="text-white flex items-center gap-1">
+                                            <FormLabel className="text-noble-black-100 flex items-center gap-1">
                                                 <Star className="h-3 w-3" /> 新しいパスワード
                                             </FormLabel>
                                             <div className="relative">
                                                 <Input
                                                     type={showPassword ? "text" : "password"}
                                                     {...field}
-                                                    className="border-blue-800 bg-gradient-to-r from-blue-600 to-blue-700 text-white border backdrop-blur-sm pr-10"
+                                                    className="border-noble-black-900 bg-black  text-noble-black-100 border backdrop-blur-sm pr-10"
                                                 />
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowPassword((p) => !p)}
-                                                    className="absolute inset-y-0 right-2 flex items-center text-white"
+                                                    className="absolute inset-y-0 right-2 flex items-center text-noble-black-100"
                                                 >
                                                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                                 </button>
@@ -216,13 +217,13 @@ const Settings = () => {
 
                                             {/* Strength Meter */}
                                             <div className="mt-2">
-                                                <div className="h-2 w-full bg-pink-100 rounded-full overflow-hidden">
+                                                <div className="h-2 w-full bg-black rounded-full overflow-hidden">
                                                     <div
                                                         className={`h-full transition-all duration-500 ${strengthColor}`}
                                                         style={{ width: `${strengthPercent}%` }}
                                                     />
                                                 </div>
-                                                <p className="text-xs text-white mt-1">{strengthLabel}</p>
+                                                <p className="text-xs text-noble-black-100 mt-1">{strengthLabel}</p>
                                             </div>
 
                                             <FormMessage className="text-red-400" />
@@ -236,19 +237,19 @@ const Settings = () => {
                                     name="confirmPassword"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel className="text-white flex items-center gap-1">
+                                            <FormLabel className="text-noble-black-100 flex items-center gap-1">
                                                 <Star className="h-3 w-3" /> 確認用パスワード
                                             </FormLabel>
                                             <div className="relative">
                                                 <Input
                                                     type={showPassword ? "text" : "password"}
                                                     {...field}
-                                                    className="border-blue-800 bg-gradient-to-r from-blue-600 to-blue-700 text-white border backdrop-blur-sm pr-10"
+                                                    className="border-noble-black-900 bg-black  text-noble-black-100 border backdrop-blur-sm pr-10"
                                                 />
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowPassword((p) => !p)}
-                                                    className="absolute inset-y-0 right-2 flex items-center text-white"
+                                                    className="absolute inset-y-0 right-2 flex items-center text-noble-black-100"
                                                 >
                                                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                                 </button>
@@ -267,7 +268,7 @@ const Settings = () => {
                                     <Button
                                         type="submit"
                                         disabled={isLoading}
-                                        className="w-full bg-gradient-to-r from-violet-400 to-violet-500 hover:from-violet-500 hover:to-violet-600 text-violet-900 hover:text-white font-medium rounded-xl shadow-md relative"
+                                        className="w-full bg-black  hover:from-violet-500 hover:to-violet-600 text-noble-black-100 hover:text-noble-black-100 font-medium rounded-xl shadow-md relative"
                                     >
                                         {isLoading ? "変更中…" : "変更"}
                                         <motion.span
@@ -275,14 +276,14 @@ const Settings = () => {
                                             animate={{ rotate: 360, scale: [1, 1.2, 1] }}
                                             transition={{ duration: 3, repeat: Infinity }}
                                         >
-                                            <Zap className="h-3 w-3 text-purple-800" />
+                                            <Zap className="h-3 w-3 text-noble-black-100" />
                                         </motion.span>
                                         <motion.span
                                             className="absolute -bottom-1 -left-1 text-xs pointer-events-none"
                                             animate={{ rotate: -360, scale: [1, 1.2, 1] }}
                                             transition={{ duration: 3, repeat: Infinity }}
                                         >
-                                            <Zap className="h-3 w-3 text-purple-800" />
+                                            <Zap className="h-3 w-3 text-noble-black-100" />
                                         </motion.span>
                                     </Button>
                                 </motion.div>
@@ -292,8 +293,13 @@ const Settings = () => {
 
                     {/* ✅ Loading Overlay */}
                     {isLoading && (
-                        <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-50 rounded-xl">
-                            <span className="text-pink-500 animate-pulse font-semibold">変更を保存中…</span>
+                        <div className="absolute inset-0 bg-black backdrop-blur-sm flex items-center justify-center z-50 rounded-xl">
+                            <Trio
+                                size="40"
+                                speed="1.3"
+                                color="#f2f2f2"
+                            />
+                            <span className="text-noble-black-100 animate-pulse font-semibold">変更を保存中…</span>
                         </div>
                     )}
                 </SheetHeader>

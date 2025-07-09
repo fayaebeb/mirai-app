@@ -510,7 +510,7 @@ export function MindMapGenerator() {
           // <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
           // <div className="relative flex h-[50rem] w-full items-center justify-center bg-black border border-noble-black-100 text-noble-black-100">
           <div className="h-full bg-black border border-noble-black-900 text-noble-black-100 rounded-2xl">
-            <Spotlight />
+            <Spotlight  />
 
             {/* Radial gradient for the container to give a faded look */}
             <div className="flex flex-col items-center justify-center h-full p-5 md:p-0">

@@ -719,7 +719,7 @@ export function NotesList() {
           >
             <Brain className="h-4 w-4" />
             <span>ノートとチャット</span>
-            <Badge variant="outline" className="ml-1 bg-noble-black-100 text-noble-black-900 text-[10px] px-1 py-0.5 h-4 leading-none">AI</Badge>
+            <Badge variant="outline" className="ml-1 bg-noble-black-200 text-noble-black-900 text-[10px] px-1 py-0.5 h-4 leading-none">AI</Badge>
             {selectedNotes.length > 0 && (
               <Badge variant="secondary" className="ml-1">
                 {selectedNotes.length}
@@ -728,7 +728,7 @@ export function NotesList() {
           </Button>
           <Dialog open={isAddNoteOpen} onOpenChange={setIsAddNoteOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" className="flex items-center gap-1">
+              <Button size="sm" className="flex items-center gap-1 bg-black text-noble-black-100">
                 <Plus className="h-4 w-4" />
                 <span>ノートを追加</span>
               </Button>
@@ -839,7 +839,7 @@ export function NotesList() {
                   {sortBy === 'updated' ? '更新日' : sortBy === 'created' ? '作成日' : 'タイトル'}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-24 bg-noble-black-900 text-noble-black-100">
+              <DropdownMenuContent align="start" className="w-24 bg-noble-black-900 text-noble-black-100 border border-noble-black-500">
                 <DropdownMenuItem className="cursor-pointer" onClick={() => setSortBy('updated')}>
                   更新日
                 </DropdownMenuItem>
@@ -877,16 +877,16 @@ export function NotesList() {
       <Separator className="bg-noble-black-800" />
 
       <Card className="p-0 flex-1 min-h-0 overflow-auto
-                             bg-black text-noble-black-100 border-noble-black-900 border">
+                             bg-black text-noble-black-100 border-noble-black-900 border rounded-lg">
         {isLoading ? (
-          <div className="p-4 text-center flex flex-col items-center justify-center">
+          <div className="p-4 text-center flex flex-col items-center justify-center h-full">
 
             <Trio
               size="40"
               speed="1.3"
               color="#f2f2f2"
             />
-            <p>Loading ... </p>
+            <p>読み込み中 </p>
           </div>
         ) : isError ? (
           <div className="p-4 text-center text-red-500">Error loading notes</div>
@@ -921,9 +921,9 @@ export function NotesList() {
             )}
           </div>
         ) : viewMode === "list" ? (
-          <div className="w-full overflow-x-auto">
-            <Table className="min-w-full table-auto border-noble-black-900 border">
-              <TableHeader className="border-noble-black-900 border">
+          <div className="w-full overflow-x-auto rounded-t-lg">
+            <Table className="min-w-full table-auto border-noble-black-900 border rounded-t-lg">
+              <TableHeader className="border-noble-black-900 border rounded-t-lg">
                 <TableRow className="hover:bg-black">
                   <TableHead className=" border-noble-black-900 border">タイトル</TableHead>
                   <TableHead className=" hidden md:table-cell border-noble-black-900 border">日付</TableHead>
@@ -1105,13 +1105,13 @@ export function NotesList() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
-                    className={`relative border rounded-lg overflow-hidden cursor-pointer group ${pinnedNotes.includes(note.id) ? 'border-blue-500/50 bg-blue-950/30' : 'border-slate-700 hover:border-slate-600'
+                    className={`relative border rounded-lg overflow-hidden cursor-pointer group ${pinnedNotes.includes(note.id) ? 'border-noble-black-800 bg-noble-black-800 p-2 ' : 'border-noble-black-900 bg-noble-black-900'
                       }`}
                     onClick={() => handleViewNote(note)}
                   >
                     {/* Pin badge */}
                     {pinnedNotes.includes(note.id) && (
-                      <div className="absolute top-2 left-2 rounded-full bg-blue-600/20 border border-blue-500/20 px-2 py-0.5 text-xs flex items-center gap-1">
+                      <div className="w-fit rounded-full bg-noble-black-100 border border-noble-black-100 text-noble-black-900 px-2 py-0.5 text-xs flex items-center gap-1">
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="m15 2-6 6 4 4-7 7 4 4 7-7 4 4 6-6-12-12Z"></path>
                         </svg>
@@ -1120,7 +1120,7 @@ export function NotesList() {
                     )}
 
                     {/* Actions */}
-                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-slate-800/80 rounded-lg backdrop-blur-sm p-1">
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-black text-noble-black-100 rounded-lg backdrop-blur-sm p-1">
                       <Button
                         size="icon"
                         variant="ghost"

@@ -69,7 +69,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [chatIdToDelete, setChatIdToDelete] = React.useState<number | null>(null);
   const [chatIdBeingDeleted, setChatIdBeingDeleted] = React.useState<number | null>(null);
   const CHAT_ACTIVE_KEY_PREFIX = "chat_active_";
-  const setActiveTab = useSetRecoilState(activeTabState);
+  const [activeTab, setActiveTab] = useRecoilState(activeTabState);
 
 
   const data = {
@@ -78,26 +78,26 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         name: "ボイスモッド",
         url: "#",
         icon: Frame,
-        click: () => setActiveTab('voice')
+        click: () => { setActiveTab('voice'); }
       },
       {
         name: "メモ",
         url: "#",
         icon: PieChart,
-        click: () => setActiveTab('notes')
+        click: () => { setActiveTab('notes') }
       },
       {
         name: "マインドマップ",
         url: "#",
         icon: Map,
-        click: () => setActiveTab('mindmap')
+        click: () => { setActiveTab('mindmap') }
 
       },
       {
         name: "ゴール",
         url: "#",
         icon: GoalIcon,
-        click: () => setActiveTab('goals')
+        click: () => { setActiveTab('goals');}
 
       },
     ],
@@ -153,7 +153,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <>
       <Sidebar
         collapsible="icon"
-        className="bg-black border-black hover:border-noble-black-900 text-noble-black-100 z-[60] "
+        className="bg-black border-black hover:border-noble-black-900 text-noble-black-100 z-[50] "
         {...props}
       >
         {/* Outer wrapper: full-height flex column */}
@@ -204,7 +204,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     onClick={() =>
                       createChat(
                         { title: "新しいチャット" },
-                        { onSuccess: (c) => {setActiveChatId(c.id); setActiveTab('chat'); } }
+                        { onSuccess: (c) => { setActiveChatId(c.id); setActiveTab('chat'); } }
                       )
                     }
                   >
@@ -226,7 +226,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         exit="exit"
                       >
                         <SidebarMenuButton
-                          className={`flex w-full justify-between items-center ${activeChatId === chat.id
+                          className={`flex w-full justify-between items-center ${activeChatId === chat.id && (activeTab === "chat" || activeTab === "voice")
                             ? "bg-noble-black-100 text-noble-black-900"
                             : " text-noble-black-100"
                             }`}
@@ -289,22 +289,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </Sidebar>
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent className="mx-auto max-w-[90%] sm:max-w-md md:max-w-lg lg:max-w-xl rounded-xl p-6">
+        <AlertDialogContent className="mx-auto max-w-[90%] sm:max-w-md md:max-w-lg lg:max-w-xl rounded-xl p-6 bg-black text-noble-black-100 border border-noble-black-900">
 
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-blue-100">チャット履歴をクリアしますか？</AlertDialogTitle>
-            <AlertDialogDescription className="text-blue-300/70">
+            <AlertDialogTitle className="text-noble-black-100">チャット履歴をクリアしますか？</AlertDialogTitle>
+            <AlertDialogDescription className="text-noble-black-300">
               この操作は取り消せません。すべてのチャット履歴が削除されます。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-slate-800 text-blue-200 border-slate-700 hover:bg-slate-700">
+            <AlertDialogCancel className="bg-noble-black-900 text-noble-black-100  hover:bg-noble-black-800 border-0 hover:text-noble-black-100">
               キャンセル
             </AlertDialogCancel>
             <AlertDialogAction
               disabled={chatIdToDelete === null}
               onClick={confirmDelete}
-              className="bg-red-900/50 hover:bg-red-900 text-red-50 border border-red-800"
+              className="bg-noble-black-100  text-noble-black-900 border border-noble-black-900 hover:text-noble-black-100"
+
             >
               削除する
             </AlertDialogAction>

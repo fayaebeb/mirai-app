@@ -17,13 +17,14 @@ import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Spotlight } from "@/components/ui/spotlight";
 import { TextGenerateEffect } from "@/components/ui/textgenerateEffect";
+import { activeTabState } from "@/states/activeTabState";
 
 export default function AppLayout() {
     const [activeChatId, setActiveChatId] = useRecoilState(activeChatIdAtom);
 
     const [, setIsSidePanelOpen] = useRecoilState(sidePanelStateAtom);
     const { mutate: createChat } = useCreateChat();
-
+    const activeTab = useRecoilValue(activeTabState)
 
 
     return (
@@ -86,9 +87,9 @@ export default function AppLayout() {
             <SidebarInset>
                 <div className="flex flex-1 flex-col gap-4 p-4 bg-black relative  max-h-screen h-screen">
                     <div className="flex flex-col min-h-full max-h-full bg-noble-black-900 rounded-2xl relative overflow-hidden">
-                        <SidebarTrigger className="rounded-full p-5 bg-black text-noble-black-100 absolute left-2 top-2 md:hidden z-50" />
+                        <SidebarTrigger className="rounded-full p-5 bg-black text-noble-black-100 absolute left-2 top-2 md:hidden z-50 border border-noble-black-900" />
 
-                        {activeChatId ?
+                        {activeChatId  ?
                             <HomePage />
                             :
                             <div className="h-full w-full rounded-md flex md:items-center md:justify-center  antialiased  overflow-hidden relative">

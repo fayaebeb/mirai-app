@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Heart, Lightbulb, FileText, Trash2, Download } from "lucide-react";
+import { Sparkles, Heart, Lightbulb, FileText, Trash2, Download, X, Menu } from "lucide-react";
 import { Message } from "@shared/schema";
 import { nanoid } from "nanoid";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -335,6 +335,49 @@ export const ChatInterface = ({
     setShowClearConfirm(true);
   };
 
+  const clearChatHistory = useMutation<void, Error>({
+    // 1️⃣ No parameters — we read activeChatId from closure
+    mutationFn: async () => {
+      if (activeChatId === null) {
+        throw new Error("チャットが選択されていません。");
+      }
+      const res = await apiRequest(
+        "DELETE",
+        `/api/chats/${activeChatId}/messages`
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "チャット履歴のクリアに失敗しました。");
+      }
+    },
+
+    // 2️⃣ Clear only the active chat’s cache on success
+    onSuccess: () => {
+      const key: [string, number, string] = [
+        "/api/chats",
+        activeChatId!,
+        "messages",
+      ];
+      queryClient.setQueryData<Message[]>(key, []);
+      queryClient.invalidateQueries({ queryKey: key });
+
+      setShowClearConfirm(false);
+      toast({
+        title: "チャット履歴をクリアしました",
+        description: "すべてのメッセージが削除されました。",
+      });
+    },
+
+    onError: (error) => {
+      console.error("Error clearing chat history:", error);
+      toast({
+        title: "エラーが発生しました",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Effect to handle initial display and make header always visible on mobile
   useEffect(() => {
     // Force scroll to top on component mount
@@ -429,10 +472,12 @@ export const ChatInterface = ({
 
   // Common quick replies/suggestions based on conversation context
   const quickReplies = [
-    { text: "詳細を教えて", icon: <Sparkles className="h-3 w-3" /> },
-    { text: "例を示して", icon: <Lightbulb className="h-3 w-3" /> },
-    { text: "まとめて", icon: <FileText className="h-3 w-3" /> },
+    { text: "詳細を教えて", icon: <Sparkles className="h-4 w-4" /> },
+    { text: "例を示して", icon: <Lightbulb className="h-4 w-4" /> },
+    { text: "まとめて", icon: <FileText className="h-4 w-4" /> },
   ];
+
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Handle quick reply selection
   const handleQuickReplySelect = (text: string) => {
@@ -754,22 +799,19 @@ export const ChatInterface = ({
                 </div> */}
 
                 {/* Quick replies after bot messages */}
-                <div className="relative">
+                <div className="relative md:hidden">
                   {group.sender === "bot" &&
                     groupIndex === groupedMessages.length - 1 && (
                       <motion.div
-                        initial={{ opacity: 0, y: 5, x: open ? 72 : 16 }}
-                        animate={{ opacity: 1, y: 0, x: open ? 72 : 16 }}
-                        exit={{ opacity: 0, y: 5, x: open ? 72 : 16 }}
-                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                        className="fixed top-6 left-0 right-0 z-50 flex justify-center px-4 space-x-2 "
+                        
+                        className="fixed top-6 right-5 z-20 flex justify-center px-4 space-x-2 "
                       >
 
                         {messages.length > 0 && (
                           <Button
                             variant="ghost"
                             onClick={handleClearChat}
-                            className="text-noble-black-100 hover:text-noble-black-900 bg-black border border-noble-black-900 shadow-black shadow-2xl hover:bg-noble-black-100 flex items-center gap-1 px-2 py-0.5 sm:px-3 sm:py-0.5 rounded-full"
+                            className="text-noble-black-100 hover:text-noble-black-900 bg-black border border-noble-black-900 shadow-black shadow-2xl hover:bg-noble-black-100 flex items-center gap-1 p-2 rounded-full"
                           >
                             <Trash2 className="h-4 w-4 text-noble-black-100" />
                             <span className="hidden sm:inline">チャット履歴をクリア</span>
@@ -796,7 +838,7 @@ export const ChatInterface = ({
                             messages={messages}
                             triggerContent={
                               <>
-                                <Download className="h-2 w-2 sm:h-3 sm:w-3" />
+                                <Download className="h-4 w-4 " />
                                 <span className="hidden sm:flex">エクスポート</span>
                               </>
                             }
@@ -810,6 +852,83 @@ export const ChatInterface = ({
                     )}
                 </div>
 
+                <div className="relative md:flex hidden">
+                  {/* only show when bot is done speaking */}
+                  {group.sender === "bot" && groupIndex === groupedMessages.length - 1 && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 5, x: drawerOpen ? -300 : (open ? 64:16 ) }}
+                        animate={{ opacity: 1, y: 0, x: drawerOpen ? -300 : (open ? 64:16 ) }}
+                        exit={{ opacity: 0, y: 5, x: drawerOpen ? -300: (open ? 64:16 ) }}
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                        className="fixed top-6 left-0 right-0  z-20 flex justify-center items-center px-4 space-x-2 "
+                      >
+                      <div className="relative flex items-center z-30">
+                        {/* DRAWER TOGGLE */}
+                        <motion.button
+                          onClick={() => setDrawerOpen((o) => !o)}
+                          animate={{ x: drawerOpen ? -8 : 0 }}
+                          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                          className="text-noble-black-100 hover:text-noble-black-900 bg-black border border-noble-black-900 shadow-black shadow-2xl hover:bg-noble-black-100 flex items-center gap-1 p-2.5  rounded-full"
+                        >
+                          {drawerOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                        </motion.button>
+
+                        {/* SLIDING PANEL */}
+                        <AnimatePresence>
+                          {drawerOpen && (
+                            <motion.div
+                              initial={{ opacity: 0, x: 10, width: 0 }}
+                              animate={{ opacity: 1, x: 0, width: "100rem" }}
+                              exit={{ opacity: 0, x: 10, width: 0 }}
+                              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                              className="absolute left-full top-0 flex items-center space-x-2 overflow-hidden z-20"
+                            >
+                              {/* 1) Clear Chat */}
+                              {messages.length > 0 && (
+                                <Button
+                                  variant="ghost"
+                                  onClick={handleClearChat}
+                                  className="text-noble-black-100 hover:text-noble-black-900 bg-black border border-noble-black-900 shadow-black shadow-2xl hover:bg-noble-black-100 flex items-center gap-1 p-2  sm:px-3 sm:py-1 rounded-full"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  <span className="hidden sm:inline">チャット履歴をクリア</span>
+                                </Button>
+                              )}
+
+                              {/* 2) Quick Replies */}
+                              {quickReplies.map((reply, i) => (
+                                <motion.button
+                                  key={i}
+                                  onClick={() => handleQuickReplySelect(reply.text)}
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  className="text-noble-black-100 hover:text-noble-black-900 bg-black border border-noble-black-900 shadow-black shadow-2xl hover:bg-noble-black-100 flex items-center gap-x-1 p-2  sm:px-3 sm:py-1 rounded-full"
+                                >
+                                  {reply.icon}
+                                  <span className="hidden md:flex">{reply.text}</span>
+                                </motion.button>
+                              ))}
+
+                              {/* 3) PDF Export */}
+                              {messages.length > 0 && (
+                                <ChatPDFExport
+                                  messages={messages}
+                                  triggerContent={
+                                    <>
+                                      <Download className="h-4 w-4" />
+                                      <span className="hidden sm:flex">エクスポート</span>
+                                    </>
+                                  }
+                                  triggerClassName=""
+                                />
+                              )}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
 
 
               </div>
@@ -833,6 +952,30 @@ export const ChatInterface = ({
         </motion.div>
       )}
       <div ref={messageEndRef} />
+
+      <AlertDialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
+        <AlertDialogContent className="mx-auto max-w-[90%] sm:max-w-md md:max-w-lg lg:max-w-xl rounded-xl p-6 bg-black text-noble-black-100 border border-noble-black-900">
+
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-noble-black-100">チャット履歴をクリアしますか？</AlertDialogTitle>
+            <AlertDialogDescription className="text-noble-black-300">
+              この操作は取り消せません。すべてのチャット履歴が削除されます。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-noble-black-900 text-noble-black-100  hover:bg-noble-black-800 border-0 hover:text-noble-black-100">
+              キャンセル
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => clearChatHistory.mutate()}
+              disabled={!activeChatId}
+              className="bg-noble-black-100  text-noble-black-900 border border-noble-black-900 hover:text-noble-black-100"
+            >
+              削除する
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
 
   );
