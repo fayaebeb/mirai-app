@@ -72,9 +72,9 @@ const chatTitleSchema = z.object({ title: z.string().min(1).max(80) });
 const chatMessageSchema = insertMessageSchema.pick({ content: true, isBot: true, dbType: true }).extend({
   dbType: z
     .enum([
-      'うごき統計',
-      '来た来ぬ統計',
-      'インバウンド統計',
+      'data',
+      'db1',
+      'db2',
       'regular',
     ] as const)
     .optional()
@@ -89,18 +89,19 @@ async function sendMessageToLangchain(
   useWeb: boolean,
   useDb: boolean,
   selectedDb: DbType,
+  history: { role: string, content: string }[]
 ): Promise<string> {
   // console.log(`Sending request to LangChain FastAPI: ${message}`);
 
   let db = '';
   if (selectedDb === 'regular') {
-    db = 'files';
-  } else if (selectedDb === 'うごき統計') {
-    db = 'files';
-  } else if (selectedDb === '来た来ぬ統計') {
-    db = 'ktdb'
-  } else if (selectedDb === 'インバウンド統計') {
-    db = 'ibt'
+    db = 'data';
+  } else if (selectedDb === 'data') {
+    db = 'data';
+  } else if (selectedDb === 'db1') {
+    db = 'db1'
+  } else if (selectedDb === 'db2') {
+    db = 'db2'
   }
 
   const response = await fetch(SKAPI, {
@@ -112,7 +113,8 @@ async function sendMessageToLangchain(
       message,
       useweb: useWeb,
       usedb: useDb,
-      db: db
+      db: db,
+      history: history
     }),
   });
 
@@ -135,6 +137,35 @@ async function sendMessageToLangchain(
 
 function formatBotResponse(text: string): string {
   return text.replace(/\\n/g, '\n').trim();
+}
+
+const processedPastMessages = async (chatId: number) => {
+  const messages = await storage.getPastMessagesByChatId(chatId, 5);
+  messages.reverse();
+
+  messages.pop();
+
+  // Format the conversation history string
+  let pastMessages: { role: string, content: string }[] = [];
+  for (const message of messages) {
+    if (message.isBot) {
+      pastMessages.push({ role: "AI", content: message.content });
+    } else {
+      pastMessages.push({ role: "user", content: message.content });
+    }
+  }
+
+  const history = pastMessages.map((message) => {
+    if (message.role === "AI") {
+      const contentSplit = message.content.split('###');
+      message.content = contentSplit[0]; // Keep content before ###
+
+      message.content = message.content.trim().replace(/\s+/g, ' ');
+    }
+    return message;
+  });
+
+  return history
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -248,12 +279,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           dbType
         });
 
+        const history = await processedPastMessages(chatId)
+
         /* 3️⃣  Ask LangChain / FastAPI */
         const formattedResponse = await sendMessageToLangchain(
           content,
           useWeb,
           useDb,
-          dbType
+          dbType,
+          history
         );
 
         /* 4️⃣  Save BOT reply */
@@ -1295,12 +1329,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
               dbType: data.dbType
             });
 
+            const history = await processedPastMessages(client.chatId)
+
             console.log("Processing voice mode message with AI...");
             const formattedResponse = await sendMessageToLangchain(
               transcribedText,
               data.useweb ?? false,
               data.usedb ?? false,
-              data.dbType
+              data.dbType,
+              history
             );
 
             const botMessage = await storage.createMessage(client.userId, {

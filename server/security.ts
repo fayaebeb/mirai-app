@@ -91,13 +91,13 @@ export const validateMessage = [
   body("dbType")
     .optional()
     .isIn([
-      "うごき統計",
-      "来た来ぬ統計",
-      "インバウンド統計",
+      "data",
+      "db1",
+      "db2",
       "regular",
     ])
     .withMessage(
-      "dbType must be one of: うごき統計, 来た来ぬ統計, インバウンド統計, regular"
+      "dbType must be one of: data, db1, db2, regular"
     ),
 ];
 

@@ -3,9 +3,9 @@ import { pgTable, integer, text, boolean, timestamp, unique, serial, index, varc
 
 import { z } from "zod";
 export type DbType =
-  | 'うごき統計'
-  | '来た来ぬ統計'
-  | 'インバウンド統計'
+  | 'data'
+  | 'db1'
+  | 'db2'
   | 'regular';
 
 export const goalsBackup = pgTable("goals_backup", {
@@ -73,9 +73,9 @@ export const sessions = pgTable("sessions", {
 // ]);
 
 export const MessageType = pgEnum('message_type', [
-  'うごき統計',
-  '来た来ぬ統計',
-  'インバウンド統計',
+  'data',
+  'db1',
+  'db2',
   'regular',
 ]);
 
@@ -89,6 +89,7 @@ export const messages = pgTable("messages", {
   isBot: boolean("is_bot").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   dbType: MessageType('db_type').notNull().default('regular'),
+  category: text("category").default("SELF").notNull(),
 });
 
 export const notes = pgTable("notes", {
@@ -210,14 +211,15 @@ export const insertMessageSchema = createInsertSchema(messages)
     isBot: true,
     // add the new one:
     dbType: true,
+    category: true,
   })
   // then override it to be optional + default:
   .extend({
     dbType: z
       .enum([
-        'うごき統計',
-        '来た来ぬ統計',
-        'インバウンド統計',
+        'data',
+        'db1',
+        'db2',
         'regular',
       ] as const)
       .optional()

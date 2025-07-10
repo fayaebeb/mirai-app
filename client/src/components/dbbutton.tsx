@@ -7,9 +7,9 @@ import { dropdownOpenState } from "@/states/databaseDropdownState";
 import { DbType } from "@shared/schema";
 
 const searchModes = [
-  { value: "うごき統計", label: "うごき統計", icon: <DatabaseIcon className="w-4 h-4" /> },
-  { value: "来た来ぬ統計", label: "来た来ぬ", icon: <ArrowLeftRight className="w-4 h-4" /> },
-  { value: "インバウンド統計", label: "インバウンド", icon: <DatabaseZap className="w-4 h-4" /> },
+  { value: "data", label: "data", icon: <DatabaseIcon className="w-4 h-4" /> },
+  { value: "db1", label: "db1", icon: <ArrowLeftRight className="w-4 h-4" /> },
+  { value: "db2", label: "db2", icon: <DatabaseZap className="w-4 h-4" /> },
 ];
 
 export default function DbButton({
@@ -63,9 +63,9 @@ export default function DbButton({
              focus:outline-none`}
         >
 
-          {selectedDb === "うごき統計" && searchModes[0].icon}
-          {selectedDb === "来た来ぬ統計" && searchModes[1].icon}
-          {selectedDb === "インバウンド統計" && searchModes[2].icon}
+          {selectedDb === "data" && searchModes[0].icon}
+          {selectedDb === "db1" && searchModes[1].icon}
+          {selectedDb === "db2" && searchModes[2].icon}
           <span className="hidden md:flex items-center gap-1">
             {useDb && selectedDb && (
               <span className=" sm:ml-1">
@@ -156,9 +156,9 @@ export default function DbButton({
                   <button
                     key={item.value}
                     onClick={() => {
-                      if (item.label === "うごき統計") setSelectedDb("うごき統計");
-                      else if (item.label === "来た来ぬ") setSelectedDb("来た来ぬ統計");
-                      else if (item.label === "インバウンド") setSelectedDb("インバウンド統計");
+                      if (item.label === "data") setSelectedDb("data");
+                      else if (item.label === "db1") setSelectedDb("db1");
+                      else if (item.label === "db2") setSelectedDb("db2");
                       setUseDb(true);
                       setIsDropdownOpen(false);
                     }}
