@@ -88,6 +88,17 @@ export const validateMessage = [
     .bail()
     .isInt({ gt: 0 }).withMessage("chatId must be a positive integer")
     .toInt(),
+  body("dbType")
+    .optional()
+    .isIn([
+      "うごき統計",
+      "来た来ぬ統計",
+      "インバウンド統計",
+      "regular",
+    ])
+    .withMessage(
+      "dbType must be one of: うごき統計, 来た来ぬ統計, インバウンド統計, regular"
+    ),
 ];
 
 export const validateFeedback = [

@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Message, Goal } from "@shared/schema";
+import { Message, Goal, DbType } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
@@ -46,6 +46,7 @@ type OptimisticMessage = {
   timestamp: Date;
   chatId: number;
   createdAt: Date;
+  dbType: DbType
 }
 
 // Array of prompts that users can quickly select
@@ -292,6 +293,7 @@ export function GoalChatInterface() {
         timestamp: new Date(),
         chatId: -1,
         createdAt: new Date(),
+        dbType: 'regular'
       };
 
       setOptimisticMessages(prev => [...prev, optimisticUserMessage]);
@@ -306,6 +308,7 @@ export function GoalChatInterface() {
         isBot: false,
         createdAt: new Date(new Date(newBotMessage.createdAt!).getTime() - 1000),
         chatId: newBotMessage.chatId,
+        dbType: 'regular'
       };
 
       // Remove our optimistic responses
@@ -584,7 +587,8 @@ export function GoalChatInterface() {
                   id: typeof message.id === 'string' ? parseInt(message.id.replace(/\D/g, '')) || -1 : message.id,
                   onRegenerateAnswer: message.isBot
                     ? () => { /* Implement regenerate functionality if needed */ }
-                    : undefined
+                    : undefined,
+                  
                 };
                 return (
                   <ChatMessage

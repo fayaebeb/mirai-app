@@ -4,7 +4,7 @@ import { Lightbulb, Send, Globe, Database } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { UseMutationResult } from "@tanstack/react-query";
-import { Message } from "@shared/schema";
+import { DbType, Message } from "@shared/schema";
 import {
   Tooltip,
   TooltipProvider,
@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { promptCategories } from "@/components/prompt-categories";
 import debounce from "lodash.debounce";
 import VoiceRecorder from "./voice-recorder";
+import DbButton from "./dbbutton";
 
 interface ChatInputProps {
   input: string;
@@ -23,7 +24,7 @@ interface ChatInputProps {
   sendMessage: UseMutationResult<
     Message,
     Error,
-    { content: string; useWeb: boolean; useDb: boolean },
+    { content: string; useWeb: boolean; useDb: boolean, dbType: DbType },
     { previousMessages?: Message[] }
   >;
 
@@ -33,7 +34,8 @@ interface ChatInputProps {
   setUseDb: React.Dispatch<React.SetStateAction<boolean>>;
   handleVoiceRecording: (audio: Blob) => void;
   isProcessingVoice: boolean;
-
+  selectedDb: DbType;
+  setSelectedDb: React.Dispatch<React.SetStateAction<DbType>>;
 }
 
 export const ChatInput = ({
@@ -45,6 +47,8 @@ export const ChatInput = ({
   setUseWeb,
   useDb,
   setUseDb,
+  selectedDb,
+  setSelectedDb,
   isProcessingVoice,
   handleVoiceRecording,
 
@@ -189,7 +193,7 @@ export const ChatInput = ({
             </button>
 
             {/* Toggle DB */}
-            <button
+            {/* <button
               onClick={(e) => {
                 e.preventDefault();
                 setUseDb(!useDb);
@@ -205,7 +209,14 @@ export const ChatInput = ({
             >
               <Database className="h-4 w-4" />
               {!isMobile && <span className="hidden sm:inline">データ</span>}
-            </button>
+            </button> */}
+
+            <DbButton
+              useDb={useDb}
+              setUseDb={setUseDb}
+              selectedDb={selectedDb}
+              setSelectedDb={setSelectedDb}
+            />
 
             <VoiceRecorder
               onRecordingComplete={handleVoiceRecording}
@@ -248,7 +259,7 @@ export const ChatInput = ({
             )}
           </motion.button>
         </div>
-            
+
 
         {/* Prompt Dropdown */}
         <AnimatePresence>
@@ -272,7 +283,7 @@ export const ChatInput = ({
                       type="button"
                       variant={selectedCategory === category.name ? "default" : "ghost"}
                       size="sm"
-                      className={`whitespace-nowrap text-xs flex items-center gap-1.5  w-1/2 ${selectedCategory === category.name  ? "bg-noble-black-900" : "" }`}
+                      className={`whitespace-nowrap text-xs flex items-center gap-1.5  w-1/2 ${selectedCategory === category.name ? "bg-noble-black-900" : ""}`}
                       onClick={() => setSelectedCategory(category.name)}
                     >
                       {category.icon}
