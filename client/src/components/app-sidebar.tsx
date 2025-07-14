@@ -1,5 +1,6 @@
 import * as React from "react"
 import {
+  AudioLines,
   AudioWaveform,
   BookOpen,
   Bot,
@@ -76,29 +77,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     projects: [
       {
         name: "ボイスモッド",
-        url: "#",
-        icon: Frame,
+        tag: 'voice',
+        icon: AudioLines,
         click: () => { setActiveTab('voice'); }
       },
       {
         name: "メモ",
-        url: "#",
+        tag: 'notes',
         icon: PieChart,
         click: () => { setActiveTab('notes') }
       },
       {
         name: "マインドマップ",
-        url: "#",
+        tag: 'mindmap',
         icon: Map,
         click: () => { setActiveTab('mindmap') }
-
       },
       {
         name: "ゴール",
-        url: "#",
+        tag: 'goals',
         icon: GoalIcon,
-        click: () => { setActiveTab('goals');}
-
+        click: () => { setActiveTab('goals'); }
       },
     ],
   }

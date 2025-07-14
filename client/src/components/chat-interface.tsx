@@ -7,7 +7,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Heart, Lightbulb, FileText, Trash2, Download, X, Menu } from "lucide-react";
-import { Message } from "@shared/schema";
+import { DbType, Message } from "@shared/schema";
 import { nanoid } from "nanoid";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import ChatMessage from "./chat-message";
@@ -248,13 +248,14 @@ interface ChatInterfaceProps {
   sendMessageMutation?: UseMutationResult<
     Message,
     Error,
-    { content: string; useWeb: boolean; useDb: boolean },
+    { content: string; useWeb: boolean; useDb: boolean, dbType: DbType },
     { previousMessages?: Message[] }
   >;
   handleEmotionSelect?: (text: string) => void;
   onClearChat?: () => void;
   useWeb?: boolean;
   useDb?: boolean;
+  dbType?: DbType
 }
 
 export const ChatInterface = ({
@@ -265,6 +266,7 @@ export const ChatInterface = ({
   handleEmotionSelect: externalHandleEmotionSelect,
   useWeb = false,
   useDb = false,
+  dbType = 'regular',
 }: ChatInterfaceProps = {}) => {
   const [input, setInputInternal] = useState("");
   const [isOnline, setIsOnline] = useState(true);
@@ -790,6 +792,7 @@ export const ChatInterface = ({
                         content: lastUserMessage.content,
                         useWeb,
                         useDb,
+                        dbType
                       });
                     }
                   };

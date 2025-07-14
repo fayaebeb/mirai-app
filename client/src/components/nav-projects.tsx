@@ -23,18 +23,21 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { MouseEventHandler } from "react"
+import { useRecoilValue } from "recoil"
+import { activeTabState } from "@/states/activeTabState"
 
 export function NavProjects({
   projects,
 }: {
   projects: {
     name: string
-    url: string
+    tag: string
     icon: LucideIcon
     click: () => void;
   }[]
 }) {
   const { isMobile } = useSidebar()
+  const activeTab = useRecoilValue(activeTabState)
 
   return (
     <SidebarGroup className="p-0">
@@ -42,7 +45,7 @@ export function NavProjects({
       <SidebarMenu className="flex flex-col items-center justify-center text-noble-black-100">
         {projects.map((item) => (
 
-          <SidebarMenuButton key={item.name} asChild>
+          <SidebarMenuButton isActive={activeTab===item.tag} key={item.name} asChild>
             <div className="cursor-pointer" onClick={item.click}>
               <item.icon />
               <span>{item.name}</span>

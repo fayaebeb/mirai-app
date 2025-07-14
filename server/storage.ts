@@ -145,7 +145,7 @@ export class DatabaseStorage implements IStorage {
   async createMessage(userId: number, msg: InsertMessage) {
     const [m] = await db
       .insert(messages)
-      .values({ userId, ...msg }) // msg must include chatId
+      .values({ userId, category: 'SELF', ...msg }) // msg must include chatId
       .returning();
     return m;
   }
@@ -393,6 +393,15 @@ export class DatabaseStorage implements IStorage {
         isValid: false,
       })
       .where(eq(inviteTokens.id, tokenId));
+  }
+
+  async getPastMessagesByChatId(chatId: number, limitCount: number): Promise<Message[]> {
+    return await db
+      .select()
+      .from(messages)
+      .where(eq(messages.chatId, chatId))
+      .orderBy(desc(messages.createdAt))
+      .limit(limitCount);
   }
 }
 

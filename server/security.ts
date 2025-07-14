@@ -88,6 +88,17 @@ export const validateMessage = [
     .bail()
     .isInt({ gt: 0 }).withMessage("chatId must be a positive integer")
     .toInt(),
+  body("dbType")
+    .optional()
+    .isIn([
+      "data",
+      "db1",
+      "db2",
+      "regular",
+    ])
+    .withMessage(
+      "dbType must be one of: data, db1, db2, regular"
+    ),
 ];
 
 export const validateFeedback = [

@@ -133,20 +133,20 @@ export function NavUser({
       </SidebarMenu>
 
       <AlertDialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
-        <AlertDialogContent className="mx-auto max-w-[90%] sm:max-w-md md:max-w-lg lg:max-w-xl rounded-xl p-6">
+        <AlertDialogContent className="mx-auto max-w-[90%] sm:max-w-md md:max-w-lg lg:max-w-xl rounded-xl p-6 bg-black text-noble-black-100 border border-noble-black-900">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-blue-100">ログアウトしますか？</AlertDialogTitle>
-            <AlertDialogDescription className="text-blue-300/70">
+            <AlertDialogTitle className="text-noble-black-100">ログアウトしますか？</AlertDialogTitle>
+            <AlertDialogDescription className="text-noble-black-300">
               ログアウトすると、セッションが終了します。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-slate-800 text-blue-200 border-slate-700 hover:bg-slate-700">
+            <AlertDialogCancel className="bg-noble-black-900 text-noble-black-100  hover:bg-noble-black-800 border-0 hover:text-noble-black-100">
               キャンセル
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => logoutMutation.mutate()}
-              className="bg-red-900/50 hover:bg-red-900 text-red-50 border border-red-800"
+              className="bg-noble-black-100  text-noble-black-900 border border-noble-black-900 hover:text-noble-black-100"
             >
               ログアウト
             </AlertDialogAction>

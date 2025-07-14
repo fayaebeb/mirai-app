@@ -6,7 +6,7 @@ import { Mic, MicOff, Volume2, VolumeX, ArrowLeft, MessageSquare, AudioLines, Pl
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Message } from "@shared/schema";
+import { DbType, Message } from "@shared/schema";
 import { ChatLoadingIndicator } from "@/components/chat-loading-indicator";
 import {
   Select,
@@ -22,6 +22,7 @@ import { useRecoilValue } from "recoil";
 import { activeChatIdAtom } from "@/states/chatStates";
 import { Spotlight } from "@/components/ui/spotlight";
 import { useRenameChat } from "@/hooks/useRenameChat";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 
 export default function VoiceModePage() {
@@ -37,7 +38,7 @@ export default function VoiceModePage() {
   const [autoListenTimeout, setAutoListenTimeout] = useState<NodeJS.Timeout | null>(null);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [isAudioPaused, setIsAudioPaused] = useState(false);
-
+  const isMobile = useIsMobile();
   const [useWeb, setUseWeb] = useState(false);
   const [useDb, setUseDb] = useState(false);
 
@@ -47,7 +48,7 @@ export default function VoiceModePage() {
   const timerRef = useRef<number | null>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
-  const [selectedDb, setSelectedDb] = useState("files");
+  const [selectedDb, setSelectedDb] = useState<DbType>("data");
   const [isDbDropdownOpen, setIsDbDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const dbButtonRef = useRef<HTMLButtonElement>(null);
@@ -508,8 +509,8 @@ export default function VoiceModePage() {
 
 
       {/* Main content area */}
-      <main className="h-full p-5 flex flex-col w-full ">
-        <div className="h-3/4  border-noble-black-900 shadow-lg shadow-black  bg-noble-black-900  rounded-2xl  p-3 border  flex flex-col mb-3 ">
+      <main className="h-full p-1 sm:p-5 flex flex-col w-full ">
+        <div className="h-3/4  border-noble-black-900  bg-noble-black-900  rounded-2xl  p-3 border  flex flex-col mb-3 ">
           <Spotlight />
 
           <div className="h-full  space-y-4 ">
@@ -576,50 +577,71 @@ export default function VoiceModePage() {
 
 
         {/* Voice control panel */}
-        <div className="border-noble-black-900 h-1/4 shadow-lg shadow-black bg-black border rounded-2xl text-noble-black-100 p-4 flex flex-col items-center justify-center space-y-2">
-          <div className="flex flex-col items-center justify-center gap-2">
-            {/* Recording timer */}
-            {isRecording && (
-              <div className="flex items-center gap-2 text-sm">
-                <span className="animate-pulse text-red-500">●</span>
-                <span>{formatTime(recordingTime)}</span>
-              </div>
-            )}
+        <div className="border-noble-black-900 h-1/4  bg-black border rounded-2xl text-noble-black-100 p-6 sm:p-4 flex">
+          <div className="flex flex-col items-center justify-center w-full h-full space-y-2">
+            <div className="flex flex-col items-center justify-center gap-2">
+              {/* Recording timer */}
+              {isRecording && (
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="animate-pulse text-red-500">●</span>
+                  <span>{formatTime(recordingTime)}</span>
+                </div>
+              )}
 
-            {/* Audio playback controls */}
-            {isAudioPlaying || isAudioPaused ? (
-              <div className="flex items-center gap-3">
-                {/* Play/Pause button */}
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Button
-                    onClick={isAudioPaused ? resumeCurrentAudio : pauseCurrentAudio}
-                    className="h-12 w-12 rounded-full bg-noble-black-900 text-noble-black-100 hover:bg-noble-black-800"
+              {/* Audio playback controls */}
+              {isAudioPlaying || isAudioPaused ? (
+                <div className="flex items-center gap-3">
+                  {/* Play/Pause button */}
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                   >
-                    {isAudioPaused ? (
-                      <Play className="h-5 w-5" />
-                    ) : (
-                      <Pause className="h-5 w-5" />
-                    )}
-                  </Button>
-                </motion.div>
+                    <Button
+                      onClick={isAudioPaused ? resumeCurrentAudio : pauseCurrentAudio}
+                      className="h-8 w-8 md:h-12 md:w-12 rounded-full bg-noble-black-900 text-noble-black-100 hover:bg-noble-black-800"
+                    >
+                      {isAudioPaused ? (
+                        <Play className="h-5 w-5" />
+                      ) : (
+                        <Pause className="h-5 w-5" />
+                      )}
+                    </Button>
+                  </motion.div>
 
-                {/* Stop button */}
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Button
-                    onClick={stopCurrentAudio}
-                    className="h-12 w-12 rounded-full bg-red-500 hover:bg-red-600"
+                  {/* Stop button */}
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="flex items-center justify-center "
                   >
-                    <Square className="h-5 w-5" />
-                  </Button>
-                </motion.div>
+                    <Button
+                      onClick={stopCurrentAudio}
+                      className="h-8 w-8 md:h-12 md:w-12 rounded-full bg-red-500 hover:bg-red-600"
+                    >
+                      <Square className="h-5 w-5" />
+                    </Button>
+                  </motion.div>
 
-                {/* Microphone button */}
+                  {/* Microphone button */}
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Button
+                      disabled={!isConnected || isProcessing}
+                      onClick={isRecording ? stopRecording : startRecording}
+                      className="h-8 w-8 sm:h-12 sm:w-12 rounded-full bg-noble-black-100 text-noble-black-900 hover:text-noble-black-100 hover:bg-noble-black-900"
+                    >
+                      {isRecording ? (
+                        <MicOff className="h-3 w-3 md:h-5 md:w-5" />
+                      ) : (
+                        <Mic className="h-3 w-3 md:h-5 md:w-5" />
+                      )}
+                    </Button>
+                  </motion.div>
+                </div>
+              ) : (
+                /* Recording button (when no audio is playing) */
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -627,71 +649,70 @@ export default function VoiceModePage() {
                   <Button
                     disabled={!isConnected || isProcessing}
                     onClick={isRecording ? stopRecording : startRecording}
-                    className="h-12 w-12 rounded-full bg-noble-black-100 text-noble-black-900 hover:text-noble-black-100 hover:bg-noble-black-900"
+                    className={`h-8 w-8 md:h-12 md:w-12 rounded-full ${isRecording
+                      ? 'bg-red-500 hover:bg-red-600'
+                      : 'bg-noble-black-100 text-noble-black-900 hover:text-noble-black-100 hover:bg-noble-black-900'
+                      }`}
                   >
                     {isRecording ? (
-                      <MicOff className="h-5 w-5" />
+                      <MicOff className="h-3 w-3 md:h-5 md:w-5" />
                     ) : (
-                      <Mic className="h-5 w-5" />
+                      <Mic className="h-3 w-3 md:h-5 md:w-5" />
                     )}
                   </Button>
                 </motion.div>
-              </div>
-            ) : (
-              /* Recording button (when no audio is playing) */
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Button
-                  disabled={!isConnected || isProcessing}
-                  onClick={isRecording ? stopRecording : startRecording}
-                  className={`h-16 w-16 rounded-full ${isRecording
-                    ? 'bg-red-500 hover:bg-red-600'
-                    : 'bg-noble-black-100 text-noble-black-900 hover:text-noble-black-100 hover:bg-noble-black-900'
-                    }`}
-                >
-                  {isRecording ? (
-                    <MicOff className="h-6 w-6" />
-                  ) : (
-                    <Mic className="h-6 w-6" />
-                  )}
-                </Button>
-              </motion.div>
-            )}
+              )}
 
-            <p className="text-sm text-noble-black-400 mt-2">
-              {isRecording
-                ? "録音中... 話し終わると自動的に停止します"
-                : isProcessing
-                  ? "処理中..."
-                  : isAudioPlaying || isAudioPaused
-                    ? "音声再生中です。録音するには停止してください"
-                    : "録音ボタンを押して話しかけてください"}
-            </p>
-          </div>
-          <div className="flex gap-2 ">
-            <Button
-              onClick={() => setUseWeb(!useWeb)}
-              className={`px-4 py-2 rounded-full shadow-md flex items-center gap-1 transition
+              <p className="text-sm text-noble-black-400 mt-2">
+                {isRecording
+                  ? "録音中... 話し終わると自動的に停止します"
+                  : isProcessing
+                    ? "処理中..."
+                    : isAudioPlaying || isAudioPaused
+                      ? "音声再生中です。録音するには停止してください"
+                      : "録音ボタンを押して話しかけてください"}
+              </p>
+            </div>
+            <div className="flex items-center justify-center gap-2 ">
+              {/* <Button
+                onClick={() => setUseWeb(!useWeb)}
+                className={`px-4 py-2 rounded-full shadow-md flex items-center gap-1 transition
                 ${useWeb
-                  ? "bg-noble-black-100 text-noble-black-900 hover:text-noble-black-100 hover:bg-noble-black-900 hover:brightness-105"
-                  : "bg-muted text-muted-foreground border border-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"}
+                    ? "bg-noble-black-100 text-noble-black-900 hover:text-noble-black-100 hover:bg-noble-black-900 hover:brightness-105"
+                    : "bg-muted text-muted-foreground border border-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"}
                 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-300
               `}
-            >
-              <Globe className="h-4 w-4" />
-              <span className="hidden sm:inline">オンライン情報</span>
-            </Button>
+              >
+                <Globe className="h-4 w-4" />
+                <span className="hidden sm:inline">オンライン情報</span>
+              </Button> */}
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  setUseWeb(!useWeb);
+                }}
+                className={`h-8 sm:h-9 flex items-center justify-center flex-shrink-0 transition-all font-medium
+                ${isMobile ? "w-8 sm:w-9 rounded-full p-0" : "px-3 py-1.5 rounded-full gap-1"}
+                ${useWeb
+                    ? "bg-cyan-600/40 text-cyan-400 border border-blue-400 shadow-sm"
+                    : "bg-noble-black-900 text-noble-black-300  hover:border-slate-400"
+                  }
+                hover:ring-1 hover:ring-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/70
+              `}
+              >
+                <Globe className="h-4 w-4" />
+                {!isMobile && <span className="hidden sm:inline">オンライン</span>}
+              </button>
 
-            <DbButton
-              useDb={useDb}
-              setUseDb={setUseDb}
-              selectedDb={selectedDb}
-              setSelectedDb={setSelectedDb}
-            />
+              <DbButton
+                useDb={useDb}
+                setUseDb={setUseDb}
+                selectedDb={selectedDb}
+                setSelectedDb={setSelectedDb}
+              />
 
 
+            </div>
           </div>
         </div>
       </main>

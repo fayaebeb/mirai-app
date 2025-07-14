@@ -1,7 +1,12 @@
 import { createInsertSchema } from "drizzle-zod";
-import { pgTable, integer, text, boolean, timestamp, unique, serial, index, varchar, json, foreignKey } from "drizzle-orm/pg-core"
+import { pgTable, integer, text, boolean, timestamp, unique, serial, index, varchar, json, foreignKey, pgEnum } from "drizzle-orm/pg-core"
 
 import { z } from "zod";
+export type DbType =
+  | 'data'
+  | 'db1'
+  | 'db2'
+  | 'regular';
 
 export const goalsBackup = pgTable("goals_backup", {
   id: integer(),
@@ -67,6 +72,13 @@ export const sessions = pgTable("sessions", {
 //   }).onDelete("cascade"),
 // ]);
 
+export const MessageType = pgEnum('message_type', [
+  'data',
+  'db1',
+  'db2',
+  'regular',
+]);
+
 export const messages = pgTable("messages", {
   id: serial("id").primaryKey(),
   chatId: integer("chat_id").notNull()
@@ -76,6 +88,8 @@ export const messages = pgTable("messages", {
   content: text("content").notNull(),
   isBot: boolean("is_bot").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  dbType: MessageType('db_type').notNull().default('regular'),
+  category: text("category").default("SELF").notNull(),
 });
 
 export const notes = pgTable("notes", {
@@ -190,11 +204,27 @@ export const insertSessionSchema = createInsertSchema(sessions).pick({
   sessionId: true,
 });
 
-export const insertMessageSchema = createInsertSchema(messages).pick({
-  chatId: true,
-  content: true,
-  isBot: true,
-});
+export const insertMessageSchema = createInsertSchema(messages)
+  .pick({
+    chatId: true,
+    content: true,
+    isBot: true,
+    // add the new one:
+    dbType: true,
+    category: true,
+  })
+  // then override it to be optional + default:
+  .extend({
+    dbType: z
+      .enum([
+        'data',
+        'db1',
+        'db2',
+        'regular',
+      ] as const)
+      .optional()
+      .default('regular'),
+  });
 
 export const chatRequestSchema = insertMessageSchema.extend({
   useWeb: z.boolean().optional(),

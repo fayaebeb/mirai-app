@@ -8,7 +8,7 @@ import { MindMapGenerator } from "@/components/mind-map-generator";
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { ChatPDFExport } from "@/components/chat-pdf-export";
-import { Message } from "@shared/schema";
+import { DbType, Message } from "@shared/schema";
 import { NotesList } from "@/components/notes-list";
 import { EnhancedTaskTracker } from "@/components/enhanced-task-tracker";
 import { GoalChatInterface } from "@/components/goal-chat-interface";
@@ -79,6 +79,7 @@ export default function HomePage() {
   const [isProcessingVoice, setIsProcessingVoice] = useRecoilState(isProcessingVoiceAtom);
   const [isPlayingAudio, setIsPlayingAudio] = useRecoilState(isPlayingAudioAtom);
   const [hasEntered, setHasEntered] = useState(false);
+  const [selectedDb, setSelectedDb] = useState<DbType>("data");
 
   const activeChatId = useRecoilValue(activeChatIdAtom)
 
@@ -92,15 +93,15 @@ export default function HomePage() {
   const sendMessage = useMutation<
     Message,
     Error,
-    { content: string; useWeb: boolean; useDb: boolean },
+    { content: string; useWeb: boolean; useDb: boolean; dbType: DbType },
     { previousMessages?: Message[] }
   >({
-    mutationFn: async ({ content, useWeb, useDb }) => {
+    mutationFn: async ({ content, useWeb, useDb, dbType }) => {
       if (!activeChatId) throw new Error("チャットが選択されていません。");
       const response = await apiRequest(
         "POST",
         `/api/messages`,
-        { content, useWeb, useDb, isBot: false, chatId: activeChatId }
+        { content, useWeb, useDb, isBot: false, chatId: activeChatId, dbType }
       );
       return response.json();
     },
@@ -118,6 +119,8 @@ export default function HomePage() {
         content,
         isBot: false,
         createdAt: new Date(),
+        dbType: selectedDb,
+        category: 'SELF'
       };
 
       queryClient.setQueryData<Message[]>(chatKey, (old = []) => [
@@ -234,6 +237,7 @@ export default function HomePage() {
         content: confirmedText,
         useWeb: useWeb,
         useDb: useDb,
+        dbType: selectedDb
       });
     }
   };
@@ -296,7 +300,7 @@ export default function HomePage() {
     setInput(""); // clear immediately
 
     sendMessage.mutate(
-      { content, useWeb, useDb },   // ← only these three props
+      { content, useWeb, useDb, dbType: selectedDb, },   // ← only these three props
       {
         onSuccess: () => {
           // 1) rename if this was the very first message
@@ -425,6 +429,7 @@ export default function HomePage() {
             handleEmotionSelect={handleEmotionSelect}
             useWeb={useWeb}
             useDb={useDb}
+            dbType={selectedDb}
           />
         </motion.div>
 
@@ -582,6 +587,8 @@ export default function HomePage() {
               setUseWeb={setUseWeb}
               useDb={useDb}
               setUseDb={setUseDb}
+              selectedDb={selectedDb}
+              setSelectedDb={setSelectedDb}
               handleVoiceRecording={handleVoiceRecording}
               isProcessingVoice={isProcessingVoice}
             />

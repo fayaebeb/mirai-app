@@ -2,7 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { comparePasswords, hashPassword, setupAuth } from "./auth";
-import { insertMessageSchema, insertNoteSchema, insertGoalSchema, chatRequestSchema, insertFeedbackSchema } from "@shared/schema";
+import { insertMessageSchema, insertNoteSchema, insertGoalSchema, chatRequestSchema, insertFeedbackSchema, DbType } from "@shared/schema";
 import { generateMindMap } from "./services/openai";
 import rateLimit from 'express-rate-limit';
 import { openai } from './openaiClient';
@@ -69,7 +69,17 @@ const upload = multer({
 
 const SKAPI = process.env.SKAPI!;
 const chatTitleSchema = z.object({ title: z.string().min(1).max(80) });
-const chatMessageSchema = insertMessageSchema.pick({ content: true, isBot: true });
+const chatMessageSchema = insertMessageSchema.pick({ content: true, isBot: true, dbType: true }).extend({
+  dbType: z
+    .enum([
+      'data',
+      'db1',
+      'db2',
+      'regular',
+    ] as const)
+    .optional()
+    .default('regular'),
+});;
 
 const getOrCreateVoiceChat = async (userId: number) =>
   await storage.getOrCreateSystemChat(userId, "Voice Assistant", "voice");
@@ -78,8 +88,21 @@ async function sendMessageToLangchain(
   message: string,
   useWeb: boolean,
   useDb: boolean,
+  selectedDb: DbType,
+  history: { role: string, content: string }[]
 ): Promise<string> {
   // console.log(`Sending request to LangChain FastAPI: ${message}`);
+
+  let db = '';
+  if (selectedDb === 'regular') {
+    db = 'data';
+  } else if (selectedDb === 'data') {
+    db = 'data';
+  } else if (selectedDb === 'db1') {
+    db = 'db1'
+  } else if (selectedDb === 'db2') {
+    db = 'db2'
+  }
 
   const response = await fetch(SKAPI, {
     method: "POST",
@@ -90,6 +113,8 @@ async function sendMessageToLangchain(
       message,
       useweb: useWeb,
       usedb: useDb,
+      db: db,
+      history: history
     }),
   });
 
@@ -112,6 +137,35 @@ async function sendMessageToLangchain(
 
 function formatBotResponse(text: string): string {
   return text.replace(/\\n/g, '\n').trim();
+}
+
+const processedPastMessages = async (chatId: number) => {
+  const messages = await storage.getPastMessagesByChatId(chatId, 5);
+  messages.reverse();
+
+  messages.pop();
+
+  // Format the conversation history string
+  let pastMessages: { role: string, content: string }[] = [];
+  for (const message of messages) {
+    if (message.isBot) {
+      pastMessages.push({ role: "AI", content: message.content });
+    } else {
+      pastMessages.push({ role: "user", content: message.content });
+    }
+  }
+
+  const history = pastMessages.map((message) => {
+    if (message.role === "AI") {
+      const contentSplit = message.content.split('###');
+      message.content = contentSplit[0]; // Keep content before ###
+
+      message.content = message.content.trim().replace(/\s+/g, ' ');
+    }
+    return message;
+  });
+
+  return history
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -140,6 +194,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         chatId: goalChat.id,
         content: userContent,
         isBot: false,
+        dbType: 'regular'
       });
 
       console.log(`Sending request to Goal Tracker API: ${userContent}`);
@@ -176,6 +231,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         chatId: goalChat.id,
         content: botResponse,
         isBot: true,
+        dbType: 'regular'
       });
 
       /* 6️⃣  Return the bot message */
@@ -204,7 +260,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Invalid request body:", parse.error);
         return sendError(res, 400, "Invalid request data", parse.error);
       }
-      const { chatId, content, useWeb = false, useDb = false } = parse.data;
+      const { chatId, content, useWeb = false, useDb = false, dbType = 'regular' } = parse.data;
 
       const userId = req.user!.id;
 
@@ -220,13 +276,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           chatId,
           content,
           isBot: false,
+          dbType
         });
+
+        const history = await processedPastMessages(chatId)
 
         /* 3️⃣  Ask LangChain / FastAPI */
         const formattedResponse = await sendMessageToLangchain(
           content,
           useWeb,
-          useDb
+          useDb,
+          dbType,
+          history
         );
 
         /* 4️⃣  Save BOT reply */
@@ -234,6 +295,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           chatId,
           content: formattedResponse,
           isBot: true,
+          dbType
         });
 
         /* 5️⃣  Return bot message */
@@ -510,6 +572,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         chatId: notesChat.id,
         content: userContent,
         isBot: false,
+        dbType: 'regular'
       });
 
       console.log(`Sending request to Notes Chat API: ${userContent}`);
@@ -570,6 +633,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         chatId: notesChat.id,
         content: botResponse,
         isBot: true,
+        dbType: 'regular'
       });
 
       /* 6️⃣  Return reply */
@@ -1079,13 +1143,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.isAuthenticated()) return res.sendStatus(401);
 
       const chatId = Number(req.params.chatId);
-      const { content, isBot } = chatMessageSchema.parse(req.body);
+      const { content, isBot, dbType } = chatMessageSchema.parse(req.body);
 
       /* save message */
       const msg = await storage.createMessage(req.user!.id, {
         chatId,
         content,
         isBot,
+        dbType
       });
 
       res.status(201).json(msg);
@@ -1260,20 +1325,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const userMessage = await storage.createMessage(client.userId, {
               content: transcribedText,
               isBot: false,
-              chatId: client.chatId
+              chatId: client.chatId,
+              dbType: data.dbType
             });
+
+            const history = await processedPastMessages(client.chatId)
 
             console.log("Processing voice mode message with AI...");
             const formattedResponse = await sendMessageToLangchain(
               transcribedText,
               data.useweb ?? false,
               data.usedb ?? false,
+              data.dbType,
+              history
             );
 
             const botMessage = await storage.createMessage(client.userId, {
               content: formattedResponse,
               isBot: true,
-              chatId: client.chatId
+              chatId: client.chatId,
+              dbType: data.dbType
             });
 
             ws.send(JSON.stringify({
