@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import TextareaAutosize from "react-textarea-autosize";
 import { Lightbulb, Send, Globe, Database } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -55,7 +55,7 @@ export const ChatInput = ({
 }: ChatInputProps) => {
   const [showPrompts, setShowPrompts] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("出力形式 📄");
-
+  const [isComposing, setIsComposing] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const promptRef = useRef<HTMLDivElement>(null);
   const lightbulbRef = useRef<HTMLButtonElement>(null);
@@ -100,6 +100,8 @@ export const ChatInput = ({
   }, [input]);
 
 
+
+
   const handlePromptInsert = (text: string) => {
     const textarea = inputRef.current;
     if (!textarea) {
@@ -127,16 +129,28 @@ export const ChatInput = ({
       >
         {/* Input Textarea */}
         <TextareaAutosize
+          onCompositionStart={() => setIsComposing(true)}
+          onCompositionEnd={(e) => {
+            setIsComposing(false);
+            // flush final IME text immediately
+            setInput(e.currentTarget.value);
+          }}
           ref={inputRef}
           value={localInput}
           onChange={(e) => {
-            const newVal = e.target.value;
-            setLocalInput(newVal);
-            debouncedSetInput(newVal);
+            const v = e.target.value;
+            setLocalInput(v);
+            // only debounce out-of-IME
+            if (!isComposing) {
+              debouncedSetInput(v);
+            }
           }}
           placeholder="ミライに何かお手伝いできますか？..."
           minRows={1}
           maxRows={6}
+          spellCheck={false}
+          autoComplete="off" // Disable browser autocomplete
+          autoCorrect="off" // Disable autocorrect
           className="w-full resize-none bg-transparent border-none focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:outline-none text-sm text-white placeholder:text-muted-foreground px-0"
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey && !isMobile) {
