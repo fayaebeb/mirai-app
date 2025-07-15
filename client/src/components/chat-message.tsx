@@ -10,7 +10,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChevronDown, Database, Globe, Cpu, Server, Clipboard, Check, Volume2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { SaveChatAsNote } from "./save-chat-as-note";
-
+import { useUpdateMessageVote } from "@/hooks/useMessageVotes";
 // Extended Message type that includes the regenerate function
 interface Message extends MessageType {
   onRegenerateAnswer?: () => void;
@@ -144,8 +144,15 @@ export default function ChatMessage({
   const [isTyping, setIsTyping] = useState(false);
   const [displayedContent, setDisplayedContent] = useState(message.content);
   const contentRef = useRef(message.content);
-
   const [copied, setCopied] = useState(false);
+
+  const voteMutation = useUpdateMessageVote();
+
+  const handleVote = (value: -1 | 1) => {
+    if (!voteMutation.isPending) {
+      voteMutation.mutate({ messageId: message.id, value });
+    }
+  };
 
   const handleCopy = async () => {
     try {
@@ -527,16 +534,31 @@ export default function ChatMessage({
               {message.isBot && (
                 <div className="flex gap-1 mr-1">
                   <motion.button
-                    className="text-noble-black-100 hover:text-blue-500 transition-colors text-[10px]"
+                    onClick={() => handleVote(1)}
                     whileHover={{ scale: 1.2 }}
                     whileTap={{ scale: 0.9 }}
+                    className={cn(
+                      "text-[10px] transition-colors",
+                      message.vote === 1
+                        ? "text-blue-500"
+                        : "text-noble-black-100 hover:text-blue-500",
+                      message.vote === -1 && "filter grayscale opacity-50"
+                    )}
                   >
                     👍
                   </motion.button>
+
                   <motion.button
-                    className="text-noble-black-100 hover:text-blue-500 transition-colors text-[10px]"
+                    onClick={() => handleVote(-1)}
                     whileHover={{ scale: 1.2 }}
                     whileTap={{ scale: 0.9 }}
+                    className={cn(
+                      "text-[10px] transition-colors",
+                      message.vote === -1
+                        ? "text-red-500"
+                        : "text-noble-black-100 hover:text-red-500",
+                      message.vote === 1 && "filter grayscale opacity-50"
+                    )}
                   >
                     👎
                   </motion.button>

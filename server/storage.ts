@@ -1,6 +1,6 @@
 import { users, messages, sessions, notes, goals, type User, type InsertUser, type Message, type InsertMessage, type Session, type Note, type InsertNote, type Goal, type InsertGoal, InsertUserSafe, InsertFeedback, Feedback, inviteTokens, Chat, chats } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, not } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -134,7 +134,7 @@ export class DatabaseStorage implements IStorage {
     return this.createChat(userId, title, type);
   }
 
-   async getMessagesByChat(userId: number, chatId: number) {
+  async getMessagesByChat(userId: number, chatId: number) {
     return await db
       .select()
       .from(messages)
@@ -403,6 +403,18 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(messages.createdAt))
       .limit(limitCount);
   }
+
+  async setMessageVote(
+    messageId: number,
+    vote: -1 | 0 | 1
+  ) {
+    const [updated] = await db
+      .update(messages)
+      .set({ vote })
+      .where(eq(messages.id, messageId))
+      .returning();
+    return updated;
+  };
 }
 
 export const storage = new DatabaseStorage();
