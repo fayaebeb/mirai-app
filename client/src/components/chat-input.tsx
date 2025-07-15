@@ -64,8 +64,10 @@ export const ChatInput = ({
   const [localInput, setLocalInput] = useState(input);
 
   useEffect(() => {
-    setLocalInput(input);
-  }, [input]);
+    if (!isComposing) {
+      setLocalInput(input);
+    }
+  }, [input, isComposing]);
 
   const debouncedSetInput = useRef(
     debounce((val: string) => setInput(val), 100)
@@ -98,8 +100,6 @@ export const ChatInput = ({
       el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
     }
   }, [input]);
-
-
 
 
   const handlePromptInsert = (text: string) => {
