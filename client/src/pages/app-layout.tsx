@@ -99,7 +99,7 @@ export default function AppLayout() {
                                         Mirai AI <br /> Internal Information Bot for FSD.
                                     </h1> */}
                                     <TextGenerateEffect duration={1.2} className="text-5xl md:text-7xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400 bg-opacity-50" words="みらいボット" />
-                                    <TextGenerateEffect duration={1.2} className="text-2xl md:text-5xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400 bg-opacity-50" words="Internal Information Bot for FSD." />
+                                    <TextGenerateEffect duration={1.2} className="text-2xl md:text-5xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400 bg-opacity-50" words="FSDの社内情報をサポートするボットです。" />
 
                                     <motion.p
                                         initial={{ opacity: 0, y: 20, scale: 0.8 }}
