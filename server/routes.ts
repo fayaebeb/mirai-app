@@ -1,4 +1,4 @@
-import type { Express, Request, Response, NextFunction } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { comparePasswords, hashPassword, setupAuth } from "./auth";
@@ -1135,6 +1135,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const msgs = await storage.getMessagesByChat(req.user!.id, chatId);
     res.json(msgs);
   });
+
+  app.post("/api/votes", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const userId = req.user!.id;
+    const { messageId, value } = req.body as {
+      messageId: number;
+      value: 1 | -1;
+    };
+
+    if (value !== 1 && value !== -1) {
+      return res.status(400).json({ error: "Value must be 1 or -1" });
+    }
+
+    try {
+      const updated = await storage.setMessageVote(messageId, value);
+      if (!updated) return res.status(404).json({ error: "Message not found" });
+
+      res.json({ success: true, vote: value });
+    } catch (err) {
+      console.error("POST /api/votes error:", err);
+      sendError(res, 500, "Failed to cast vote");
+    }
+  });
+
+  // Clear (neutralize) your vote
+  app.delete("/api/votes", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const { messageId } = req.body as { messageId: number };
+
+    try {
+      const updated = await storage.setMessageVote(messageId, 0); // neutralize
+      if (!updated) return res.status(404).json({ error: "Message not found" });
+
+      res.json({ success: true, vote: 0 });
+    } catch (err) {
+      console.error("DELETE /api/votes error:", err);
+      sendError(res, 500, "Failed to clear vote");
+    }
+  });
+
+
 
   app.post(
     "/api/chats/:chatId/messages",

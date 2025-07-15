@@ -90,6 +90,7 @@ export const messages = pgTable("messages", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   dbType: MessageType('db_type').notNull().default('regular'),
   category: text("category").default("SELF").notNull(),
+  vote: integer("vote").default(0).notNull(), // -1 = down, 0 = neutral, 1 = up
 });
 
 export const notes = pgTable("notes", {
