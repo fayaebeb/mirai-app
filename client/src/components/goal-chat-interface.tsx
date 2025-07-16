@@ -48,6 +48,7 @@ type OptimisticMessage = {
   createdAt: Date;
   dbType: DbType;
   category: string
+  vote: number
 }
 
 // Array of prompts that users can quickly select
@@ -295,7 +296,8 @@ export function GoalChatInterface() {
         chatId: -1,
         createdAt: new Date(),
         dbType: 'regular',
-        category: 'SELF'
+        category: 'SELF',
+        vote: 0
       };
 
       setOptimisticMessages(prev => [...prev, optimisticUserMessage]);
@@ -311,7 +313,8 @@ export function GoalChatInterface() {
         createdAt: new Date(new Date(newBotMessage.createdAt!).getTime() - 1000),
         chatId: newBotMessage.chatId,
         dbType: 'regular',
-        category: 'SELF'
+        category: 'SELF',
+        vote:0
       };
 
       // Remove our optimistic responses
