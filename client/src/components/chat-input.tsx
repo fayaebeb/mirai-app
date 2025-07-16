@@ -315,7 +315,7 @@ export const ChatInput = ({
                       whileTap={{ scale: 0.98 }}
                       onClick={() => handlePromptInsert(prompt.message || prompt.text)}
                     >
-                      <span className="font-medium text-sm text-noble-black-100">{prompt.text}</span>
+                      <span className="font-medium text-sm text-noble-black-100 hover:text-noble-black-900">{prompt.text}</span>
                       <span className="text-xs text-muted-foreground mt-0.5">
                         {prompt.description}
                       </span>
