@@ -91,9 +91,9 @@ export const validateMessage = [
   body("dbType")
     .optional()
     .isIn([
-      "data",
       "db1",
       "db2",
+      "db3",
       "regular",
     ])
     .withMessage(
