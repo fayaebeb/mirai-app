@@ -98,7 +98,7 @@ export default function AppLayout() {
                                     {/* <h1 className="text-4xl md:text-7xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400 bg-opacity-50">
                                         Mirai AI <br /> Internal Information Bot for FSD.
                                     </h1> */}
-                                    <TextGenerateEffect duration={1.2} className="text-5xl md:text-7xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400 bg-opacity-50" words="みらいボット" />
+                                    <TextGenerateEffect duration={1.2} className="text-5xl md:text-7xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400 bg-opacity-50" words="ミライボット" />
                                     <TextGenerateEffect duration={1.2} className="text-2xl md:text-5xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400 bg-opacity-50" words="FSDの社内情報をサポートするボットです。" />
 
                                     <motion.p
