@@ -72,9 +72,9 @@ const chatTitleSchema = z.object({ title: z.string().min(1).max(80) });
 const chatMessageSchema = insertMessageSchema.pick({ content: true, isBot: true, dbType: true }).extend({
   dbType: z
     .enum([
-      'data',
       'db1',
       'db2',
+      'db3',
       'regular',
     ] as const)
     .optional()
@@ -95,13 +95,13 @@ async function sendMessageToLangchain(
 
   let db = '';
   if (selectedDb === 'regular') {
-    db = 'data';
-  } else if (selectedDb === 'data') {
-    db = 'data';
+    db = 'db1';
   } else if (selectedDb === 'db1') {
-    db = 'db1'
+    db = 'db1';
   } else if (selectedDb === 'db2') {
     db = 'db2'
+  } else if (selectedDb === 'db3') {
+    db = 'db3'
   }
 
   const response = await fetch(SKAPI, {

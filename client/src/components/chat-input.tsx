@@ -310,7 +310,7 @@ export const ChatInput = ({
                     <motion.button
                       key={index}
                       type="button"
-                      className="flex flex-col items-start rounded-lg px-3 py-2 text-left hover:bg-accent transition-colors"
+                      className="flex flex-col items-start rounded-lg px-3 py-2 text-left hover:bg-accent hover:text-noble-black-900 transition-colors "
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => handlePromptInsert(prompt.message || prompt.text)}

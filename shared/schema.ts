@@ -3,9 +3,9 @@ import { pgTable, integer, text, boolean, timestamp, unique, serial, index, varc
 
 import { z } from "zod";
 export type DbType =
-  | 'data'
   | 'db1'
   | 'db2'
+  | 'db3'
   | 'regular';
 
 export const goalsBackup = pgTable("goals_backup", {
@@ -218,9 +218,9 @@ export const insertMessageSchema = createInsertSchema(messages)
   .extend({
     dbType: z
       .enum([
-        'data',
         'db1',
         'db2',
+        'db3',
         'regular',
       ] as const)
       .optional()
