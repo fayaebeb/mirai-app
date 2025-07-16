@@ -185,7 +185,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 className={`flex items-center z-20 ${open ? "justify-between p-3" : "justify-center p-3"
                   }`}
               >
-                {open && <div onClick={() => setActiveChatId(null)} className="text-xl font-semibold z-20 cursor-pointer text-noble-black-100">みらい</div>}
+                {open && <div onClick={() => setActiveChatId(null)} className="text-xl font-semibold z-20 cursor-pointer text-noble-black-100">ミライ</div>}
                 <SidebarTrigger className="h-8 w-8 z-20 text-noble-black-100" />
               </div>
             </SidebarHeader>

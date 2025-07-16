@@ -296,7 +296,7 @@ export default function ChatMessage({
           </motion.div>
         </Avatar>
       ) : message.isBot ? (
-        <div className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 mr-0.5 bg-black border border-noble-black-500/20 rounded-full text-noble-black-100 flex items-center justify-center">み</div>
+        <div className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 mr-0.5 bg-black border border-noble-black-500/20 rounded-full text-noble-black-100 flex items-center justify-center">ミ</div>
       ) : null}
 
 
