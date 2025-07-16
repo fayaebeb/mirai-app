@@ -97,7 +97,7 @@ export const validateMessage = [
       "regular",
     ])
     .withMessage(
-      "dbType must be one of: data, db1, db2, regular"
+      "dbType must be one of: db1, db2, db3, regular"
     ),
 ];
 

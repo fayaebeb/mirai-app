@@ -73,9 +73,9 @@ export const sessions = pgTable("sessions", {
 // ]);
 
 export const MessageType = pgEnum('message_type', [
-  'data',
   'db1',
   'db2',
+  'db3',
   'regular',
 ]);
 

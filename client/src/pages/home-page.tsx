@@ -79,7 +79,7 @@ export default function HomePage() {
   const [isProcessingVoice, setIsProcessingVoice] = useRecoilState(isProcessingVoiceAtom);
   const [isPlayingAudio, setIsPlayingAudio] = useRecoilState(isPlayingAudioAtom);
   const [hasEntered, setHasEntered] = useState(false);
-  const [selectedDb, setSelectedDb] = useState<DbType>("data");
+  const [selectedDb, setSelectedDb] = useState<DbType>("db1");
 
   const activeChatId = useRecoilValue(activeChatIdAtom)
 
@@ -120,7 +120,8 @@ export default function HomePage() {
         isBot: false,
         createdAt: new Date(),
         dbType: selectedDb,
-        category: 'SELF'
+        category: 'SELF',
+        vote: 0
       };
 
       queryClient.setQueryData<Message[]>(chatKey, (old = []) => [
