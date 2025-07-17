@@ -141,7 +141,7 @@ export default function FeedbackDialog({ open, onOpenChange }: FeedbackDialogPro
             <Button
               type="submit"
               disabled={feedbackMutation.isPending || (!comment && rating === null)}
-              className="mt-4  bg-noble-black-100 text-noble-black-900 font-medium rounded-xl shadow-md "
+              className="mt-4  bg-noble-black-100 text-noble-black-900 hover:text-noble-black-100 font-medium rounded-xl shadow-md "
             >
               送信
             </Button>

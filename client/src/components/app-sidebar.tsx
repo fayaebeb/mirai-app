@@ -49,6 +49,7 @@ import { sidePanelStateAtom } from "@/states/settingsState"
 import { Button } from "./ui/button"
 import { useAuth } from "@/hooks/use-auth"
 import { activeTabState } from "@/states/activeTabState"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 const itemVariants = {
   show: { opacity: 1, scale: 1, transition: { duration: 0.2 } },
@@ -68,10 +69,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
   const [chatIdToDelete, setChatIdToDelete] = React.useState<number | null>(null);
-  const [chatIdBeingDeleted, setChatIdBeingDeleted] = React.useState<number | null>(null);
   const CHAT_ACTIVE_KEY_PREFIX = "chat_active_";
   const [activeTab, setActiveTab] = useRecoilState(activeTabState);
-
+  const isMobile = useIsMobile()
 
   const data = {
     projects: [
@@ -106,16 +106,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const confirmDelete = () => {
     if (chatIdToDelete !== null) {
-      setChatIdBeingDeleted(chatIdToDelete);
-      setShowDeleteDialog(false);
-      setTimeout(() => {
-        deleteChat(chatIdToDelete);
-        if (activeChatId === chatIdToDelete) {
-          setActiveChatId(null);
+      deleteChat(chatIdToDelete, {
+        onSuccess: () => {
+          if (activeChatId === chatIdToDelete) {
+            localStorage.removeItem(storageKey); // 🧹 Fix: clear invalid chat ID
+            setActiveChatId(null);
+          }
+          setChatIdToDelete(null);
+          setShowDeleteDialog(false);
         }
-        setChatIdBeingDeleted(null);
-        setChatIdToDelete(null);
-      }, 200);
+      });
     }
   };
 
@@ -156,7 +156,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {...props}
       >
         {/* Outer wrapper: full-height flex column */}
-        <div className={`${open ? "py-4 px-4 md:pr-0" : "pl-4 py-4"} h-full bg-black flex flex-col  `}>
+        <div className={`${open ? "py-4 px-4 md:pr-0" : isMobile ? "p-4" : "pl-4 py-4"} h-full bg-black flex flex-col  `}>
           {/* Inner panel: flex-col, takes all available height */}
           <div
             className={`flex flex-col flex-1 relative overflow-hidden z-0 ${open ? "rounded-2xl" : "rounded-2xl"
@@ -182,10 +182,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             {/* Header */}
             <SidebarHeader className="p-0 z-20">
               <div
-                className={`flex items-center z-20 ${open ? "justify-between p-3" : "justify-center p-3"
+                className={`flex items-center z-20 ${open ? "justify-between p-3" : "justify-between p-3"
                   }`}
               >
-                {open && <div onClick={() => setActiveChatId(null)} className="text-xl font-semibold z-20 cursor-pointer text-noble-black-100">ミライ</div>}
+                {!isMobile ? (
+                  open && <div onClick={() => setActiveChatId(null)} className="text-xl font-semibold z-20 cursor-pointer text-noble-black-100">ミライ</div>
+                ) : (
+                  <div onClick={() => setActiveChatId(null)} className="text-xl font-semibold z-20 cursor-pointer text-noble-black-100">ミライ</div>
+                )}
                 <SidebarTrigger className="h-8 w-8 z-20 text-noble-black-100" />
               </div>
             </SidebarHeader>
@@ -194,28 +198,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
             {/* Content area: flex-1, scrollable */}
             <SidebarContent className="p-2 flex-1 overflow-y-auto flex flex-col z-20">
+              {!isMobile ? (
+                open && (
+                  <div className="flex flex-col space-y-2 mb-2 z-20">
+                    <Button
+                      size="sm"
+                      className="w-full bg-black border z-20 border-noble-black-100/20 hover:bg-gradient-to-br  hover:from-noble-black-900 hover:to-noble-black text-noble-black-100 hover:text-white rounded-lg shadow-md"
+                      onClick={() =>
+                        createChat(
+                          { title: "新しいチャット" },
+                          { onSuccess: (c) => { setActiveChatId(c.id); setActiveTab('chat'); } }
+                        )
+                      }
+                    >
+                      <Plus className="z-20" />
+                      新しいチャット
+                    </Button>
 
-              {open && (
-                <div className="flex flex-col space-y-2 mb-2 z-20">
-                  <Button
-                    size="sm"
-                    className="w-full bg-black border z-20 border-noble-black-100/20 hover:bg-gradient-to-br  hover:from-noble-black-900 hover:to-noble-black text-noble-black-100 hover:text-white rounded-lg shadow-md"
-                    onClick={() =>
-                      createChat(
-                        { title: "新しいチャット" },
-                        { onSuccess: (c) => { setActiveChatId(c.id); setActiveTab('chat'); } }
-                      )
-                    }
-                  >
-                    <Plus className="z-20" />
-                    新しいチャット
-                  </Button>
-
-                  <SidebarGroupLabel className="text-noble-black-500 z-20">チャット</SidebarGroupLabel>
+                    <SidebarGroupLabel className="text-noble-black-500 z-20">チャット</SidebarGroupLabel>
 
 
-                  {chats.map((chat) =>
-                    chat.id === chatIdBeingDeleted ? null : (
+                    {chats.map((chat) => (
                       <motion.div
                         key={chat.id}
                         layout
@@ -244,9 +247,61 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         </SidebarMenuButton>
                       </motion.div>
                     )
+                    )}
+                  </div>
+                )
+              ) : (
+                <div className="flex flex-col space-y-2 mb-2 z-20">
+                  <Button
+                    size="sm"
+                    className="w-full bg-black border z-20 border-noble-black-100/20 hover:bg-gradient-to-br  hover:from-noble-black-900 hover:to-noble-black text-noble-black-100 hover:text-white rounded-lg shadow-md"
+                    onClick={() =>
+                      createChat(
+                        { title: "新しいチャット" },
+                        { onSuccess: (c) => { setActiveChatId(c.id); setActiveTab('chat'); } }
+                      )
+                    }
+                  >
+                    <Plus className="z-20" />
+                    新しいチャット
+                  </Button>
+
+                  <SidebarGroupLabel className="text-noble-black-500 z-20">チャット</SidebarGroupLabel>
+
+
+                  {chats.map((chat) => (
+                    <motion.div
+                      key={chat.id}
+                      layout
+                      variants={itemVariants}
+                      initial="show"
+                      animate="show"
+                      exit="exit"
+                    >
+                      <SidebarMenuButton
+                        className={`flex w-full justify-between items-center ${activeChatId === chat.id && (activeTab === "chat" || activeTab === "voice")
+                          ? "bg-noble-black-100 text-noble-black-900"
+                          : " text-noble-black-100"
+                          }`}
+                        onClick={() => { setActiveTab('chat'); setActiveChatId(chat.id) }}
+                      >
+                        <span className="truncate">{chat.title}</span>
+                        <Trash2
+                          size={16}
+                          className="text-noble-black-400 hover:text-noble-black-900"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setChatIdToDelete(chat.id)
+                            setShowDeleteDialog(true)
+                          }}
+                        />
+                      </SidebarMenuButton>
+                    </motion.div>
+                  )
                   )}
                 </div>
               )}
+
 
               <div className={`h-px bg-noble-black-800 ${open ? "flex" : "hidden"} `} />
 

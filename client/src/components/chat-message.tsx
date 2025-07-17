@@ -452,14 +452,14 @@ export default function ChatMessage({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 p-1 rounded-full"
+                  className="h-7 w-7 p-1 rounded-full text-noble-black-100 hover:text-noble-black-900"
                   onClick={() => onPlayAudio(message.id, message.content)}
                   disabled={isPlayingAudio && playingMessageId !== message.id}
                 >
                   {isPlayingAudio && playingMessageId === message.id ? (
                     <span className="animate-pulse text-xs">■</span>
                   ) : (
-                    <Volume2 className="h-4 w-4 text-noble-black-100 hover:text-noble-black-900" />
+                    <Volume2 className="h-4 w-4 " />
                   )}
                 </Button>
               ) : null}
