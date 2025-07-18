@@ -5,7 +5,8 @@ import { ChevronDown, Check, Database, DatabaseIcon, ArrowLeftRight, DatabaseZap
 import { useRecoilState } from "recoil";
 import { dropdownOpenState } from "@/states/databaseDropdownState";
 import { DbType } from "@shared/schema";
-
+import { useRecoilValue } from "recoil";
+import { activeChatDbTypeAtom } from "@/states/chatDialogDbState";
 const searchModes = [
   { value: "db1", label: "db1", icon: <DatabaseIcon className="w-4 h-4" /> },
   { value: "db2", label: "db2", icon: <ArrowLeftRight className="w-4 h-4" /> },
@@ -15,18 +16,15 @@ const searchModes = [
 export default function DbButton({
   useDb,
   setUseDb,
-  selectedDb,
-  setSelectedDb,
 }: {
   useDb: boolean;
   setUseDb: (v: boolean) => void;
-  selectedDb: DbType;
-  setSelectedDb: (v: DbType) => void;
 }) {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonGroupRef = useRef<HTMLDivElement>(null); // New ref for entire group
   const [isDropdownOpen, setIsDropdownOpen] = useRecoilState(dropdownOpenState);
   const [coords, setCoords] = useState({ top: 0, left: 0 });
+  const selectedDb = useRecoilValue(activeChatDbTypeAtom);
 
   useLayoutEffect(() => {
     if (isDropdownOpen && dropdownRef.current && buttonGroupRef.current) {
@@ -48,35 +46,35 @@ export default function DbButton({
 
   return (
     <div id="select-database-button" className="relative overflow-visible flex">
-      <div ref={buttonGroupRef} className={`flex rounded-full border ${useDb ? "border-fuchsia-400" : "border-noble-black-900"} hover:border-fuchsia-400 `}>
+      <div ref={buttonGroupRef} className={`flex rounded-full border border-noble-black-900`}>
         <button
           onClick={(e) => {
             e.preventDefault();
             setUseDb(!useDb);
           }}
-          className={`h-8 sm:h-9 flex items-center justify-center flex-shrink-0 shadow-md transition-all rounded-l-full font-medium border-r-0
+          className={`h-8 sm:h-9 flex items-center justify-center flex-shrink-0 shadow-md transition-all rounded-full font-medium border-r-0
             px-2 py-2 sm:px-3 sm:py-1.5 gap-1
             ${useDb
               ? "bg-fuchsia-600/40 text-fuchsia-400  shadow-sm"
               : "bg-noble-black-900 text-noble-black-300"
             }
-             focus:outline-none`}
+             focus:outline-none hover:text-fuchsia-400 hover:bg-fuchsia-600/40 focus:ring-2 focus:ring-purple-500/70`}
         >
 
           {selectedDb === "db1" && searchModes[0].icon}
           {selectedDb === "db2" && searchModes[1].icon}
           {selectedDb === "db3" && searchModes[2].icon}
-          <span className="hidden md:flex items-center gap-1">
+          <span className="flex items-center gap-1">
             {useDb && selectedDb && (
-              <span className=" sm:ml-1">
-                ({searchModes.find((m) => m.value === selectedDb)?.label ?? selectedDb})
+              <span className=" sm:ml-1 uppercase">
+                {searchModes.find((m) => m.value === selectedDb)?.label ?? selectedDb}
               </span>
             )}
-            {!useDb && <span className="hidden sm:inline">内部データ</span>}
+            {!useDb && <span className="">内部データ</span>}
           </span>
         </button>
 
-        <button
+        {/* <button
           onClick={handleChevronClick}
           className={`h-8 sm:h-9 px-2 sm:px-3 py-2 sm:py-1.5 rounded-r-full shadow-md transition-all border font-medium ${useDb
             ? "bg-fuchsia-600/40 text-fuchsia-400 shadow-sm border-l-0.5 border-r-0 border-y-0 border-l-fuchsia-400"
@@ -87,7 +85,14 @@ export default function DbButton({
             className={`w-4 h-4 transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : "rotate-0"
               }`}
           />
-        </button>
+        </button> */}
+
+        {/* <button
+          disabled
+          className="h-8 sm:h-9 px-2 sm:px-3 py-2 sm:py-1.5 rounded-r-full border font-medium bg-noble-black-800 text-noble-black-500 cursor-not-allowed"
+        >
+          <ChevronDown className="w-4 h-4 opacity-30" />
+        </button> */}
       </div>
       {/* <AnimatePresence>
         {isDropdownOpen &&
@@ -134,7 +139,7 @@ export default function DbButton({
           )}
       </AnimatePresence> */}
 
-      {typeof window !== "undefined" &&
+      {/* {typeof window !== "undefined" &&
         createPortal(
           <AnimatePresence>
             {isDropdownOpen && (
@@ -179,7 +184,7 @@ export default function DbButton({
             )}
           </AnimatePresence>,
           document.body
-        )}
+        )} */}
     </div>
   );
 }

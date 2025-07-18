@@ -1,7 +1,7 @@
 // src/hooks/use-chats.ts
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Chat } from "@shared/schema";
+import type { Chat, DbType } from "@shared/schema";
 
 /* ───────── fetch all chats ───────────────────────────────────────── */
 
@@ -24,9 +24,9 @@ export function useCreateChat(options?: {
   onSuccess?: (chat: Chat) => void;
   onError?: (err: Error) => void;
 }) {
-  return useMutation<Chat, Error, { title?: string }>({
-    mutationFn: async ({ title }) => {
-      const res = await apiRequest("POST", "/api/chats", { title });
+  return useMutation<Chat, Error, { title?: string, dbType: DbType }>({
+    mutationFn: async ({ title, dbType }) => {
+      const res = await apiRequest("POST", "/api/chats", { title, dbType });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || "チャットの作成に失敗しました。");

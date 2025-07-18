@@ -43,20 +43,61 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { useChats, useCreateChat, useDeleteChat } from "@/hooks/use-chat"
-import { useRecoilState, useSetRecoilState } from "recoil"
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil"
 import { activeChatIdAtom } from "@/states/chatStates"
 import { sidePanelStateAtom } from "@/states/settingsState"
 import { Button } from "./ui/button"
 import { useAuth } from "@/hooks/use-auth"
 import { activeTabState } from "@/states/activeTabState"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { activeChatDbTypeAtom, isChatDialogOpenAtom } from "@/states/chatDialogDbState"
+import { Badge } from "./ui/badge"
 
 const itemVariants = {
   show: { opacity: 1, scale: 1, transition: { duration: 0.2 } },
   exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } },
 };
 // This is sample data.
-
+function getDbidTag(dbid?: string): {
+  label: string;
+  className: string;
+  notBotClassName: string;
+} {
+  switch (dbid) {
+    case "db1":
+      return {
+        label: "DB1",
+        className:
+          "bg-violet-950 text-violet-500 backdrop-blur-2xl  text-[10px] px-2 py-0.5 rounded-full ",
+        notBotClassName:
+          "bg-violet-200 text-violet-800 backdrop-blur-2xl text-[10px] px-2 py-0.5 rounded-full ",
+      };
+    case "db2":
+      return {
+        label: "DB2",
+        className:
+          "bg-red-950 text-red-500 backdrop-blur-md text-cyan-500 px-2 py-0.5 rounded-full ",
+        notBotClassName:
+          "bg-red-200 text-red-800 backdrop-blur-md text-[10px] px-2 py-0.5 rounded-full ",
+      };
+    case "db3":
+      return {
+        label: "DB3",
+        className:
+          "bg-pink-950 text-pink-500 backdrop-blur-md text-[10px] px-2 py-0.5 rounded-full ",
+        notBotClassName:
+          "bg-pink-200 text-pink-800 backdrop-blur-md text-[10px] px-2 py-0.5 rounded-full ",
+      };
+    default:
+      return {
+        label: "不明",
+        className:
+          "bg-gray-300 text-gray-700 backdrop-blur-md text-[10px] px-2 py-0.5 rounded-full ",
+        notBotClassName:
+          "bg-gray-300 text-gray-700 backdrop-blur-md text-[10px] px-2 py-0.5 rounded-full ",
+      };
+  }
+}
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { open } = useSidebar()
@@ -66,12 +107,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth()
   const [activeChatId, setActiveChatId] = useRecoilState(activeChatIdAtom);
   const [, setIsSidePanelOpen] = useRecoilState(sidePanelStateAtom);
-
+  const setSelectedDbType = useSetRecoilState(activeChatDbTypeAtom);
+  const setOpenDialog = useSetRecoilState(isChatDialogOpenAtom);
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
   const [chatIdToDelete, setChatIdToDelete] = React.useState<number | null>(null);
   const CHAT_ACTIVE_KEY_PREFIX = "chat_active_";
   const [activeTab, setActiveTab] = useRecoilState(activeTabState);
   const isMobile = useIsMobile()
+
 
   const data = {
     projects: [
@@ -204,12 +247,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     <Button
                       size="sm"
                       className="w-full bg-black border z-20 border-noble-black-100/20 hover:bg-gradient-to-br  hover:from-noble-black-900 hover:to-noble-black text-noble-black-100 hover:text-white rounded-lg shadow-md"
-                      onClick={() =>
-                        createChat(
-                          { title: "新しいチャット" },
-                          { onSuccess: (c) => { setActiveChatId(c.id); setActiveTab('chat'); } }
-                        )
-                      }
+                      onClick={() => {
+                        setOpenDialog(true);
+                      }}
                     >
                       <Plus className="z-20" />
                       新しいチャット
@@ -232,18 +272,31 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             ? "bg-noble-black-100 text-noble-black-900"
                             : " text-noble-black-100"
                             }`}
-                          onClick={() => { setActiveTab('chat'); setActiveChatId(chat.id) }}
+                          onClick={() => { setActiveTab('chat'); setActiveChatId(chat.id); setSelectedDbType(chat.dbType) }}
                         >
                           <span className="truncate">{chat.title}</span>
-                          <Trash2
-                            size={16}
-                            className="text-noble-black-400 hover:text-noble-black-900"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setChatIdToDelete(chat.id)
-                              setShowDeleteDialog(true)
-                            }}
-                          />
+
+                          <div className="flex space-x-2 items-center justify-center">
+                            {(() => {
+                              const tag = getDbidTag(chat.dbType);
+                              return (
+                                <div
+                                  className={`border-0 py-[0.5px] px-3 text-[10px] rounded-full font-semibold ${activeChatId === chat.id ? tag.notBotClassName : tag.className}`}
+                                >
+                                  {tag.label}
+                                </div>
+                              );
+                            })()}
+                            <Trash2
+                              size={16}
+                              className="text-noble-black-400 hover:text-noble-black-900"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setChatIdToDelete(chat.id)
+                                setShowDeleteDialog(true)
+                              }}
+                            />
+                          </div>
                         </SidebarMenuButton>
                       </motion.div>
                     )
@@ -255,12 +308,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <Button
                     size="sm"
                     className="w-full bg-black border z-20 border-noble-black-100/20 hover:bg-gradient-to-br  hover:from-noble-black-900 hover:to-noble-black text-noble-black-100 hover:text-white rounded-lg shadow-md"
-                    onClick={() =>
-                      createChat(
-                        { title: "新しいチャット" },
-                        { onSuccess: (c) => { setActiveChatId(c.id); setActiveTab('chat'); } }
-                      )
-                    }
+                    onClick={() => {
+                      setOpenDialog(true);
+                    }}
                   >
                     <Plus className="z-20" />
                     新しいチャット
@@ -286,15 +336,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         onClick={() => { setActiveTab('chat'); setActiveChatId(chat.id) }}
                       >
                         <span className="truncate">{chat.title}</span>
-                        <Trash2
-                          size={16}
-                          className="text-noble-black-400 hover:text-noble-black-900"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setChatIdToDelete(chat.id)
-                            setShowDeleteDialog(true)
-                          }}
-                        />
+                        <div className="flex space-x-2 items-center justify-center">
+                          {(() => {
+                            const tag = getDbidTag(chat.dbType);
+                            return (
+                              <div
+                                className={`border-0 py-[0.5px] px-3 text-[10px] rounded-full font-semibold ${activeChatId === chat.id ? tag.notBotClassName : tag.className}`}
+                              >
+                                {tag.label}
+                              </div>
+                            );
+                          })()}
+                          <Trash2
+                            size={16}
+                            className="text-noble-black-400 hover:text-noble-black-900"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setChatIdToDelete(chat.id)
+                              setShowDeleteDialog(true)
+                            }}
+                          />
+                        </div>
                       </SidebarMenuButton>
                     </motion.div>
                   )

@@ -95,7 +95,7 @@ export default function FloatingSidebar() {
 
                         {/* CREATE */}
                         <div className="mt-4 px-4">
-                            <Button
+                            {/* <Button
                                 size="sm"
                                 className="w-full bg-gradient-to-r from-violet-400 to-violet-500 text-violet-900 hover:text-white rounded-xl shadow-md"
                                 onClick={() =>
@@ -103,7 +103,7 @@ export default function FloatingSidebar() {
                                 }
                             >
                                 + New Chat
-                            </Button>
+                            </Button> */}
                         </div>
 
                         {/* LIST WRAPPER */}

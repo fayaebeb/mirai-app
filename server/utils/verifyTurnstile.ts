@@ -30,3 +30,4 @@ export async function verifyTurnstile(
     return res.status(500).json({ error: "CAPTCHA verification error" });
   }
 }
+

@@ -11,6 +11,7 @@ import { ChevronDown, Database, Globe, Cpu, Server, Clipboard, Check, Volume2 } 
 import { Button } from "./ui/button";
 import { SaveChatAsNote } from "./save-chat-as-note";
 import { useUpdateMessageVote } from "@/hooks/useMessageVotes";
+import { Badge } from "./ui/badge";
 // Extended Message type that includes the regenerate function
 interface Message extends MessageType {
   onRegenerateAnswer?: () => void;
@@ -48,6 +49,20 @@ const parseMessageContent = (content: string) => {
 
   return sections;
 };
+
+
+function getDbidTag(dbid?: string): { label: string; className: string, notBotClassName: string } {
+  switch (dbid) {
+    case "db1":
+      return { label: "DB1", className: "bg-violet-950 text-violet-500", notBotClassName: "bg-violet-200 text-violet-800" };
+    case "db2":
+      return { label: "DB2", className: "bg-red-950 text-red-500", notBotClassName: "bg-red-200 text-red-800" };
+    case "db3":
+      return { label: "DB3", className: "bg-pink-950 text-pink-500", notBotClassName: "bg-pink-200 text-pink-800" };
+    default:
+      return { label: dbid || "不明", className: "bg-gray-300 text-gray-700", notBotClassName: "bg-gray-300 text-gray-700" };
+  }
+}
 
 const MessageSection = ({
   title,
@@ -433,7 +448,7 @@ export default function ChatMessage({
               </ReactMarkdown>
             )}
 
-            <div id="highlighted-component-1" className="mt-2 flex items-center justify-between">
+            <div id="highlighted-component-1" className="mt-2 flex items-center justify-between space-x-2">
               <div className="text-[9px] sm:text-[10px] text-noble-black-400">
                 {/* {message.timestamp && new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} */}
 
@@ -448,6 +463,20 @@ export default function ChatMessage({
                   })}
 
               </div>
+              {!message.isBot && (
+                (() => {
+                  const tag = getDbidTag(message.dbType);
+                  return (
+                    <Badge
+                      variant="outline"
+
+                      className={`border-0 ${tag.notBotClassName}`}
+                    >
+                      {tag.label}
+                    </Badge>
+                  );
+                })()
+              )}
               {message.isBot ? (
                 <Button
                   variant="ghost"
@@ -526,6 +555,19 @@ export default function ChatMessage({
                     </button>
 
                     <SaveChatAsNote message={message} />
+
+                    {(() => {
+                      const tag = getDbidTag(message.dbType);
+                      return (
+                        <Badge
+                          variant="outline"
+
+                          className={`border-0 ${tag.className}`}
+                        >
+                          {tag.label}
+                        </Badge>
+                      );
+                    })()}
                   </>
                 )}
               </div>
