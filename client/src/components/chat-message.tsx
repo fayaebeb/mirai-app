@@ -19,7 +19,14 @@ interface Message extends MessageType {
 
 // Futuristic decorative elements to randomly add to bot messages
 const botDecorations = [
-  "⚡", "🔹", "💠", "🔷", "🔌", "📡", "🛰️", "⚙️", "🔋", "💻"
+  "💭",
+  "🍙",
+  "🐼",
+  "🫧",
+  "👻",
+  "🤍",
+  "🕊️",
+  "🐧"
 ];
 
 // Helper function to parse message content into sections
@@ -303,13 +310,7 @@ export default function ChatMessage({
             whileHover={{ scale: 1.05, rotate: [0, -5, 5, 0] }}
             transition={{ rotate: { duration: 0.5 } }}
           >
-            <div className="w-full h-full rounded-full flex items-center justify-center bg-black border border-noble-black-500/20">
-              <img
-                src="/images/mirai.png"
-                alt="AI Assistant"
-                className="w-full h-full p-1 object-contain rounded-full"
-              />
-            </div>
+            <div className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 mr-0.5 bg-black border border-noble-black-500/20 rounded-full text-noble-black-100 flex items-center justify-center">ミ</div>
           </motion.div>
         </Avatar>
       ) : message.isBot ? (
@@ -479,7 +480,7 @@ export default function ChatMessage({
                   })()
                 )}
               </div>
-              
+
               {message.isBot ? (
                 <Button
                   variant="ghost"

@@ -43,12 +43,12 @@ const characterVariants = {
 };
 
 const thinkingExpressions = [
-  "⏳",
-  "🔄",
-  "🔹",
-  "⚡",
-  "🔌",
-  "📡"
+  "💭",
+  "🍙",
+  "🐼",
+  "🫧",
+  "👻",
+  "🤍"
 ];
 
 const thinkingMessages = [
