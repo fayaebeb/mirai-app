@@ -59,8 +59,10 @@ function getDbidTag(dbid?: string): { label: string; className: string, notBotCl
       return { label: "DB2", className: "bg-red-950 text-red-500", notBotClassName: "bg-red-200 text-red-800" };
     case "db3":
       return { label: "DB3", className: "bg-pink-950 text-pink-500", notBotClassName: "bg-pink-200 text-pink-800" };
+    case "regular":
+      return { label: "不明", className: "bg-gray-300 text-gray-700", notBotClassName: "bg-gray-300 text-gray-700" };
     default:
-      return { label: dbid || "不明", className: "bg-gray-300 text-gray-700", notBotClassName: "bg-gray-300 text-gray-700" };
+      return { label: "不明", className: "bg-gray-300 text-gray-700", notBotClassName: "bg-gray-300 text-gray-700" };
   }
 }
 
@@ -319,7 +321,7 @@ export default function ChatMessage({
         initial={message.isBot ? { x: -10, opacity: 0 } : { x: 10, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.3 }}
-        whileHover={message.isBot && !isTyping ? { scale: 1.01 } : { scale: 1 }}
+        // whileHover={message.isBot && !isTyping ? { scale: 1.01 } : { scale: 1 }}
         onHoverStart={handleBotMessageHover}
         className={cn({
           // Bot message bubble takes full width on mobile, max 85% on sm+
@@ -449,7 +451,7 @@ export default function ChatMessage({
             )}
 
             <div id="highlighted-component-1" className="mt-2 flex items-center justify-between space-x-2">
-              <div className="text-[9px] sm:text-[10px] text-noble-black-400">
+              <div className="text-[9px] sm:text-[10px] text-noble-black-400 ">
                 {/* {message.timestamp && new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} */}
 
                 {message.createdAt &&
@@ -462,21 +464,22 @@ export default function ChatMessage({
                     minute: "2-digit",
                   })}
 
-              </div>
-              {!message.isBot && (
-                (() => {
-                  const tag = getDbidTag(message.dbType);
-                  return (
-                    <Badge
-                      variant="outline"
+                {(
+                  (() => {
+                    const tag = getDbidTag(message.dbType);
+                    return (
+                      <Badge
+                        variant="outline"
 
-                      className={`border-0 ${tag.notBotClassName}`}
-                    >
-                      {tag.label}
-                    </Badge>
-                  );
-                })()
-              )}
+                        className={`border-0 ml-2 ${message.isBot ? tag.className : tag.notBotClassName}`}
+                      >
+                        {tag.label}
+                      </Badge>
+                    );
+                  })()
+                )}
+              </div>
+              
               {message.isBot ? (
                 <Button
                   variant="ghost"
@@ -556,18 +559,7 @@ export default function ChatMessage({
 
                     <SaveChatAsNote message={message} />
 
-                    {(() => {
-                      const tag = getDbidTag(message.dbType);
-                      return (
-                        <Badge
-                          variant="outline"
 
-                          className={`border-0 ${tag.className}`}
-                        >
-                          {tag.label}
-                        </Badge>
-                      );
-                    })()}
                   </>
                 )}
               </div>

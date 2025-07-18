@@ -88,6 +88,14 @@ function getDbidTag(dbid?: string): {
         notBotClassName:
           "bg-pink-200 text-pink-800 backdrop-blur-md text-[10px] px-2 py-0.5 rounded-full ",
       };
+    case "regular":
+      return {
+        label: "不明",
+        className:
+          "bg-gray-300 text-gray-700 backdrop-blur-md text-[10px] px-2 py-0.5 rounded-full ",
+        notBotClassName:
+          "bg-gray-300 text-gray-700 backdrop-blur-md text-[10px] px-2 py-0.5 rounded-full ",
+      };
     default:
       return {
         label: "不明",
