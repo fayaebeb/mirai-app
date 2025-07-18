@@ -202,7 +202,7 @@ export const ChatInput = ({
                   ? "bg-cyan-600/40 text-cyan-400 border border-blue-400 shadow-sm"
                   : "bg-noble-black-900 text-noble-black-300  hover:border-slate-400"
                 }
-                hover:ring-1  hover:bg-cyan-600/40 focus:outline-none focus:ring-2 focus:ring-blue-500/70
+                 hover:bg-cyan-600/40 focus:outline-none hover:ring-2 hover:ring-blue-500/70 focus:ring-2 focus:ring-blue-500/70
               `}
             >
               <Globe className="h-4 w-4" />

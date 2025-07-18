@@ -471,7 +471,7 @@ export default function ChatMessage({
                       <Badge
                         variant="outline"
 
-                        className={`border-0 ml-2 ${tag.notBotClassName}`}
+                        className={`border-0 ml-2 ${message.isBot ? tag.className : tag.notBotClassName}`}
                       >
                         {tag.label}
                       </Badge>
@@ -479,6 +479,7 @@ export default function ChatMessage({
                   })()
                 )}
               </div>
+              
               {message.isBot ? (
                 <Button
                   variant="ghost"

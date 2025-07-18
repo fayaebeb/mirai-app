@@ -58,7 +58,7 @@ export default function DbButton({
               ? "bg-fuchsia-600/40 text-fuchsia-400  shadow-sm"
               : "bg-noble-black-900 text-noble-black-300"
             }
-             focus:outline-none hover:text-fuchsia-400 hover:bg-fuchsia-600/40 focus:ring-2 focus:ring-purple-500/70`}
+             focus:outline-none  hover:bg-fuchsia-800/40 hover:ring-2 hover:ring-purple-500/70 focus:ring-2 focus:ring-purple-500/70`}
         >
 
           {selectedDb === "db1" && searchModes[0].icon}
