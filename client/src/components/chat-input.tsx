@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import TextareaAutosize from "react-textarea-autosize";
-import { Lightbulb, Send, Globe, Database } from "lucide-react";
+import { Lightbulb, Send, Globe, Database, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { UseMutationResult } from "@tanstack/react-query";
@@ -64,9 +64,16 @@ export const ChatInput = ({
     }
   }, [input, isComposing]);
 
-  const debouncedSetInput = useRef(
-    debounce((val: string) => setInput(val), 100)
-  ).current;
+  // const debouncedSetInput = useRef(
+  //   debounce((val: string) => setInput(val), 100)
+  // ).current;
+
+  // Sync local input with parent input when not composing
+  useEffect(() => {
+    if (!isComposing) {
+      setLocalInput(input);
+    }
+  }, [input, isComposing]);
 
   const selectedCategoryData = promptCategories.find(
     (cat) => cat.name === selectedCategory
@@ -116,6 +123,14 @@ export const ChatInput = ({
     }, 0);
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    setLocalInput(value);
+
+    // Update parent state immediately without debouncing
+    setInput(value);
+  };
+
   return (
     <div className="w-full px-0.5 pb-0.5 md:pb-0 md:px-0 md:w-fit  flex items-center justify-center relative z-[49]">
       <form
@@ -132,14 +147,7 @@ export const ChatInput = ({
           }}
           ref={inputRef}
           value={localInput}
-          onChange={(e) => {
-            const v = e.target.value;
-            setLocalInput(v);
-            // only debounce out-of-IME
-            if (!isComposing) {
-              debouncedSetInput(v);
-            }
-          }}
+          onChange={handleInputChange}
           placeholder="ミライに何かお手伝いできますか？..."
           minRows={1}
           maxRows={6}
@@ -235,7 +243,7 @@ export const ChatInput = ({
           <motion.button
             type="submit"
             disabled={sendMessage.isPending || !input.trim()}
-            className={`relative disabled:text-noble-black-100  disabled:bg-noble-black-900 px-3 sm:px-4 py-2 h-10 rounded-xl text-noble-black-100 flex items-center gap-1.5 flex-shrink-0 transition-all
+            className={`relative disabled:text-noble-black-100  disabled:bg-noble-black-900 px-3 sm:px-4 py-2 h-10 rounded-full text-noble-black-100 flex items-center gap-1.5 flex-shrink-0 transition-all
               ${input.trim()
                 ? "bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 shadow-lg shadow-blue-900/30 hover:shadow-blue-900/50"
                 : "bg-slate-700/50 text-slate-400 cursor-not-allowed"
@@ -259,7 +267,7 @@ export const ChatInput = ({
                     animate={{ rotate: 360, scale: [1, 1.2, 1] }}
                     transition={{ duration: 3, repeat: Infinity }}
                   >
-                    ⚡
+                    <Zap className="h-3 w-3 text-noble-black-100"   />
                   </motion.span>
                 )}
               </>

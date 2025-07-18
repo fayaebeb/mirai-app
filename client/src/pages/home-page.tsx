@@ -2,7 +2,7 @@ import { useAuth } from "@/hooks/use-auth";
 import ChatInterface from "@/components/chat-interface";
 import { ChatInput } from "@/components/chat-input";
 import { motion, AnimatePresence } from "framer-motion";
-import { Zap, Target } from "lucide-react";
+import { Zap, Target, Check } from "lucide-react";
 import { MindMapGenerator } from "@/components/mind-map-generator";
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -22,6 +22,7 @@ import { currentAudioUrlAtom, isPlayingAudioAtom, isProcessingVoiceAtom, playing
 import { activeChatIdAtom } from "@/states/chatStates";
 import { useRenameChat } from "@/hooks/useRenameChat";
 import VoiceModePage from "./voice-mode-page";
+import SuggestionPanel from "@/components/suggestion-panel";
 
 // Audio player for bot responses
 const AudioPlayer = ({ audioUrl, isPlaying, onPlayComplete }: { audioUrl: string, isPlaying: boolean, onPlayComplete: () => void }) => {
@@ -74,8 +75,10 @@ export default function HomePage() {
   const [isPlayingAudio, setIsPlayingAudio] = useRecoilState(isPlayingAudioAtom);
   const [hasEntered, setHasEntered] = useState(false);
   const [selectedDb, setSelectedDb] = useState<DbType>("db1");
-
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(true);
   const activeChatId = useRecoilValue(activeChatIdAtom)
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
 
   const CHAT_SESSION_KEY_PREFIX = "chat_session_id_user_";
@@ -126,12 +129,14 @@ export default function HomePage() {
       return { previousMessages };
     },
 
-    onSuccess: (newBotMessage: Message) => {
+    onSuccess: async (newBotMessage: Message, variables) => {
       setInput("");
       queryClient.setQueryData<Message[]>(chatKey, (old = []) => [
         ...old,
         newBotMessage
       ]);
+
+      fetchSuggestions.mutate({ message: variables.content });
     },
 
     onError: (error, content, context) => {
@@ -154,6 +159,37 @@ export default function HomePage() {
       queryClient.invalidateQueries({ queryKey: chatKey });
     }
   });
+
+  const fetchSuggestions = useMutation<
+    { suggestions: string[] },
+    Error,
+    { message: string }
+  >({
+    mutationFn: async ({ message }) => {
+      const response = await fetch("/api/suggest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ message }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch suggestions");
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setSuggestions(data.suggestions || []);
+      setShowSuggestions(true);
+    },
+    onError: (error) => {
+      console.error("Failed to fetch suggestions:", error);
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  });
+
 
   const handleVoiceRecording = async (audioBlob: Blob) => {
     setIsProcessingVoice(true);
@@ -572,6 +608,20 @@ export default function HomePage() {
                 </div>
               )}
             </AnimatePresence>
+
+            {showSuggestions && (
+              <div className="w-fit  md:mx-auto z-[999]">
+                <SuggestionPanel
+                  suggestions={suggestions}
+                  isLoading={fetchSuggestions.isPending}
+                  onSelect={(sugg) => {
+                    setInput(sugg);
+                  }}
+                  onClose={() => setShowSuggestions(false)}
+                />
+              </div>
+            )}
+
 
             <ChatInput
               input={input}

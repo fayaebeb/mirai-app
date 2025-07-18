@@ -14,6 +14,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { transcribeAudio } from "./apis/openai";
 import { textToSpeechStream } from "./apis/textToSpeechStream";
 import { z } from "zod";
+import { suggestHandler } from "./apis/suggest";
 dotenv.config();
 
 const createUserAwareRateLimiter = (options: { windowMs: number; max: number; message?: string }) =>
@@ -1254,6 +1255,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   );
 
+  app.post("/api/suggest", apiRateLimit, suggestHandler);
 
   const httpServer = createServer(app);
 
