@@ -1,13 +1,11 @@
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import ChatInterface from "@/components/chat-interface";
 import { ChatInput } from "@/components/chat-input";
 import { motion, AnimatePresence } from "framer-motion";
-import { Zap, Network, Cpu, Server, Database, Globe, LogOut, FileText, Book, Target, Trash2, FileOutput, MoreVertical, MessageSquare, Wand2, BrainCircuit, Menu, Home, X, Download } from "lucide-react";
+import { Zap, Target } from "lucide-react";
 import { MindMapGenerator } from "@/components/mind-map-generator";
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { ChatPDFExport } from "@/components/chat-pdf-export";
 import { DbType, Message } from "@shared/schema";
 import { NotesList } from "@/components/notes-list";
 import { EnhancedTaskTracker } from "@/components/enhanced-task-tracker";
@@ -17,15 +15,11 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { nanoid } from "nanoid";
-import Footer from "@/components/Footer";
 import { useRecoilState, useRecoilValue } from "recoil";
-import { ActiveTab, activeTabState } from "@/states/activeTabState";
-import Navbar from "@/components/Navbar";
+import { activeTabState } from "@/states/activeTabState";
 import TranscriptionConfirmation from "@/components/transcription-confirmation";
 import { currentAudioUrlAtom, isPlayingAudioAtom, isProcessingVoiceAtom, playingMessageIdAtom } from "@/states/voicePlayerStates";
 import { activeChatIdAtom } from "@/states/chatStates";
-import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
-import FloatingSidebar from "@/components/Sidepanel";
 import { useRenameChat } from "@/hooks/useRenameChat";
 import VoiceModePage from "./voice-mode-page";
 
@@ -588,8 +582,6 @@ export default function HomePage() {
               setUseWeb={setUseWeb}
               useDb={useDb}
               setUseDb={setUseDb}
-              selectedDb={selectedDb}
-              setSelectedDb={setSelectedDb}
               handleVoiceRecording={handleVoiceRecording}
               isProcessingVoice={isProcessingVoice}
             />

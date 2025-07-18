@@ -48,7 +48,7 @@ export default function VoiceModePage() {
   const timerRef = useRef<number | null>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
-  const [selectedDb, setSelectedDb] = useState<DbType>("data");
+  const [selectedDb, setSelectedDb] = useState<DbType>("db1");
   const [isDbDropdownOpen, setIsDbDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const dbButtonRef = useRef<HTMLButtonElement>(null);
@@ -707,8 +707,6 @@ export default function VoiceModePage() {
               <DbButton
                 useDb={useDb}
                 setUseDb={setUseDb}
-                selectedDb={selectedDb}
-                setSelectedDb={setSelectedDb}
               />
 
 

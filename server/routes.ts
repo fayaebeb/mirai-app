@@ -260,8 +260,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Invalid request body:", parse.error);
         return sendError(res, 400, "Invalid request data", parse.error);
       }
-      const { chatId, content, useWeb = false, useDb = false, dbType = 'regular' } = parse.data;
-
+      const { chatId, content, useWeb = false, useDb = false, dbType: _dbType } = parse.data;
       const userId = req.user!.id;
 
       try {
@@ -270,6 +269,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!chat || chat.userId !== userId) {
           return sendError(res, 403, "Forbidden: chat not found");
         }
+
+        const dbType = useDb ? (chat.dbType ?? 'regular') : 'regular';
 
         /* 2️⃣  Save USER message */
         await storage.createMessage(userId, {
@@ -1094,8 +1095,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/chats", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
-    const { title } = chatTitleSchema.partial().parse(req.body);
-    const chat = await storage.createChat(req.user!.id, title || "New chat");
+    const parsed = chatTitleSchema.partial().extend({
+      dbType: z.enum(['db1', 'db2', 'db3', 'regular']).default('regular')
+    }).safeParse(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid request body" });
+    }
+
+    const { title = "新しいチャット", dbType } = parsed.data;
+    const chat = await storage.createChat(req.user!.id, title, "regular", dbType);
     res.status(201).json(chat);
   });
 

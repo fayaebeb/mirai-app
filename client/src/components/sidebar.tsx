@@ -64,12 +64,12 @@ export default function Sidebar() {
     return (
         <div className="w-72 border-r bg-muted fixed flex flex-col z-[9999]">
             {/* create */}
-            <button
+            {/* <button
                 className="p-3 flex items-center gap-2 hover:bg-muted text-sm"
                 onClick={() => createChat({}, { onSuccess: (c) => setActiveChatId(c.id) })}
             >
                 <Plus size={16} /> New chat
-            </button>
+            </button> */}
 
             {/* list */}
             <ul className="flex-1 overflow-y-auto">

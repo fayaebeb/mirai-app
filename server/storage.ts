@@ -1,4 +1,4 @@
-import { users, messages, sessions, notes, goals, type User, type InsertUser, type Message, type InsertMessage, type Session, type Note, type InsertNote, type Goal, type InsertGoal, InsertUserSafe, InsertFeedback, Feedback, inviteTokens, Chat, chats } from "@shared/schema";
+import { users, messages, sessions, notes, goals, type User, type InsertUser, type Message, type InsertMessage, type Session, type Note, type InsertNote, type Goal, type InsertGoal, InsertUserSafe, InsertFeedback, Feedback, inviteTokens, Chat, chats, DbType } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc } from "drizzle-orm";
 import session from "express-session";
@@ -101,10 +101,10 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  async createChat(userId: number, title = "New chat", type = "regular") {
+  async createChat(userId: number, title = "新しいチャット", type = "regular", dbType: DbType = "regular") {
     const [chat] = await db
       .insert(chats)
-      .values({ userId, title, type })
+      .values({ userId, title, type, dbType })
       .returning();
     return chat;
   }

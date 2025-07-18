@@ -160,10 +160,11 @@ export const chats = pgTable("chats", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  title: text("title").notNull().default("New chat"),
+  title: text("title").notNull().default("新しいチャット"),
   type: text("type").notNull().default("regular"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+  dbType: MessageType("db_type").notNull().default("regular"),
 });
 
 // Add password validation to the insert schema

@@ -34,8 +34,6 @@ interface ChatInputProps {
   setUseDb: React.Dispatch<React.SetStateAction<boolean>>;
   handleVoiceRecording: (audio: Blob) => void;
   isProcessingVoice: boolean;
-  selectedDb: DbType;
-  setSelectedDb: React.Dispatch<React.SetStateAction<DbType>>;
 }
 
 export const ChatInput = ({
@@ -47,8 +45,6 @@ export const ChatInput = ({
   setUseWeb,
   useDb,
   setUseDb,
-  selectedDb,
-  setSelectedDb,
   isProcessingVoice,
   handleVoiceRecording,
 
@@ -60,7 +56,6 @@ export const ChatInput = ({
   const promptRef = useRef<HTMLDivElement>(null);
   const lightbulbRef = useRef<HTMLButtonElement>(null);
   const isMobile = useIsMobile();
-
   const [localInput, setLocalInput] = useState(input);
 
   useEffect(() => {
@@ -199,7 +194,7 @@ export const ChatInput = ({
                   ? "bg-cyan-600/40 text-cyan-400 border border-blue-400 shadow-sm"
                   : "bg-noble-black-900 text-noble-black-300  hover:border-slate-400"
                 }
-                hover:ring-1 hover:ring-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/70
+                hover:ring-1  hover:bg-cyan-600/40 focus:outline-none focus:ring-2 focus:ring-blue-500/70
               `}
             >
               <Globe className="h-4 w-4" />
@@ -228,8 +223,6 @@ export const ChatInput = ({
             <DbButton
               useDb={useDb}
               setUseDb={setUseDb}
-              selectedDb={selectedDb}
-              setSelectedDb={setSelectedDb}
             />
 
             <VoiceRecorder

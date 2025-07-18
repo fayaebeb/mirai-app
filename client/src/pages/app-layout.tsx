@@ -1,95 +1,135 @@
 // src/pages/app-layout.tsx
-import React from "react";
+import React, { useState } from "react";
 import HomePage from "./home-page";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import FloatingSidebar from "@/components/Sidepanel";
-import { SidebarInset, SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
-import { useRecoilValue, useRecoilState } from "recoil";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { useRecoilValue, useRecoilState, useSetRecoilState } from "recoil";
 import { activeChatIdAtom } from "@/states/chatStates";
 import { sidePanelStateAtom } from "@/states/settingsState";
 import { motion } from "framer-motion";
-import { Home, MessageSquare, PlusIcon, Sparkles } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCreateChat } from "@/hooks/use-chat";
 import { AppSidebar } from "@/components/app-sidebar";
-import { Separator } from "@/components/ui/separator";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Spotlight } from "@/components/ui/spotlight";
 import { TextGenerateEffect } from "@/components/ui/textgenerateEffect";
 import { activeTabState } from "@/states/activeTabState";
+import {
+    Dialog, DialogContent, DialogHeader, DialogTitle,
+    DialogFooter,
+    DialogDescription
+} from "@/components/ui/dialog";
+import {
+    Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+} from "@/components/ui/select";
+import { activeChatDbTypeAtom, isChatDialogOpenAtom } from "@/states/chatDialogDbState";
+import { DbType } from "@shared/schema";
 
 export default function AppLayout() {
     const [activeChatId, setActiveChatId] = useRecoilState(activeChatIdAtom);
-
+    const [openDialog, setOpenDialog] = useRecoilState(isChatDialogOpenAtom);
     const [, setIsSidePanelOpen] = useRecoilState(sidePanelStateAtom);
     const { mutate: createChat } = useCreateChat();
-    const activeTab = useRecoilValue(activeTabState)
+    const [selectedDbType, setSelectedDbType] = useState<DbType>("db1");
+    const setActiveChatDbType = useSetRecoilState(activeChatDbTypeAtom)
+    const setActiveTab = useSetRecoilState(activeTabState);
 
 
     return (
-        // <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-900 to-slate-800 relative overflow-hidden">
-        //     <SidebarProvider>
-        //         <Navbar />
 
-        //         <FloatingSidebar />
-        //         {activeChatId ? (
-        //             <div className="w-full">
-        //             <HomePage />
-        //             </div>
-        //         ) : (
-        //             <div className="flex items-center justify-center w-full">
-
-
-        //                 <main className="flex-1 flex items-center justify-center p-6">
-
-
-
-        //                     <motion.div
-        //                         initial={{ opacity: 0, y: 20 }}
-        //                         animate={{ opacity: 1, y: 0 }}
-        //                         transition={{ duration: 0.5 }}
-        //                         className="flex flex-col items-center space-y-6 text-center"
-        //                     >
-        //                         <motion.div
-        //                             animate={{ scale: [1, 1.2, 1] }}
-        //                             transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-        //                             className="p-4 rounded-full bg-blue-900/50"
-        //                         >
-        //                             <MessageSquare className="h-16 w-16 text-blue-400" />
-        //                         </motion.div>
-
-        //                         <h2 className="text-2xl font-semibold text-white">
-        //                             Select a chat or start a new one
-        //                         </h2>
-
-        //                         <Button
-        //                             variant="outline"
-        //                             className="border-blue-500 text-blue-300 hover:bg-blue-500 hover:text-white"
-        //                             onClick={() =>
-        //                                 createChat({ title: "New Chat" }, { onSuccess: (c) => setActiveChatId(c.id) })
-        //                             }
-        //                         >
-        //                             + New Chat
-        //                         </Button>
-        //                     </motion.div>
-
-        //                 </main>
-
-        //             </div>
-
-        //         )}
-        //         <Footer />
-        //     </SidebarProvider>
-        // </div>
         <SidebarProvider >
+            <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+                <DialogContent className="bg-black border border-noble-black-800 text-noble-black-100 ">
+                    <DialogHeader>
+                        <DialogTitle>データベースを選択してください</DialogTitle>
+                        <DialogDescription className="text-noble-black-400">
+                            Lorem ipsum dolor sit amet consectetur adipisicing elit.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 ">
+                        <Button
+                            style={{
+                                backgroundImage: "url('/images/bg-pattern-db1.webp')",
+                                backgroundSize: "cover",
+                                backgroundPosition: "center",
+                                filter: selectedDbType === "db1" ? "none" : "grayscale(1)",
+                                transition: "filter 0.3s",
+                            }}
+                            className={`p-2 md:p-8 col-span-1
+        ${selectedDbType === "db1"
+                                    ? "bg-gradient-to-br from-pink-800 to-pink-600 text-white border border-violet-950"
+                                    : "bg-noble-black-800 text-noble-black-400 hover:bg-noble-black-700"
+                                }`}
+                            onClick={() => setSelectedDbType("db1")}
+                        >
+                            DB1
+                        </Button>
+                        <Button
+                            style={{
+                                backgroundImage: "url('/images/bg-pattern-db2.webp')",
+                                backgroundSize: "cover",
+                                backgroundPosition: "center",
+                                filter: selectedDbType === "db2" ? "none" : "grayscale(1)",
+                                transition: "filter 0.3s",
+                            }}
+                            className={`p-2 md:p-8  col-span-1
+        ${selectedDbType === "db2"
+                                    ? "bg-gradient-to-br from-blue-800 to-blue-600 text-white border border-red-950"
+                                    : "bg-noble-black-800 text-noble-black-400 hover:bg-noble-black-700"
+                                }`}
+                            onClick={() => setSelectedDbType("db2")}
+                        >
+                            DB2
+                        </Button>
+                        <Button
+                            style={{
+                                backgroundImage: "url('/images/bg-pattern-db3.webp')",
+                                backgroundSize: "cover",
+                                backgroundPosition: "center",
+                                filter: selectedDbType === "db3" ? "none" : "grayscale(1)",
+                                transition: "filter 0.3s",
+                            }}
+                            className={`p-2 md:p-8 col-span-1
+        ${selectedDbType === "db3"
+                                    ? "bg-gradient-to-br from-green-800 to-green-600 text-white border border-pink-950"
+                                    : "bg-noble-black-800 text-noble-black-400 hover:bg-noble-black-700"
+                                }`}
+                            onClick={() => setSelectedDbType("db3")}
+                        >
+                            DB3
+                        </Button>
+                    </div>
+
+
+                    <DialogFooter className=" w-full">
+                        <Button
+                            className="w-full bg-noble-black-900 text-noble-black-100 hover:text-noble-black-900 hover:bg-noble-black-100 border border-noble-black-800"
+                            onClick={() => {
+                                createChat(
+                                    { dbType: selectedDbType },
+                                    {
+                                        onSuccess: (c) => {
+                                            setActiveChatId(c.id);
+                                            setActiveChatDbType(selectedDbType);
+                                            setActiveTab('chat');
+                                            setOpenDialog(false);
+                                        },
+                                    }
+                                );
+                            }}
+                        >
+                            Start Chat
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
             <AppSidebar />
             <SidebarInset>
                 <div className="flex flex-1 flex-col gap-4 p-4 bg-black relative  max-h-screen h-screen">
                     <div className="flex flex-col min-h-full max-h-full bg-noble-black-900 rounded-2xl relative overflow-hidden">
                         <SidebarTrigger className="rounded-full p-5 bg-black text-noble-black-100 absolute left-2 top-2 md:hidden z-50 border border-noble-black-900" />
 
-                        {activeChatId  ?
+                        {activeChatId ?
                             <HomePage />
                             :
                             <div className="h-full w-full rounded-md flex md:items-center md:justify-center  antialiased  overflow-hidden relative">
@@ -130,7 +170,7 @@ export default function AppLayout() {
                                             whileTap={{ scale: 0.95 }}
 
                                             onClick={() =>
-                                                createChat({ title: "New Chat" }, { onSuccess: (c) => setActiveChatId(c.id) })
+                                                setOpenDialog(true)
                                             }
                                             className="flex items-center text-noble-black-100/80 bg-black/90 rounded-full
                                         hover:text-noble-black-300 hover:bg-black
