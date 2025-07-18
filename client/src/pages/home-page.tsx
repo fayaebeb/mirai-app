@@ -116,7 +116,7 @@ export default function HomePage() {
         content,
         isBot: false,
         createdAt: new Date(),
-        dbType: selectedDb,
+        dbType: useDb ? selectedDb : "regular",
         category: 'SELF',
         vote: 0
       };
